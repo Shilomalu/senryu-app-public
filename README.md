@@ -28,3 +28,5 @@ MySQL Workbenchを起動し、インストール時に設定したrootパスワ�
 
 稲妻（⚡）ボタンを押して、スクリプト全体を実行します。
 
+プルの方法
+ターミナル上で「git checkout main」、「git pull origin main」を順に行う。
