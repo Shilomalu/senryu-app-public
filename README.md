@@ -13,7 +13,16 @@
 プルを行う前にプッシュをすると、エラーが発生する可能性がある。
 
 バックエンドの扱う人用(できれば全員行う。もし行うことができれば実際に自分のパソコンで全体を確認できる。)
-まず、以下の2つのソフトウェアをPCにインストールします。
+まず、最初に各PCに.envファイルを作成する
+1.backendディレクトリに「.env」という名のファイルを作成する。
+2.中身を「
+PORT=3001
+DB_HOST=localhost
+DB_NAME=Project_Team6_db
+DB_USER=Project_Team6_user
+DB_PASSWORD=Project_Team6_pw
+」をコピペして保存する。
+次に以下の2つのソフトウェアをPCにインストールします。
 1.
 MySQL Community Server: データベース本体です。
 
