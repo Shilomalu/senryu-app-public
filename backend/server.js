@@ -5,6 +5,7 @@ const mysql = require('mysql2/promise');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { check575 } = require('./senryu-checker.js');
 
 // --- 2. 基本設定 ---
 const app = express();
@@ -76,6 +77,10 @@ app.post('/api/posts', authenticateToken, async (req, res) => {
     try {
         const { content } = req.body;
         const userId = req.user.id; // ミドルウェアがセットしたユーザーIDを使用
+        const is575 = await check575(content);
+        if (!is575) {
+            return res.status(400).json({ error: 'この句は5-7-5ではありません。' });
+        }
         const sql = "INSERT INTO posts (user_id, content) VALUES (?, ?)";
         await pool.execute(sql, [userId, content]);
         res.status(201).json({ message: '投稿成功' });
