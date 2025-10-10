@@ -33,3 +33,55 @@ a,
     padding: 0 2rem;
   }
 }
+
+/* ============================================= */
+/* レスポンシブ対応スタイル             */
+/* ============================================= */
+
+/* --- 基本スタイル（スマホでの表示）--- */
+
+/* ナビゲーションを縦並びにする */
+header nav {
+  display: flex;
+  flex-direction: column; /* 縦並びに変更 */
+  align-items: center;
+  gap: 10px; /* リンク間の隙間 */
+  border: none;
+}
+
+header nav a {
+  border: none;
+  padding: 5px 0;
+}
+
+/* フォームを画面幅いっぱいにする */
+.form-container {
+  width: 90%; /* 画面幅の90%を使う */
+  margin: 0 auto;
+}
+
+
+/* --- PC用のスタイル --- */
+/* 画面幅が768px以上になったら適用 */
+@media (min-width: 768px) {
+
+  /* ナビゲーションを元の横並びに */
+  header nav {
+    flex-direction: row; /* 横並びに上書き */
+    justify-content: center;
+  }
+
+  header nav a {
+    padding: 0 1rem;
+    border-left: 1px solid var(--color-border);
+  }
+
+  header nav a:first-of-type {
+    border: 0;
+  }
+
+  /* フォームの最大幅を設定 */
+  .form-container {
+    max-width: 400px;
+  }
+}

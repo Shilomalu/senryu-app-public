@@ -1,14 +1,10 @@
-import './assets/main.css'
-
 import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-
 import App from './App.vue'
-import router from './router'
+import router from './router' // ルーターを読み込む
+
+import './assets/main.css' // 基本的なスタイルシート
 
 const app = createApp(App)
 
-app.use(createPinia())
-app.use(router)
-
+app.use(router) // アプリにルーターを適用
 app.mount('#app')
