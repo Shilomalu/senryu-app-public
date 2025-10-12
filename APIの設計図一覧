@@ -1,0 +1,28 @@
+認証 (Authentication)
+認証が必要なAPIは、リクエストヘッダーに Authorization: Bearer <JWT_TOKEN> を含める必要があります。
+
+ユーザー関連 (/api/users)
+機能	エンドポイント	メソッド	認証	リクエストBody	成功レスポンス (2xx)
+新規登録	/api/users/register	POST	不要	{ "username", "email", "password" }	201: { "message", "userId" }
+ログイン	/api/users/login	POST	不要	{ "email", "password" }	200: { "message", "token" }
+プロフィール取得	/api/users/:id	GET	不要	(なし)	200: { "user", "posts": [...] }
+プロフィール更新	/api/users/me	PUT	必要	{ "username", "profile_text" }	200: { "message", "updatedUser" }
+
+投稿関連 (/api/posts)
+機能	エンドポイント	メソッド	認証	リクエストBody	成功レスポンス (2xx)
+新規投稿	/api/posts	POST	必要	{ "content" }	201: { "message", "newPost" }
+タイムライン取得	/api/posts/timeline	GET	不要	(なし)	200: [ { "id", "content", "authorName", "likeCount", ... }, ... ]
+投稿詳細取得	/api/posts/:id	GET	不要	(なし)	200: { "post", "replies": [...] }
+投稿削除	/api/posts/:id	DELETE	必要	(なし)	200: { "message": "投稿が削除されました。" }
+
+交流関連 (いいね、フォロー、リプライ)
+機能	エンドポイント	メソッド	認証	リクエストBody	成功レスポンス (2xx)
+いいねする	/api/posts/:id/like	POST	必要	(なし)	200: { "message", "likeCount" }
+いいね解除	/api/posts/:id/like	DELETE	必要	(なし)	200: { "message", "likeCount" }
+フォローする	/api/users/:id/follow	POST	必要	(なし)	200: { "message": "フォローしました。" }
+フォロー解除	/api/users/:id/follow	DELETE	必要	(なし)	200: { "message": "フォロー解除しました。" }
+リプライ投稿	/api/posts/:id/reply	POST	必要	{ "content" }	201: { "message", "newReply" }
+
+検索関連 (/api/search)
+機能	エンドポイント	メソッド	認証	クエリパラメータ	成功レスポンス (2xx)
+キーワード検索	/api/search	GET	不要	?q=検索語	200: { "posts": [...] }
