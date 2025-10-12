@@ -93,14 +93,52 @@ app.post('/api/posts', authenticateToken, async (req, res) => {
 app.get('/api/posts/timeline', async (req, res) => {
     try {
         const sql = `
-            SELECT posts.id, posts.content, posts.created_at, users.username AS authorName
-            FROM posts JOIN users ON posts.user_id = users.id
-            ORDER BY posts.created_at DESC LIMIT 50;
+            SELECT 
+                posts.id, 
+                posts.content, 
+                posts.created_at, 
+                posts.user_id,         -- ▼▼▼ この行を追加 ▼▼▼
+                users.username AS authorName
+            FROM posts 
+            JOIN users ON posts.user_id = users.id
+            ORDER BY posts.created_at DESC 
+            LIMIT 50;
         `;
         const [posts] = await pool.execute(sql);
         res.json(posts);
     } catch (error) {
         res.status(500).json({ error: 'タイムライン取得エラー' });
+    }
+});
+
+app.delete('/api/posts/:id', authenticateToken, async (req, res) => {
+    try {
+        const postId = req.params.id;   // URLから削除したい投稿のIDを取得
+        const userId = req.user.id;     // 認証トークンから、操作しているユーザーのIDを取得
+
+        // データベースから、削除しようとしている投稿の投稿者IDを取得
+        const [posts] = await pool.execute("SELECT user_id FROM posts WHERE id = ?", [postId]);
+
+        if (posts.length === 0) {
+            return res.status(404).json({ error: '投稿が見つかりません。' });
+        }
+
+        const postAuthorId = posts[0].user_id;
+
+        // 投稿の作者IDと、操作しているユーザーのIDが一致するかをチェック
+        if (postAuthorId !== userId) {
+            // もし一致しなければ、権限がないのでエラーを返す
+            return res.status(403).json({ error: 'この投稿を削除する権限がありません。' });
+        }
+
+        // IDが一致すれば、投稿を削除する
+        await pool.execute("DELETE FROM posts WHERE id = ?", [postId]);
+
+        res.status(200).json({ message: '投稿が削除されました。' });
+
+    } catch (error) {
+        console.error('削除APIエラー:', error);
+        res.status(500).json({ error: 'サーバーエラーが発生しました。' });
     }
 });
 

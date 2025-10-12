@@ -1,22 +1,19 @@
 const kuromoji = require('kuromoji');
 
-// 判定器を構築（辞書を読み込む非同期処理）
 const builder = kuromoji.builder({ dicPath: 'node_modules/kuromoji/dict' });
 
-// ひらがな以外を削除し、長音「ー」を母音に変換するヘルパー関数
+// カタカナをひらがなに変換するヘルパー関数
 const cleanReading = (reading) => {
-  const hiragana = reading.replace(/[^ぁ-んー]/g, ''); // ひらがなと長音以外を削除
-  // 例: 「チョー」→「ちょう」のように、カタカナの長音を母音に変換する処理（簡易版）
-  // 実際はより複雑なルールが必要ですが、まずは基本形
-  return hiragana;
+  if (!reading) return '';
+  return reading.replace(/[\u30a1-\u30f6]/g, (match) => {
+    return String.fromCharCode(match.charCodeAt(0) - 0x60);
+  });
 };
 
-// 音拍（モーラ）を数える関数
 const countMora = (text) => {
   let count = 0;
   const smallVowels = ['ゃ', 'ゅ', 'ょ', 'ぁ', 'ぃ', 'ぅ', 'ぇ', 'ぉ'];
   for (let i = 0; i < text.length; i++) {
-    // 小さい「ゃ」「ゅ」「ょ」などは前の文字とセットで1音なので、単独では数えない
     if (smallVowels.includes(text[i])) {
       continue;
     }
@@ -27,37 +24,36 @@ const countMora = (text) => {
 
 // メインの5-7-5チェック関数
 const check575 = (text) => {
+  console.log('\n--- 5-7-5 Checker Start ---');
+  console.log(`[1] 入力テキスト: "${text}"`);
+
   return new Promise((resolve, reject) => {
     builder.build((err, tokenizer) => {
       if (err) {
+        console.error('[ERROR] 辞書のビルドに失敗:', err);
         return reject(err);
       }
+      console.log('[2] 辞書の読み込み成功');
 
-      // 1. 形態素解析を実行
       const tokens = tokenizer.tokenize(text);
+      console.log('[3] 形態素解析の結果 (単語リスト):', tokens.map(t => t.surface_form));
 
-      // 2. 全ての単語の「読み」を連結
       const reading = tokens.map(t => t.reading).join('');
+      console.log(`[4] 連結された読み (カタカナ): "${reading}"`);
       
-      // 3. 「読み」をひらがなに変換
       const hiragana = cleanReading(reading);
+      console.log(`[5] 整形された読み (ひらがな): "${hiragana}"`);
 
-      // 4. 音拍を数える
       const moraCount = countMora(hiragana);
-      
-      console.log(`テキスト: ${text}, 読み: ${hiragana}, 音拍数: ${moraCount}`);
+      console.log(`[6] 計算された音拍（モーラ）数: ${moraCount}`);
 
-      // 5. 判定 (5+7+5 = 19音)
-      // ここではまず合計の音拍数が17になるかで判定（字余り・足らずを許容しない場合）
-      if (moraCount === 17) {
-        // さらに厳密には、各句の切れ目で5, 7, 5になっているかを判定するロジックが必要
-        resolve(true);
-      } else {
-        resolve(false);
-      }
+      const isCorrect = moraCount === 17;
+      console.log(`[7] 判定結果 (音拍数が17か？): ${isCorrect}`);
+      console.log('--- 5-7-5 Checker End ---\n');
+
+      resolve(isCorrect);
     });
   });
 };
 
-// 他のファイルから使えるように関数をエクスポート
 module.exports = { check575 };
