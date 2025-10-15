@@ -75,12 +75,28 @@ app.post('/api/users/login', async (req, res) => {
 // 川柳投稿 (要認証)
 app.post('/api/posts', authenticateToken, async (req, res) => {
     try {
-        const { content } = req.body;
+        const { content1, content2, content3 } = req.body;
         const userId = req.user.id; // ミドルウェアがセットしたユーザーIDを使用
-        const is575 = await check575(content);
-        if (!is575) {
-            return res.status(400).json({ error: 'この句は5-7-5ではありません。' });
+        if(!content1 || !content2 || !content3){
+            return res.status(400).json({ error: 'すべての句を入力してください。'});
         }
+        let num = 0;
+        const can_kaminoku = await check575(content1,5);
+        const can_nakanoku = await check575(content2,7);
+        const can_shimonoku = await check575(content3,5);
+        if(!can_kaminoku){
+            num = num + 1;
+        }
+        if(!can_nakanoku){
+            num = num + 2;
+        }
+        if(!can_shimonoku){
+            num = num + 4;
+        }
+        if(num != 0){
+            return res.status(400).json({ errorCode: num, message: '句の音の数が正しくありません。' });
+        }
+        const content = `${content1} ${content2} ${content3}`;
         const sql = "INSERT INTO posts (user_id, content) VALUES (?, ?)";
         await pool.execute(sql, [userId, content]);
         res.status(201).json({ message: '投稿成功' });

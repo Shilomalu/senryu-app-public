@@ -22,38 +22,47 @@ const countMora = (text) => {
   return count;
 };
 
-// メインの5-7-5チェック関数
-const check575 = (text) => {
-  console.log('\n--- 5-7-5 Checker Start ---');
-  console.log(`[1] 入力テキスト: "${text}"`);
-
+const checkPart = (text) => {
   return new Promise((resolve, reject) => {
     builder.build((err, tokenizer) => {
-      if (err) {
-        console.error('[ERROR] 辞書のビルドに失敗:', err);
-        return reject(err);
-      }
-      console.log('[2] 辞書の読み込み成功');
-
-      const tokens = tokenizer.tokenize(text);
-      console.log('[3] 形態素解析の結果 (単語リスト):', tokens.map(t => t.surface_form));
-
-      const reading = tokens.map(t => t.reading).join('');
-      console.log(`[4] 連結された読み (カタカナ): "${reading}"`);
+      if (err) return reject(err);
       
+      const tokens = tokenizer.tokenize(text);
+      const reading = tokens.map(t => t.reading || '').join('');
       const hiragana = cleanReading(reading);
-      console.log(`[5] 整形された読み (ひらがな): "${hiragana}"`);
-
-      const moraCount = countMora(hiragana);
-      console.log(`[6] 計算された音拍（モーラ）数: ${moraCount}`);
-
-      const isCorrect = moraCount === 17;
-      console.log(`[7] 判定結果 (音拍数が17か？): ${isCorrect}`);
-      console.log('--- 5-7-5 Checker End ---\n');
-
-      resolve(isCorrect);
+      
+      resolve(countMora(hiragana));
     });
   });
+};
+
+// メインの5-7-5チェック関数
+const check575 = async (content,num) => {
+  console.log('\n--- 5-7-5 Checker Start ---');
+  /*console.log(`[1] 入力テキスト`);
+  console.log(`上の句"${content1}"`);
+  console.log(`中の句"${content2}"`);
+  console.log(`下の句"${content3}"`);
+
+  try{
+    const [part1, part2, part3] = await Promise.all([
+      checkPart(content1),
+      checkPart(content2),
+      checkPart(content3),
+    ]);
+    return part1 === 5 && part2 === 7 && part3 === 5;
+  }catch (error){
+    console.error('5-7-5判定中にエラーが発生しました', error);
+    return false;
+  }
+    */
+  try{
+    const moraCount = await checkPart(content);
+    return moraCount === num;
+  }catch(error){
+    console.error('エラー発生！');
+    return false;
+  }
 };
 
 module.exports = { check575 };
