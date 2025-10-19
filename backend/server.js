@@ -7,6 +7,10 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { check575 } = require('./senryu-checker.js');
 
+var { PythonShell } = require("python-shell");
+var pyshell = new PythonShell("senryu-checker.py");
+
+
 // --- 2. 基本設定 ---
 const app = express();
 app.use(cors());
@@ -72,6 +76,7 @@ app.post('/api/users/login', async (req, res) => {
     }
 });
 
+
 // 川柳投稿 (要認証)
 app.post('/api/posts', authenticateToken, async (req, res) => {
     try {
@@ -104,6 +109,43 @@ app.post('/api/posts', authenticateToken, async (req, res) => {
         res.status(500).json({ error: '投稿エラー' });
     }
 });
+
+
+/*
+const checkMoraCountWithPython = (text) => {
+  return new Promise((resolve, reject) => {
+    pyshell.send(text);
+    pyshell.on("message", function (data) {
+        console.log(data);
+        resolve(data);
+    });
+  });
+};
+
+// 川柳投稿 (要認証)
+app.post('/api/posts', authenticateToken, async (req, res) => {
+    try {
+        const { content1, content2, content3 } = req.body;
+        const userId = req.user.id; // ミドルウェアがセットしたユーザーIDを使用
+        let num = 0;
+        const part1 = await checkMoraCountWithPython(content1);
+        const part2 = await checkMoraCountWithPython(content2);
+        const part3 = await checkMoraCountWithPython(content3);
+        if(part1 !== 5) num = num + 1;
+        if(part2 !== 7) num = num + 2;
+        if(part3 !== 5) num = num + 4;
+        if(num != 0){
+            return res.status(400).json({ errorCode: num, message: '句の音の数が正しくありません。' });
+        }
+        const content = `${content1} ${content2} ${content3}`;
+        const sql = "INSERT INTO posts (user_id, content) VALUES (?, ?)";
+        await pool.execute(sql, [userId, content]);
+        res.status(201).json({ message: '投稿成功' });
+    } catch (error) {
+        res.status(500).json({ error: '投稿エラー' });
+    }
+});
+*/
 
 // タイムライン取得
 app.get('/api/posts/timeline', async (req, res) => {
