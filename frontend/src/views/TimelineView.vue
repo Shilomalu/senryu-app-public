@@ -51,9 +51,9 @@ const fetchTimeline = async () => {
 const handleDelete = async (postId) => {
   if (!confirm('本当にこの投稿を削除しますか？')) return;
   try {
-    const res = await fetch(`http://localhost:3001/api/posts/${postId}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token.value}` },
+    const res = await fetch(`/api/posts/${postId}`, { // ← 相対パスに修正
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token.value}` },
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
@@ -85,9 +85,9 @@ onMounted(() => {
 
 <style scoped>
 .page-container {
-  max-width: 600px;
-  margin: 0 auto;
-  padding-bottom: 80px; /* 下部バーと重ならないように */
+  max-width: 500px; /* ← CreatePostViewと同じ最大幅を指定 */
+  margin: 0 auto;   /* ← 中央寄せを追加 */
+  padding-bottom: 80px; /* 下部バーとの重なり防止は残す */
 }
 
 /* ページタイトル中央配置 */

@@ -125,14 +125,15 @@ const goToProfile = () => {
 
 <style scoped>
 .card {
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  padding: 1rem;
-  margin: 1rem auto;
-  width: 80%;
+  border: 1px solid #e0e0e0; 
+  border-radius: 8px; 
+  padding: 1.2rem; 
+  margin: 1rem 0;  /*上下のマージンだけ残す */
+  width: 100%;    /* 親要素いっぱいに広げる */
   background-color: #fff;
   display: flex;
   flex-direction: column;
+  color: #333; 
 }
 
 /* ユーザー情報ボタン */
