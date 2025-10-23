@@ -1,9 +1,9 @@
 <template>
   <div class="card">
-    <!-- ユーザー情報 -->
-    <div class="author">
-      🧑 {{ post.author }}
-    </div>
+    <!-- ユーザー情報（ボタン化） -->
+    <button class="author-btn" @click="goToProfile">
+      👤 {{ post.authorName || post.author }}
+    </button>
 
     <!-- 川柳ボックス -->
     <div class="poem-wrapper">
@@ -16,28 +16,111 @@
 
     <!-- アクションボタン -->
     <div class="actions">
-      <span class="like-btn">💛いとをかし</span>
-      <button class="reply-btn">返信</button>
+      <LikeButton />
+      <button class="reply-btn" @click="toggleReplies">
+        返信{{ post.repliesCount || 0 }}
+      </button>
+      <button 
+        v-if="currentUser && post.user_id === currentUser.id"
+        class="delete-btn" 
+        @click="$emit('delete', post.id)"
+      >
+        削除
+      </button>
+    </div>
+
+    <!-- 返信欄 -->
+    <div v-if="showReplies" class="replies">
+      <div v-if="!replies.length" class="no-replies">返信はありません</div>
+        <div v-else>
+          <div v-for="reply in replies" :key="reply.id" class="reply">
+            <ReplyCard 
+              :reply="reply" 
+              :current-user="currentUser"
+              @reply-deleted="handleReplyDeleted" 
+            />
+          </div>
+        </div>
+        <ReplyForm 
+          :post-id="post.id" 
+          :current-user="currentUser"
+          @reply-posted="handleReplyPosted" 
+        />
     </div>
   </div>
 </template>
 
 <script setup>
-import { defineProps, computed } from 'vue';
+import { defineProps, ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import LikeButton from './LikeButton.vue';
+import ReplyForm from './ReplyForm.vue';
+import ReplyCard from './ReplyCard.vue';
 
 const props = defineProps({
   post: {
     type: Object,
     required: true,
     default: () => ({
-      author: 'テストユーザー',
-      content: '花散るや　風にまかせて　時は過ぐ'
+    authorName: 'テストユーザー',
+    user_id: 1,
+      content: '花散るや　風にまかせて　時は過ぐ',
+      replies: []
     })
+  },
+  currentUser: {
+    type: Object,
+    default: null
   }
 });
 
-// 全角スペースで投稿を3行に分割
+const router = useRouter();
+
 const lines = computed(() => props.post.content.split('　'));
+const showReplies = ref(false);
+const replies = ref([]);
+const isLoadingReplies = ref(false);
+
+const toggleReplies = async () => {
+  showReplies.value = !showReplies.value;
+  if (showReplies.value && !replies.value.length) {
+    await fetchReplies();
+  }
+};
+
+// 返信を取得
+const fetchReplies = async () => {
+  isLoadingReplies.value = true;
+  try {
+  const res = await fetch(`/api/posts/${props.post.id}`);
+    if (!res.ok) throw new Error('返信の取得に失敗しました');
+    const data = await res.json();
+    replies.value = data.replies || [];
+  } catch (error) {
+    console.error('返信取得エラー:', error);
+  } finally {
+    isLoadingReplies.value = false;
+  }
+};
+
+// 返信が投稿されたときの処理
+const handleReplyPosted = () => {
+  fetchReplies();
+};
+
+// 返信が削除されたときの処理
+const handleReplyDeleted = (replyId) => {
+  replies.value = replies.value.filter(reply => reply.id !== replyId);
+  // 返信数を更新
+  if (props.post.repliesCount) {
+    props.post.repliesCount--;
+  }
+};
+
+// プロフィール画面に遷移
+const goToProfile = () => {
+  router.push(`/profile/${props.post.user_id}`);
+};
 </script>
 
 <style scoped>
@@ -52,9 +135,17 @@ const lines = computed(() => props.post.content.split('　'));
   flex-direction: column;
 }
 
-.author {
+/* ユーザー情報ボタン */
+.author-btn {
+  background: none;
+  border: none;
   font-weight: bold;
+  cursor: pointer;
+  padding: 0;
   margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* 川柳ボックス */
@@ -66,12 +157,11 @@ const lines = computed(() => props.post.content.split('　'));
   width: 100%;
   min-height: 120px;
   display: flex;
-  justify-content: center; /* ボックス内横中央 */
-  align-items: center;     /* ボックス内縦中央 */
+  justify-content: center;
+  align-items: center;
   background-color: #fafafa;
 }
 
-/* 川柳テキスト（縦書き） */
 .poem {
   writing-mode: vertical-rl;
   text-orientation: upright;
@@ -89,19 +179,54 @@ const lines = computed(() => props.post.content.split('　'));
 
 .actions {
   display: flex;
-  justify-content: flex-end; /* カード右端にボタンを配置 */
+  justify-content: flex-end;
   gap: 1rem;
-}
-
-.like-btn {
-  cursor: pointer;
 }
 
 .reply-btn {
   background-color: #f4f4f4;
   border: none;
+  margin-top: 0.5rem;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+}
+
+.reply-btn:hover {
+  background-color: #f8f9fa;
+}
+
+.delete-btn {
+  background-color: transparent;
+  color: #dc3545;
+  border: 1px solid #dc3545;
   padding: 0.5rem 1rem;
   border-radius: 8px;
   cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delete-btn:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+.replies {
+  margin-top: 0.5rem;
+  border-top: 1px solid #ccc;
+  padding-top: 0.5rem;
+}
+
+.reply {
+  margin-bottom: 0.3rem;
+}
+
+.no-replies {
+  color: #888;
+  font-style: italic;
+  margin-bottom: 0.3rem;
 }
 </style>
