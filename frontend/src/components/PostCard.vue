@@ -2,7 +2,7 @@
   <div class="card">
     <!-- ユーザー情報（ボタン化） -->
     <button class="author-btn" @click="goToProfile">
-      👤 {{ post.author }}
+      👤 {{ post.authorName || post.author }}
     </button>
 
     <!-- 川柳ボックス -->
@@ -62,7 +62,8 @@ const props = defineProps({
     type: Object,
     required: true,
     default: () => ({
-      author: 'テストユーザー',
+    authorName: 'テストユーザー',
+    user_id: 1,
       content: '花散るや　風にまかせて　時は過ぐ',
       replies: []
     })
