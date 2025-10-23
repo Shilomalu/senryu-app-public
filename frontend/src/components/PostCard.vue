@@ -76,7 +76,7 @@ const props = defineProps({
 
 const router = useRouter();
 
-const lines = computed(() => props.post.content.split('　'));
+const lines = computed(() => props.post.content.split(' '));
 const showReplies = ref(false);
 const replies = ref([]);
 const isLoadingReplies = ref(false);
