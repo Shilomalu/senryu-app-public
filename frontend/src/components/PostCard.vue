@@ -184,15 +184,15 @@ const goToProfile = () => {
 }
 
 .reply-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: none;
-  border: 1px solid #ddd;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
+  background-color: #f4f4f4;
+  border: none;
+  margin-top: 0.5rem;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: none;
+  background-color: #007bff;
+  color: white;
   cursor: pointer;
-  transition: all 0.2s;
 }
 
 .reply-btn:hover {
@@ -215,21 +215,18 @@ const goToProfile = () => {
 }
 
 .replies {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #eee;
+  margin-top: 0.5rem;
+  border-top: 1px solid #ccc;
+  padding-top: 0.5rem;
 }
 
 .reply {
-  margin-bottom: 1rem;
+  margin-bottom: 0.3rem;
 }
 
 .no-replies {
-  text-align: center;
-  color: #666;
-  padding: 1rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  margin-bottom: 1rem;
+  color: #888;
+  font-style: italic;
+  margin-bottom: 0.3rem;
 }
 </style>
