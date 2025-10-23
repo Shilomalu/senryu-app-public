@@ -150,21 +150,43 @@ app.post('/api/posts', authenticateToken, async (req, res) => {
 // タイムライン取得
 app.get('/api/posts/timeline', async (req, res) => {
     try {
+        // ログインユーザーのIDを取得（オプショナル）
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+        let userId = null;
+        
+        if (token) {
+            try {
+                const decoded = jwt.verify(token, JWT_SECRET);
+                userId = decoded.id;
+            } catch (err) {
+                console.warn('Invalid token in timeline request:', err);
+            }
+        }
+
         const sql = `
             SELECT 
                 posts.id, 
                 posts.content, 
                 posts.created_at, 
-                posts.user_id,         -- ▼▼▼ この行を追加 ▼▼▼
-                users.username AS authorName
+                posts.user_id,
+                users.username AS authorName,
+                CASE WHEN likes.user_id IS NOT NULL THEN 1 ELSE 0 END AS isLiked,
+                CASE WHEN follows.follower_id IS NOT NULL THEN 1 ELSE 0 END AS isFollowing,
+                (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS likesCount,
+                (SELECT COUNT(*) FROM replies WHERE replies.post_id = posts.id) AS repliesCount
             FROM posts 
             JOIN users ON posts.user_id = users.id
+            LEFT JOIN likes ON likes.post_id = posts.id AND likes.user_id = ?
+            LEFT JOIN follows ON follows.followed_id = posts.user_id AND follows.follower_id = ?
             ORDER BY posts.created_at DESC 
             LIMIT 50;
         `;
-        const [posts] = await pool.execute(sql);
+        
+        const [posts] = await pool.execute(sql, [userId, userId]);
         res.json(posts);
     } catch (error) {
+        console.error('タイムライン取得エラー:', error);
         res.status(500).json({ error: 'タイムライン取得エラー' });
     }
 });
@@ -197,6 +219,63 @@ app.delete('/api/posts/:id', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('削除APIエラー:', error);
         res.status(500).json({ error: 'サーバーエラーが発生しました。' });
+    }
+});
+
+// 投稿詳細とそのリプライ取得
+app.get('/api/posts/:id', async (req, res) => {
+    try {
+        const postId = req.params.id;
+        const [posts] = await pool.execute(
+            `SELECT posts.id, posts.content, posts.created_at, posts.user_id, users.username AS authorName FROM posts JOIN users ON posts.user_id = users.id WHERE posts.id = ?`,
+            [postId]
+        );
+        if (posts.length === 0) return res.status(404).json({ error: '投稿が見つかりません。' });
+        const post = posts[0];
+
+        const [replies] = await pool.execute(
+            `SELECT replies.id, replies.content, replies.created_at, replies.user_id, users.username AS authorName FROM replies JOIN users ON replies.user_id = users.id WHERE replies.post_id = ? ORDER BY replies.created_at DESC`,
+            [postId]
+        );
+
+        res.json({ post, replies });
+    } catch (err) {
+        console.error('投稿詳細取得エラー:', err);
+        res.status(500).json({ error: '投稿詳細の取得に失敗しました' });
+    }
+});
+
+// リプライ投稿 (要認証)
+app.post('/api/posts/:id/reply', authenticateToken, async (req, res) => {
+    try {
+        const postId = req.params.id;
+        const userId = req.user.id;
+        const { content } = req.body; // ここでは content を1つの文字列で受け取る
+        if (!content) return res.status(400).json({ error: 'リプライの内容が必要です' });
+
+        await pool.execute('INSERT INTO replies (user_id, post_id, content) VALUES (?, ?, ?)', [userId, postId, content]);
+        res.status(201).json({ message: 'リプライを投稿しました' });
+    } catch (err) {
+        console.error('リプライ投稿エラー:', err);
+        res.status(500).json({ error: 'リプライの投稿に失敗しました' });
+    }
+});
+
+// リプライ削除 (要認証)
+app.delete('/api/replies/:id', authenticateToken, async (req, res) => {
+    try {
+        const replyId = req.params.id;
+        const userId = req.user.id;
+
+        const [rows] = await pool.execute('SELECT user_id FROM replies WHERE id = ?', [replyId]);
+        if (rows.length === 0) return res.status(404).json({ error: 'リプライが見つかりません' });
+        if (rows[0].user_id !== userId) return res.status(403).json({ error: '削除権限がありません' });
+
+        await pool.execute('DELETE FROM replies WHERE id = ?', [replyId]);
+        res.json({ message: 'リプライを削除しました' });
+    } catch (err) {
+        console.error('リプライ削除エラー:', err);
+        res.status(500).json({ error: 'リプライの削除に失敗しました' });
     }
 });
 

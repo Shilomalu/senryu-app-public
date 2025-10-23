@@ -43,7 +43,31 @@ const fetchTimeline = async () => {
     if (!res.ok) throw new Error('タイムラインの読み込みに失敗しました。');
     timeline.value = data;
   } catch {
-    timeline.value = [];
+    // データベースからの取得に失敗した場合は、サンプルデータを表示
+    timeline.value = [
+      { 
+        id: 1, 
+        user_id: 1,
+        authorName: '山田太郎', 
+        content: '花散るや　風にまかせて　時は過ぐ',
+        created_at: new Date().toISOString(),
+        likesCount: 5,
+        repliesCount: 2,
+        isLiked: false,
+        isFollowing: false
+      },
+      { 
+        id: 2, 
+        user_id: 2,
+        authorName: '佐藤花子', 
+        content: '月明かり　影を照らして　夜は静か',
+        created_at: new Date().toISOString(),
+        likesCount: 3,
+        repliesCount: 1,
+        isLiked: false,
+        isFollowing: false
+      }
+    ];
   }
 };
 
@@ -78,11 +102,7 @@ const emptyMessage = computed(() => {
 });
 
 onMounted(() => {
-  // サンプル投稿を直接追加
-  timeline.value = [
-    { id: 1, author: '山田太郎', content: '花散るや　風にまかせて　時は過ぐ' },
-    { id: 2, author: '佐藤花子', content: '月明かり　影を照らして　夜は静か' }
-  ];
+  fetchTimeline();
 });
 </script>
 
