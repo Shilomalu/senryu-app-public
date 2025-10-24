@@ -6,7 +6,10 @@ const props = defineProps({
   postId: Number,           // 投稿ID
   initialLiked: Boolean,    // 初期いいね状態
   currentUserId: Number,    // 現在のユーザーID
-  initialLikeCount: Number  // 初期いいね件数
+  initialLikeCount: {       // 初期いいね件数
+    type: [Number, String],
+    default: 0
+  }
 });
 
 // 親にイベントを送るためのemit
@@ -14,8 +17,8 @@ const emit = defineEmits(['like-toggled']);
 
 // いいね状態
 const liked = ref(props.initialLiked);
-// いいね件数
-const likeCount = ref(props.initialLikeCount);
+// いいね件数（必ず数値として初期化）
+const likeCount = ref(Number(props.initialLikeCount) || 0);
 
 // いいねボタンを押したときの処理
 function toggleLike() {
