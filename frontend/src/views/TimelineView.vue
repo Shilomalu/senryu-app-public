@@ -143,6 +143,9 @@ onMounted(() => {
   padding-top: 120px;
   width: 100%;
   padding-bottom: 80px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  max-height: 100vh;
 }
 
 .timeline {
