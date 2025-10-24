@@ -2,9 +2,9 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-const content1 = ref('');//5
-const content2 = ref('');//7
-const content3 = ref('');//5
+const content1 = ref(''); // 上の句（5）
+const content2 = ref(''); // 中の句（7）
+const content3 = ref(''); // 下の句（5）
 
 const message = ref('');
 const router = useRouter();
@@ -67,18 +67,37 @@ const handlePost = async () => {
 </template>
 
 <style scoped>
-.form-container { max-width: 500px; margin: 0 auto; }
-/* 3つの入力欄を横に並べるスタイル */
+.form-container {
+  max-width: 500px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* 入力欄を縦に並べるスタイル */
 .senryu-inputs {
   display: flex;
-  gap: 10px; /* 入力欄の間の隙間 */
+  flex-direction: column; /* 縦並びに変更！ */
+  gap: 10px;
   margin-bottom: 20px;
 }
+
 .senryu-inputs input {
-  flex: 1; /* 横幅を均等に分ける */
   padding: 10px;
   font-size: 1.1em;
   text-align: center;
 }
-button { width: 100%; padding: 10px; }
+
+button {
+  width: 100%;
+  padding: 10px;
+  font-size: 1em;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+button:hover {
+  background-color: #0056b3;
+}
 </style>
