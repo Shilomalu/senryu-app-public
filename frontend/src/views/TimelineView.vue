@@ -142,6 +142,7 @@ onMounted(() => {
 .timeline-content {
   padding-top: 120px;
   width: 100%;
+  padding-bottom: 80px;
 }
 
 .timeline {
