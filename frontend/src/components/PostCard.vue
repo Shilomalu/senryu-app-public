@@ -125,10 +125,13 @@ const goToProfile = () => {
   padding: 1rem;
   border: 1px solid #ccc;
   border-radius: 10px;
+  height: 400px; 
+  justify-content: space-between;
   display: flex;
   flex-direction: column;
   background-color: #fff;
   box-sizing: border-box;
+  color: #000;
 }
 
 .author-btn {
@@ -169,6 +172,7 @@ const goToProfile = () => {
 .post-line {
   margin: 0 0 0.5rem 0;
   text-align: center;
+  color: #000;
 }
 
 .actions {
