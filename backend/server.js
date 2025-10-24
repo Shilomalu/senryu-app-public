@@ -272,7 +272,7 @@ app.delete('/api/replies/:id', authenticateToken, async (req, res) => {
         if (rows[0].user_id !== userId) return res.status(403).json({ error: '削除権限がありません' });
 
         await pool.execute('DELETE FROM replies WHERE id = ?', [replyId]);
-        res.json({ message: 'リプライを削除しました' });
+        res.status(200).json({ message: 'リプライを削除しました' });
     } catch (err) {
         console.error('リプライ削除エラー:', err);
         res.status(500).json({ error: 'リプライの削除に失敗しました' });
