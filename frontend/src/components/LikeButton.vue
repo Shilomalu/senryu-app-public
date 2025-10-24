@@ -1,9 +1,38 @@
 <script setup>
+import { ref, defineProps, defineEmits } from 'vue';
+
+// 親から渡されるprops
+const props = defineProps({
+  postId: Number,          // 投稿ID
+  initialLiked: Boolean,   // 初期いいね状態
+  currentUserId: Number    // 現在のユーザーID
+});
+
+// 親にイベントを送るためのemit
+const emit = defineEmits(['like-toggled']);
+
+// いいね状態
+const liked = ref(props.initialLiked);
+
+// いいねボタンを押したときの処理
+function toggleLike() {
+  liked.value = !liked.value;
+
+  // APIに反映（必要ならサーバー側と同期）
+  fetch(`/api/posts/${props.postId}/like`, {
+    method: liked.value ? 'POST' : 'DELETE'
+  });
+
+  // 親コンポーネントに状態を通知
+  emit('like-toggled', { postId: props.postId, liked: liked.value });
+}
 </script>
 
 <template>
-  <button class="like-button">
-    ❤️
+  <button class="like-button" @click="toggleLike">
+    <span v-if="liked">💮</span>
+    <span v-else>💠</span>
+    <span class="label">{{ liked ? 'いいね済み' : 'いいね' }}</span>
   </button>
 </template>
 
@@ -13,5 +42,12 @@
   border: 1px solid #ccc;
   padding: 5px 10px;
   cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.label {
+  font-size: 14px;
 }
 </style>
