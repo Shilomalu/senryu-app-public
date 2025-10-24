@@ -77,10 +77,6 @@ const cancel = () => {
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-<<<<<<< HEAD
-=======
-  color: #000;
->>>>>>> 3e6d52df1d87e991443f7ced5db83ade6a260525
 }
 
 h2 {
