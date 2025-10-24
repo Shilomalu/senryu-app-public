@@ -248,9 +248,30 @@ app.get('/api/posts/:id', async (req, res) => {
 // リプライ投稿 (要認証)
 app.post('/api/posts/:id/reply', authenticateToken, async (req, res) => {
     try {
+        const { content1, content2, content3 } = req.body;
+        const userId = req.user.id; // ミドルウェアがセットしたユーザーIDを使用
         const postId = req.params.id;
-        const userId = req.user.id;
-        const { content } = req.body; // ここでは content を1つの文字列で受け取る
+        if(!content1 || !content2 || !content3){
+            return res.status(400).json({ error: 'すべての句を入力してください。'});
+        }
+        let num = 0;
+        const can_kaminoku = await check575(content1,5);
+        const can_nakanoku = await check575(content2,7);
+        const can_shimonoku = await check575(content3,5);
+        if(!can_kaminoku){
+            num = num + 1;
+        }
+        if(!can_nakanoku){
+            num = num + 2;
+        }
+        if(!can_shimonoku){
+            num = num + 4;
+        }
+        if(num != 0){
+            return res.status(400).json({ errorCode: num, message: '句の音の数が正しくありません。' });
+        }
+        const content = `${content1} ${content2} ${content3}`;
+        
         if (!content) return res.status(400).json({ error: 'リプライの内容が必要です' });
 
         await pool.execute('INSERT INTO replies (user_id, post_id, content) VALUES (?, ?, ?)', [userId, postId, content]);
