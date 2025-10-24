@@ -29,10 +29,10 @@ import PostCard from '../components/PostCard.vue';
 
 const timeline = ref([]);
 const filter = ref('all');
+const message = ref('');
 const token = ref(localStorage.getItem('token'));
 const currentUser = ref(token.value ? jwtDecode(token.value) : null);
 
-<<<<<<< HEAD
 const fetchTimeline = async () => {
   try {
     const res = await fetch('/api/posts/timeline'); // 修正
@@ -59,10 +59,6 @@ const handleDelete = async (postId) => {
   } catch (err) {
     message.value = err.message;
   }
-=======
-const handleDelete = (postId) => {
-  timeline.value = timeline.value.filter(post => post.id !== postId);
->>>>>>> bf74ddf (変更)
 };
 
 const filteredTimeline = computed(() => {
@@ -80,25 +76,12 @@ const emptyMessage = computed(() => {
 });
 
 onMounted(() => {
-<<<<<<< HEAD
   fetchTimeline();
-=======
-  timeline.value = [
-    { id: 1, author: '山田太郎', content: '花散るや　風にまかせて　時は過ぐ' },
-    { id: 2, author: '佐藤花子', content: '月明かり　影を照らして　夜は静か' },
-    { id: 3, author: '田中一郎', content: '桜舞う　川辺の道に　足止める' }
-  ];
->>>>>>> bf74ddf (変更)
 });
 </script>
 
 <style scoped>
 .page-container {
-<<<<<<< HEAD
-  max-width: 500px; /* ← CreatePostViewと同じ最大幅を指定 */
-  margin: 0 auto;   /* ← 中央寄せを追加 */
-  padding-bottom: 80px; /* 下部バーとの重なり防止は残す */
-=======
   width: 100%;
   margin: 0;
   padding: 0;
@@ -114,7 +97,6 @@ onMounted(() => {
   z-index: 1000;
   border-bottom: 2px solid #ccc;
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
->>>>>>> bf74ddf (変更)
 }
 
 .page-title {

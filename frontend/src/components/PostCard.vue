@@ -54,7 +54,6 @@ import ReplyForm from './ReplyForm.vue';
 import ReplyCard from './ReplyCard.vue';
 
 const props = defineProps({
-<<<<<<< HEAD
   post: {
     type: Object,
     required: true,
@@ -74,14 +73,6 @@ const props = defineProps({
 const router = useRouter();
 
 const lines = computed(() => props.post.content.split(' '));
-=======
-  post: { type: Object, required: true }
-});
-
-const router = useRouter();
-const lines = computed(() => props.post.content.split('　'));
-const replies = computed(() => props.post.replies || []);
->>>>>>> bf74ddf (変更)
 const showReplies = ref(false);
 const replies = ref([]);
 const isLoadingReplies = ref(false);
@@ -129,17 +120,6 @@ const goToProfile = () => {
 
 <style scoped>
 .card {
-<<<<<<< HEAD
-  border: 1px solid #e0e0e0; 
-  border-radius: 8px; 
-  padding: 1.2rem; 
-  margin: 1rem 0;  /*上下のマージンだけ残す */
-  width: 100%;    /* 親要素いっぱいに広げる */
-  background-color: #fff;
-  display: flex;
-  flex-direction: column;
-  color: #333; 
-=======
   width: 100%;
   max-width: 500px;
   padding: 1rem;
@@ -149,7 +129,6 @@ const goToProfile = () => {
   flex-direction: column;
   background-color: #fff;
   box-sizing: border-box;
->>>>>>> bf74ddf (変更)
 }
 
 .author-btn {
