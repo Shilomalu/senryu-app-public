@@ -1,5 +1,5 @@
 <template>
-  <div class="card">
+  <div class="card" :class="{ 'card-expanded': showReplies }">
     <button class="author-btn" @click="goToProfile">
       👤 {{ post.authorName || post.author }}
     </button>
@@ -28,7 +28,7 @@
 
     <div v-if="showReplies" class="replies">
       <div v-if="!replies.length" class="no-replies">返信はありません</div>
-        <div v-else>
+        <div v-else class="reply-scroll-container">
           <div v-for="reply in replies" :key="reply.id" class="reply">
             <ReplyCard 
               :reply="reply" 
@@ -136,7 +136,7 @@ const goToProfile = () => {
   transition: height 0.3s ease;
 }
 .card-expanded {
-  height: 900px; /* 返信を開いたときの高さ */
+  height: 960px; /* 返信を開いたときの高さ */
 }
 
 .author-btn {
@@ -234,6 +234,30 @@ const goToProfile = () => {
 
 .reply {
   margin-bottom: 0.3rem;
+}
+
+/* 3件ぶんだけ表示し、縦スクロールを許可 */
+.reply-scroll-container {
+  height: 360px; /* 1件=120px × 3件分など */
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+}
+
+/* 各返信カードをスナップ対象に */
+.reply-scroll-container > .reply {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* スクロールバー非表示（任意） */
+.reply-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+.reply-scroll-container {
+  scrollbar-width: none;
 }
 
 .no-replies {
