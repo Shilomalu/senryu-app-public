@@ -87,6 +87,7 @@ async function handleSubmit(e) {
   padding: 1rem;
   background-color: #f8f9fa;
   border-radius: 4px;
+  height: 200px; /* 固定高さ */
 }
 
 .reply-input {
