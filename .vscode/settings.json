@@ -13,6 +13,20 @@
       "name": "dbms_class",
       "database": "class_db",
       "username": "student"
+    },
+    {
+      "mysqlOptions": {
+        "authProtocol": "default",
+        "enableSsl": "Disabled"
+      },
+      "ssh": "Disabled",
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 3306,
+      "driver": "MySQL",
+      "name": "project",
+      "database": "Project_Team6_db",
+      "username": "Project_Team6_user"
     }
   ]
 }
