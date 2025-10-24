@@ -8,6 +8,7 @@ import PostDetailView from '../views/PostDetailView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import SearchView from '../views/SearchView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
+import EditProfileView from '../views/EditProfileView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -36,6 +37,14 @@ const router = createRouter({
       name: 'profile',
       component: ProfileView
     },
+
+    // 追加: プロフィール編集ページ
+    {
+      path: '/profile/edit',
+      name: 'profile-edit',
+      component: EditProfileView
+    },
+
     // --- 以下はタブバー以外の場所から遷移するページ ---
 
     // 5. 新規登録ページ
