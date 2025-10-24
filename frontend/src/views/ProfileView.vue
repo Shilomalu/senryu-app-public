@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-<style scoped>
-/* コンテナ全体のスタイル */
-=======
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter, RouterLink } from 'vue-router';
@@ -102,7 +98,6 @@ const goEdit = () => {
 </template>
 
 <style scoped>
->>>>>>> 3e6d52df1d87e991443f7ced5db83ade6a260525
 .profile-container {
   max-width: 600px;
   margin: 2rem auto;
@@ -132,27 +127,6 @@ const goEdit = () => {
   color: #555; /* 通常テキストの色 */
 }
 
-<<<<<<< HEAD
-/* ラベル部分（ユーザー名：など） */
-.profile-info li strong {
-  color: #333; /* ラベルの色を少し濃く */
-  display: inline-block;
-  min-width: 150px; /* ラベルの幅を揃える（お好みで調整） */
-}
-
-/* 投稿リストの箇条書き */
-.profile-info ul ul {
-  margin-top: 0.5rem;
-  padding-left: 20px; /* インデント */
-}
-.profile-info ul ul li {
-  margin-bottom: 0.5rem;
-  font-size: 1rem; /* 投稿リストの文字サイズ */
-  color: #444; /* 投稿内容の文字色 */
-}
-
-/* ヘッダー部分（タイトルとボタン） */
-=======
 .button-container {
   display: flex;
   justify-content: flex-end; /* 右寄せ */
@@ -160,54 +134,29 @@ const goEdit = () => {
   margin-top: 2rem;
 }
 
->>>>>>> 3e6d52df1d87e991443f7ced5db83ade6a260525
 .profile-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.5rem;
-<<<<<<< HEAD
-  border-bottom: 1px solid #eee; /* タイトルの下に線 */
-  padding-bottom: 1rem;
-=======
->>>>>>> 3e6d52df1d87e991443f7ced5db83ade6a260525
 }
 
 .profile-header h1 {
   font-weight: bold;
   font-size: 1.8rem;
-<<<<<<< HEAD
-  color: #2c3e50; /* 見出しの色（Vueのデフォルトに近い色） */
-  margin: 0; /* 不要なマージンを削除 */
-}
-
-/* ヘッダー内のボタングループ */
-.profile-header .button-group {
-=======
   margin-left: 10px;
   margin-right: 20px;
 }
 
 .button-group {
->>>>>>> 3e6d52df1d87e991443f7ced5db83ade6a260525
   display: flex;
   gap: 10px;
 }
 
-<<<<<<< HEAD
-/* 汎用ボタンスタイル */
-=======
->>>>>>> 3e6d52df1d87e991443f7ced5db83ade6a260525
 .button-group button {
   padding: 8px 18px;
   border: none;
   border-radius: 6px;
-<<<<<<< HEAD
-  color: #fff; /* ボタンの文字色を白に */
-  font-size: 0.9rem; /* ボタンの文字サイズ */
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-=======
   color: #fff;
   font-size: 1rem;
   cursor: pointer;
@@ -228,7 +177,6 @@ const goEdit = () => {
 
 .logout-btn:hover {
   background-color: #a71d2a;
->>>>>>> 3e6d52df1d87e991443f7ced5db83ade6a260525
 }
 
 /* 編集ボタン */
@@ -255,11 +203,7 @@ const goEdit = () => {
   text-align: center;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
-<<<<<<< HEAD
-  background-color: #f9f9f9; /* 背景色を少しつける */
-=======
   color: #000;
->>>>>>> 3e6d52df1d87e991443f7ced5db83ade6a260525
 }
 
 .auth-prompt h2 {
@@ -268,14 +212,8 @@ const goEdit = () => {
 }
 
 .auth-prompt p {
-<<<<<<< HEAD
-  margin-bottom: 2.5rem; /* 間隔調整 */
-  color: #555; /* 説明文の色 */
-  line-height: 1.7; /* 行間調整 */
-=======
   margin-bottom: 2rem;
   color: #000;
->>>>>>> 3e6d52df1d87e991443f7ced5db83ade6a260525
 }
 
 /* 認証画面へのボタングループ */
