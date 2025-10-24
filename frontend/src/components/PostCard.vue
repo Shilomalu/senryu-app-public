@@ -125,13 +125,17 @@ const goToProfile = () => {
   padding: 1rem;
   border: 1px solid #ccc;
   border-radius: 10px;
-  height: 400px; 
   justify-content: space-between;
   display: flex;
   flex-direction: column;
   background-color: #fff;
   box-sizing: border-box;
   color: #000;
+  height: 400px; /* 返信を閉じているときの高さ */
+  transition: height 0.3s ease;
+}
+.card-expanded {
+  height: 600px; /* 返信を開いたときの高さ */
 }
 
 .author-btn {
@@ -157,6 +161,7 @@ const goToProfile = () => {
   align-items: center;
   background-color: #fafafa;
   box-sizing: border-box;
+  height: 250px;
 }
 
 .poem {
