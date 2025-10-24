@@ -1,11 +1,9 @@
 <template>
   <div class="card">
-    <!-- ユーザー情報（ボタン化） -->
     <button class="author-btn" @click="goToProfile">
       👤 {{ post.authorName || post.author }}
     </button>
 
-    <!-- 川柳ボックス -->
     <div class="poem-wrapper">
       <div class="poem">
         <p v-for="(line, index) in lines" :key="index" class="post-line">
@@ -14,7 +12,6 @@
       </div>
     </div>
 
-    <!-- アクションボタン -->
     <div class="actions">
       <LikeButton />
       <button class="reply-btn" @click="toggleReplies">
@@ -29,7 +26,6 @@
       </button>
     </div>
 
-    <!-- 返信欄 -->
     <div v-if="showReplies" class="replies">
       <div v-if="!replies.length" class="no-replies">返信はありません</div>
         <div v-else>
@@ -58,6 +54,7 @@ import ReplyForm from './ReplyForm.vue';
 import ReplyCard from './ReplyCard.vue';
 
 const props = defineProps({
+<<<<<<< HEAD
   post: {
     type: Object,
     required: true,
@@ -77,6 +74,14 @@ const props = defineProps({
 const router = useRouter();
 
 const lines = computed(() => props.post.content.split(' '));
+=======
+  post: { type: Object, required: true }
+});
+
+const router = useRouter();
+const lines = computed(() => props.post.content.split('　'));
+const replies = computed(() => props.post.replies || []);
+>>>>>>> bf74ddf (変更)
 const showReplies = ref(false);
 const replies = ref([]);
 const isLoadingReplies = ref(false);
@@ -117,7 +122,6 @@ const handleReplyDeleted = (replyId) => {
   }
 };
 
-// プロフィール画面に遷移
 const goToProfile = () => {
   router.push(`/profile/${props.post.user_id}`);
 };
@@ -125,6 +129,7 @@ const goToProfile = () => {
 
 <style scoped>
 .card {
+<<<<<<< HEAD
   border: 1px solid #e0e0e0; 
   border-radius: 8px; 
   padding: 1.2rem; 
@@ -134,9 +139,19 @@ const goToProfile = () => {
   display: flex;
   flex-direction: column;
   color: #333; 
+=======
+  width: 100%;
+  max-width: 500px;
+  padding: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  box-sizing: border-box;
+>>>>>>> bf74ddf (変更)
 }
 
-/* ユーザー情報ボタン */
 .author-btn {
   background: none;
   border: none;
@@ -149,25 +164,24 @@ const goToProfile = () => {
   gap: 0.5rem;
 }
 
-/* 川柳ボックス */
 .poem-wrapper {
+  width: 100%;
+  padding: 1rem;
   border: 1px solid #ccc;
   border-radius: 10px;
-  padding: 1rem;
   margin-bottom: 0.5rem;
-  width: 100%;
-  min-height: 120px;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: #fafafa;
+  box-sizing: border-box;
 }
 
 .poem {
   writing-mode: vertical-rl;
   text-orientation: upright;
   font-family: "Hiragino Mincho ProN", serif;
-  font-size: 20px;
+  font-size: clamp(16px, 2vw, 22px);
   line-height: 1.8;
   display: flex;
   flex-direction: column;

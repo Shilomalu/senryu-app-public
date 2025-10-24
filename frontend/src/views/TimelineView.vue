@@ -1,20 +1,18 @@
 <template>
   <div class="page-container">
-    <!-- ページタイトル -->
-    <h1 class="page-title">🎍川柳SNS🎍</h1>
-    <hr />
-
-    <!-- 上部タブ -->
-    <div class="tabs">
-      <button :class="{ active: filter === 'all' }" @click="filter = 'all'">一覧</button>
-      <button :class="{ active: filter === 'likes' }" @click="filter = 'likes'">いいね</button>
-      <button :class="{ active: filter === 'following' }" @click="filter = 'following'">フォロー中</button>
+    <!-- 固定ヘッダー -->
+    <div class="fixed-header">
+      <h1 class="page-title">🎍川柳SNS🎍</h1>
+      <div class="tabs">
+        <button :class="{ active: filter === 'all' }" @click="filter = 'all'">一覧</button>
+        <button :class="{ active: filter === 'likes' }" @click="filter = 'likes'">いいね</button>
+        <button :class="{ active: filter === 'following' }" @click="filter = 'following'">フォロー中</button>
+      </div>
     </div>
-    <hr />
 
-    <!-- 投稿リスト -->
-    <div class="timeline">
-      <ul v-if="filteredTimeline.length">
+    <!-- タイムライン -->
+    <div class="timeline-content">
+      <ul v-if="filteredTimeline.length" class="timeline">
         <li v-for="post in filteredTimeline" :key="post.id">
           <PostCard :post="post" :currentUser="currentUser" @delete="handleDelete" />
         </li>
@@ -30,12 +28,11 @@ import { jwtDecode } from 'jwt-decode';
 import PostCard from '../components/PostCard.vue';
 
 const timeline = ref([]);
-const message = ref('');
 const filter = ref('all');
-
 const token = ref(localStorage.getItem('token'));
 const currentUser = ref(token.value ? jwtDecode(token.value) : null);
 
+<<<<<<< HEAD
 const fetchTimeline = async () => {
   try {
     const res = await fetch('/api/posts/timeline'); // 修正
@@ -62,6 +59,10 @@ const handleDelete = async (postId) => {
   } catch (err) {
     message.value = err.message;
   }
+=======
+const handleDelete = (postId) => {
+  timeline.value = timeline.value.filter(post => post.id !== postId);
+>>>>>>> bf74ddf (変更)
 };
 
 const filteredTimeline = computed(() => {
@@ -79,69 +80,113 @@ const emptyMessage = computed(() => {
 });
 
 onMounted(() => {
+<<<<<<< HEAD
   fetchTimeline();
+=======
+  timeline.value = [
+    { id: 1, author: '山田太郎', content: '花散るや　風にまかせて　時は過ぐ' },
+    { id: 2, author: '佐藤花子', content: '月明かり　影を照らして　夜は静か' },
+    { id: 3, author: '田中一郎', content: '桜舞う　川辺の道に　足止める' }
+  ];
+>>>>>>> bf74ddf (変更)
 });
 </script>
 
 <style scoped>
 .page-container {
+<<<<<<< HEAD
   max-width: 500px; /* ← CreatePostViewと同じ最大幅を指定 */
   margin: 0 auto;   /* ← 中央寄せを追加 */
   padding-bottom: 80px; /* 下部バーとの重なり防止は残す */
+=======
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
-/* ページタイトル中央配置 */
+/* 固定ヘッダー */
+.fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: #fff;
+  z-index: 1000;
+  border-bottom: 2px solid #ccc;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+>>>>>>> bf74ddf (変更)
+}
+
 .page-title {
   text-align: center;
-  margin: 20px 0 5px;
-  font-size: 1.5em;
+  margin: 10px 0 5px;
+  font-size: 1.8em;
+  color: #333;
 }
 
-/* 上部タブ */
 .tabs {
-  display: flex;
-  justify-content: space-around; /* タブを左右均等に配置 */
-  margin: 10px 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 2px solid #ccc;
+  border-bottom: 2px solid #ccc;
 }
+
 .tabs button {
-  flex-grow: 1;           /* 均等に幅を分ける */
-  text-align: center;     /* ボタン内の文字は中央寄せ */
   background: none;
   border: none;
   font-weight: bold;
+  font-size: 1rem;
   color: #555;
   cursor: pointer;
-  padding: 8px 0;
+  padding: 10px 0;
   position: relative;
 }
 
-/* タブの間に縦線を追加（最後のボタンには表示しない） */
 .tabs button:not(:last-child)::after {
-  content: "|";
+  content: "";
   position: absolute;
   right: 0;
-  color: #ccc;
+  top: 25%;
+  bottom: 25%;
+  width: 1px;
+  background-color: #ccc;
 }
 
-/* アクティブタブ */
 .tabs button.active {
   color: #007bff;
 }
 
 /* タイムライン */
-.timeline ul {
-  list-style: none;
-  padding: 0;
-}
-.timeline li {
-  border-bottom: 1px solid #eee;
-  padding: 15px 0;
+.timeline-content {
+  padding-top: 120px;
+  width: 100%;
 }
 
-/* 投稿がない場合のメッセージ */
+.timeline {
+  display: grid;
+  gap: 1.5rem;
+  justify-content: center;
+}
+
+@media (max-width: 999px) {
+  .timeline {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1000px) {
+  .timeline {
+    grid-template-columns: repeat(2, 500px);
+  }
+}
+
+
+.timeline li {
+  list-style: none;
+}
 .empty-message {
   text-align: center;
+  margin-top: 2rem;
   color: #888;
-  margin-top: 20px;
 }
 </style>
