@@ -81,6 +81,9 @@ async function handleDelete() {
   padding: 1rem;
   border-top: 1px solid #f0f0f0;
   background-color: #fafafa;
+  height: 120px; /* 固定高さ（好みで調整） */
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .reply-header {
