@@ -107,6 +107,7 @@ const goEdit = () => {
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   background-color: #fff;
   text-align: center;
+  color: #000;
 }
 
 .profile-info {
@@ -184,6 +185,7 @@ const goEdit = () => {
   text-align: center;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
+  color: #000;
 }
 
 .auth-prompt h2 {
@@ -192,7 +194,7 @@ const goEdit = () => {
 
 .auth-prompt p {
   margin-bottom: 2rem;
-  color: #555;
+  color: #000;
 }
 
 .button-group {
