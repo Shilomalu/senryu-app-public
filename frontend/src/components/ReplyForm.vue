@@ -27,8 +27,11 @@ async function handleSubmit(e) {
   isSubmitting.value = true
   try {
     const token = localStorage.getItem('token')
-    // combine parts into single content string (same format as posts)
-    const combined = `${content1.value.trim()} ${content2.value.trim()} ${content3.value.trim()}`.trim()
+    const replydata = {
+      content1: content1.value.trim(),
+      content2: content2.value.trim(),
+      content3: content3.value.trim(),
+    };
 
     const response = await fetch(`/api/posts/${props.postId}/reply`, {
       method: 'POST',
@@ -36,7 +39,7 @@ async function handleSubmit(e) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ content: combined })
+      body: JSON.stringify(replydata)
     })
 
     if (!response.ok) {

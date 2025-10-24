@@ -271,7 +271,7 @@ app.post('/api/posts/:id/reply', authenticateToken, async (req, res) => {
             return res.status(400).json({ errorCode: num, message: '句の音の数が正しくありません。' });
         }
         const content = `${content1} ${content2} ${content3}`;
-        
+
         if (!content) return res.status(400).json({ error: 'リプライの内容が必要です' });
 
         await pool.execute('INSERT INTO replies (user_id, post_id, content) VALUES (?, ?, ?)', [userId, postId, content]);
