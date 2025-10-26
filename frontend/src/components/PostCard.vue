@@ -1,11 +1,9 @@
 <template>
   <div class="card">
-    <!-- ユーザー情報（ボタン化） -->
     <button class="author-btn" @click="goToProfile">
       👤 {{ post.authorName || post.author }}
     </button>
 
-    <!-- 川柳ボックス -->
     <div class="poem-wrapper">
       <div class="poem">
         <p v-for="(line, index) in lines" :key="index" class="post-line">
@@ -14,7 +12,6 @@
       </div>
     </div>
 
-    <!-- アクションボタン -->
     <div class="actions">
       <LikeButton />
       <button class="reply-btn" @click="toggleReplies">
@@ -29,7 +26,6 @@
       </button>
     </div>
 
-    <!-- 返信欄 -->
     <div v-if="showReplies" class="replies">
       <div v-if="!replies.length" class="no-replies">返信はありません</div>
         <div v-else>
@@ -117,7 +113,6 @@ const handleReplyDeleted = (replyId) => {
   }
 };
 
-// プロフィール画面に遷移
 const goToProfile = () => {
   router.push(`/profile/${props.post.user_id}`);
 };
@@ -125,18 +120,25 @@ const goToProfile = () => {
 
 <style scoped>
 .card {
-  border: 1px solid #e0e0e0; 
-  border-radius: 8px; 
-  padding: 1.2rem; 
-  margin: 1rem 0;  /*上下のマージンだけ残す */
-  width: 100%;    /* 親要素いっぱいに広げる */
-  background-color: #fff;
+  width: 100%;
+  max-width: 500px;
+  padding: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  justify-content: space-between;
   display: flex;
   flex-direction: column;
-  color: #333; 
+  background-color: #fff;
+  box-sizing: border-box;
+  color: #000;
+  position: relative;
+  height: 400px; /* 返信を閉じているときの高さ */
+  transition: height 0.3s ease;
+}
+.card-expanded {
+  height: 900px; /* 返信を開いたときの高さ */
 }
 
-/* ユーザー情報ボタン */
 .author-btn {
   background: none;
   border: none;
@@ -149,25 +151,26 @@ const goToProfile = () => {
   gap: 0.5rem;
 }
 
-/* 川柳ボックス */
 .poem-wrapper {
+  width: 100%;
+  padding: 1rem;
   border: 1px solid #ccc;
   border-radius: 10px;
-  padding: 1rem;
   margin-bottom: 0.5rem;
-  width: 100%;
-  min-height: 120px;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: #fafafa;
+  box-sizing: border-box;
+  height: 250px;
+  transition: height 0.3s ease;
 }
 
 .poem {
   writing-mode: vertical-rl;
   text-orientation: upright;
   font-family: "Hiragino Mincho ProN", serif;
-  font-size: 20px;
+  font-size: clamp(16px, 2vw, 22px);
   line-height: 1.8;
   display: flex;
   flex-direction: column;
@@ -176,12 +179,20 @@ const goToProfile = () => {
 .post-line {
   margin: 0 0 0.5rem 0;
   text-align: center;
+  color: #000;
 }
 
 .actions {
+  position: absolute;
+  top: calc(1rem + 250px + 1rem); /* 上余白 + 川柳高さ + 間隔 */
+  right: 1rem;
   display: flex;
-  justify-content: flex-end;
   gap: 1rem;
+  transition: top 0.3s ease;
+}
+
+.card-expanded .actions {
+  top: calc(1rem + 180px + 1rem); /* 川柳が小さくなった分、位置を上に */
 }
 
 .reply-btn {

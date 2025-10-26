@@ -1,46 +1,89 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { RouterLink } from 'vue-router';
+import { useRouter, RouterLink } from 'vue-router';
+import axios from 'axios';
 
-// ログイン状態を管理するためのリアクティブな変数
+const router = useRouter();
+
+// ログイン状態
 const isLoggedIn = ref(false);
 
-// このページが読み込まれた時に、ログイン状態をチェックする
-onMounted(() => {
-  // ブラウザのlocalStorageにトークンが存在するかどうかで判断
-  const token = localStorage.getItem('token');
-  if (token) {
-    isLoggedIn.value = true;
-  } else {
+// ユーザー情報
+const username = ref('');
+const email = ref('');
+const profile_text = ref('');
+const posts = ref([]);
+
+// JWTトークン
+const token = localStorage.getItem('token');
+
+// ログイン状態チェックとプロフィール取得
+const loadProfile = async () => {
+  if (!token) {
+    isLoggedIn.value = false;
+    return;
+  }
+  isLoggedIn.value = true;
+  try {
+    // プロフィール取得
+    const res = await axios.get('/api/users/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    username.value = res.data.username;
+    email.value = res.data.email;
+    profile_text.value = res.data.profile_text;
+
+    // 自分の投稿取得（タイムラインからフィルター）
+    const timelineRes = await axios.get('/api/posts/timeline');
+    posts.value = timelineRes.data.filter(p => p.user_id === res.data.id);
+  } catch (err) {
+    console.error(err);
+    alert('プロフィールの取得に失敗しました');
     isLoggedIn.value = false;
   }
+};
+
+onMounted(() => {
+  loadProfile();
 });
 
-// ログアウト処理
+// ログアウト
 const logout = () => {
-  // ブラウザからトークンを削除
   localStorage.removeItem('token');
-  // ログイン状態をfalseに更新（画面が自動で切り替わります）
   isLoggedIn.value = false;
+  router.push('/');
+};
+
+// プロフィール編集
+const goEdit = () => {
+  router.push('/profile/edit');
 };
 </script>
 
 <template>
   <div>
     <div v-if="isLoggedIn" class="profile-container">
-      <h1>マイプロフィール</h1>
+      <div class="profile-header">
+        <h1>マイプロフィール</h1>
+        <div class="button-group">
+          <button @click="goEdit" class="edit-btn">編集</button>
+          <button @click="logout" class="logout-btn">ログアウト</button>
+        </div>
+      </div>
       
       <div class="profile-info">
-        <h3>表示される情報</h3>
         <ul>
-          <li><strong>ユーザー名:</strong> (ここにあなたのユーザー名が表示されます)</li>
-          <li><strong>メールアドレス:</strong> (ここにあなたのメールアドレスが表示されます)</li>
-          <li><strong>自己紹介:</strong> (ここにあなたの自己紹介文が表示されます)</li>
-          <li><strong>投稿した川柳一覧:</strong> (ここにあなたが投稿した川柳のリストが表示されます)</li>
+          <li><strong>ユーザー名：</strong> {{ username }}</li>
+          <li><strong>メールアドレス：</strong> {{ email }}</li>
+          <li><strong>自己紹介：</strong> {{ profile_text }}</li>
+          <li>
+            <strong>投稿した川柳一覧：</strong>
+            <ul>
+              <li v-for="post in posts" :key="post.user_id">{{ post.content }}</li>
+            </ul>
+          </li>
         </ul>
       </div>
-
-      <button @click="logout" class="logout-button">ログアウト</button>
     </div>
 
     <div v-else class="auth-prompt">
@@ -55,14 +98,16 @@ const logout = () => {
 </template>
 
 <style scoped>
-/* プロフィール表示用のスタイル */
 .profile-container {
   max-width: 600px;
   margin: 2rem auto;
   padding: 2rem;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  background-color: #fff;
   text-align: center;
+  color: #000;
 }
 
 .profile-info {
@@ -80,15 +125,56 @@ const logout = () => {
   font-size: 1.1rem;
 }
 
-.logout-button {
+.button-container {
+  display: flex;
+  justify-content: flex-end; /* 右寄せ */
+  gap: 10px; /* ボタン間のスペース */
   margin-top: 2rem;
-  padding: 10px 25px;
-  background-color: #dc3545;
-  color: white;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.profile-header h1 {
+  font-weight: bold;
+  font-size: 1.8rem;
+  margin-left: 10px;
+  margin-right: 20px;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+}
+
+.button-group button {
+  padding: 8px 18px;
   border: none;
-  border-radius: 5px;
-  cursor: pointer;
+  border-radius: 6px;
+  color: #fff;
   font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-btn {
+  background-color: #007bff;
+}
+
+.edit-btn:hover {
+  background-color: #0056b3;
+}
+
+.logout-btn {
+  background-color: #dc3545;
+}
+
+.logout-btn:hover {
+  background-color: #a71d2a;
 }
 
 /* ログインを促す画面用のスタイル */
@@ -99,6 +185,7 @@ const logout = () => {
   text-align: center;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
+  color: #000;
 }
 
 .auth-prompt h2 {
@@ -107,7 +194,7 @@ const logout = () => {
 
 .auth-prompt p {
   margin-bottom: 2rem;
-  color: #555;
+  color: #000;
 }
 
 .button-group {

@@ -18,6 +18,7 @@ app.use(express.json());
 const JWT_SECRET = process.env.JWT_SECRET || 'your-very-secret-key'; // .envファイルで設定推奨
 
 // --- 3. データベース接続 ---
+/*
 const pool = mysql.createPool({
     host: process.env.DB_HOST || 'localhost',
     port: 3306,
@@ -25,20 +26,40 @@ const pool = mysql.createPool({
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME || 'senryu_sns_db',
 });
+*/
+
+const pool = mysql.createPool({
+  host: 'localhost',
+  user: 'Project_Team6_user',
+  password: 'Project_Team6_pw',
+  database: 'Project_Team6_db',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
+
 
 // --- 4. 認証ミドルウェア ---
 // 特定のAPI（投稿など）の前に、ログイン状態をチェックする関数
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-    if (token == null) return res.sendStatus(401); // トークンがない
+    console.log('Authorizationヘッダー:', authHeader);
+    console.log('Token:', token);
+
+    if (!token) return res.status(401).json({ error: 'Tokenがありません' });
 
     jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) return res.sendStatus(403); // トークンが無効
+        if (err) {
+            console.log('JWT認証エラー:', err);
+            return res.status(403).json({ error: 'Tokenが無効です' });
+        }
+        console.log('JWT認証成功:', user);
         req.user = user;
-        next(); // 次の処理へ
+        next();
     });
 };
+
 
 // --- 5. APIエンドポイント ---
 
@@ -75,6 +96,68 @@ app.post('/api/users/login', async (req, res) => {
         res.status(500).json({ error: 'ログインエラー' });
     }
 });
+
+
+// 認証付きプロフィール更新API
+app.put("/api/users/me", authenticateToken, async (req, res) => {
+  const { username, profile_text } = req.body;
+  const id = req.user.id; // JWT から自動取得
+
+  try {
+    let updates = [];
+    let values = [];
+
+    if (username !== undefined) {
+      updates.push("username = ?");
+      values.push(username);
+    }
+    if (profile_text !== undefined) {
+      updates.push("profile_text = ?");
+      values.push(profile_text);
+    }
+
+    if (updates.length === 0)
+      return res.status(400).json({ message: "No data to update" });
+
+    values.push(id); // WHERE id = ?
+    const sql = `UPDATE users SET ${updates.join(", ")} WHERE id = ?`;
+    const [result] = await pool.execute(sql, values);
+
+    if (result.affectedRows === 0)
+      return res.status(404).json({ message: "User not found" });
+
+    const [rows] = await pool.execute(
+      "SELECT id, username, email, profile_text FROM users WHERE id = ?",
+      [id]
+    );
+    res.json({ message: "Profile updated successfully", user: rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+// JWT 認証付きで自分のプロフィールを取得
+app.get('/api/users/me', authenticateToken, async (req, res) => {
+  const id = req.user.id;
+  console.log('--- /api/users/me ---');
+  console.log('req.user.id:', id);
+  try {
+    const [rows] = await pool.execute(
+      "SELECT id, username, email, profile_text FROM users WHERE id = ?",
+      [id]
+    );
+    console.log('DB結果:', rows);
+    if (rows.length === 0) return res.status(404).json({ message: "User not found" });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 
 
 // 川柳投稿 (要認証)
@@ -271,9 +354,30 @@ app.get('/api/posts/:id', async (req, res) => {
 // リプライ投稿 (要認証)
 app.post('/api/posts/:id/reply', authenticateToken, async (req, res) => {
     try {
+        const { content1, content2, content3 } = req.body;
+        const userId = req.user.id; // ミドルウェアがセットしたユーザーIDを使用
         const postId = req.params.id;
-        const userId = req.user.id;
-        const { content } = req.body; // ここでは content を1つの文字列で受け取る
+        if(!content1 || !content2 || !content3){
+            return res.status(400).json({ error: 'すべての句を入力してください。'});
+        }
+        let num = 0;
+        const can_kaminoku = await check575(content1,5);
+        const can_nakanoku = await check575(content2,7);
+        const can_shimonoku = await check575(content3,5);
+        if(!can_kaminoku){
+            num = num + 1;
+        }
+        if(!can_nakanoku){
+            num = num + 2;
+        }
+        if(!can_shimonoku){
+            num = num + 4;
+        }
+        if(num != 0){
+            return res.status(400).json({ errorCode: num, message: '句の音の数が正しくありません。' });
+        }
+        const content = `${content1} ${content2} ${content3}`;
+
         if (!content) return res.status(400).json({ error: 'リプライの内容が必要です' });
 
         await pool.execute('INSERT INTO replies (user_id, post_id, content) VALUES (?, ?, ?)', [userId, postId, content]);
