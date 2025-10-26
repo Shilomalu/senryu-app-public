@@ -22,6 +22,7 @@
 フォローする	/api/users/:id/follow	POST	必要	(なし)	200: { "message": "フォローしました。" }
 フォロー解除	/api/users/:id/follow	DELETE	必要	(なし)	200: { "message": "フォロー解除しました。" }
 リプライ投稿	/api/posts/:id/reply	POST	必要	{ "content" }	201: { "message", "newReply" }
+リプライ削除	/api/posts/:id/reply	DELETE	必要	(なし)	200: { "message", "リプライを削除しました" }
 
 検索関連 (/api/search)
 機能	エンドポイント	メソッド	認証	クエリパラメータ	成功レスポンス (2xx)
