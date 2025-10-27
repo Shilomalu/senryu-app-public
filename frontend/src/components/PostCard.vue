@@ -125,15 +125,15 @@ const goToProfile = () => {
   padding: 1rem;
   border: 1px solid #ccc;
   border-radius: 10px;
-  justify-content: space-between;
+  justify-content: flex-start;
   display: flex;
   flex-direction: column;
   background-color: #fff;
   box-sizing: border-box;
   color: #000;
-  position: relative;
   height: 400px; /* 返信を閉じているときの高さ */
   transition: height 0.3s ease;
+  overflow: hidden;
 }
 .card-expanded {
   height: 960px; /* 返信を開いたときの高さ */
@@ -163,7 +163,6 @@ const goToProfile = () => {
   background-color: #fafafa;
   box-sizing: border-box;
   height: 250px;
-  transition: height 0.3s ease;
 }
 
 .poem {
@@ -182,54 +181,50 @@ const goToProfile = () => {
   color: #000;
 }
 
+/* いいね・返信ボタンは川柳の下に固定 */
 .actions {
-  position: absolute;
-  top: calc(1rem + 250px + 1rem); /* 上余白 + 川柳高さ + 間隔 */
-  right: 1rem;
   display: flex;
+  justify-content: flex-end;
   gap: 1rem;
-  transition: top 0.3s ease;
-}
-
-.card-expanded .actions {
-  top: calc(1rem + 180px + 1rem); /* 川柳が小さくなった分、位置を上に */
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .reply-btn {
-  background-color: #f4f4f4;
+  background-color: #007bff;
   border: none;
   margin-top: 0.5rem;
   padding: 5px 10px;
   border-radius: 6px;
   border: none;
-  background-color: #007bff;
   color: white;
   cursor: pointer;
+  transition: background-color 0.2s;
 }
-
 .reply-btn:hover {
-  background-color: #f8f9fa;
+  background-color: #0056b3;
 }
 
 .delete-btn {
   background-color: transparent;
   color: #dc3545;
   border: 1px solid #dc3545;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.8rem;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
 }
-
 .delete-btn:hover {
   background-color: #dc3545;
   color: white;
 }
 
 .replies {
+  flex-grow: 1;
   margin-top: 0.5rem;
   border-top: 1px solid #ccc;
   padding-top: 0.5rem;
+  overflow-y: auto;
 }
 
 .reply {
