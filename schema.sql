@@ -26,6 +26,7 @@ DROP TABLE IF EXISTS follows;
 DROP TABLE IF EXISTS replies;
 DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS dictionary;
 
 
 CREATE TABLE users (
@@ -33,7 +34,7 @@ CREATE TABLE users (
     username VARCHAR(50) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    profile_text VARCHAR(255) DEFAULT 'よろしくお願いします。',
+    -- profile_text VARCHAR(255) DEFAULT 'よろしくお願いします。',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -72,3 +73,14 @@ CREATE TABLE replies (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 );
+
+
+CREATE TABLE dictionary(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    word_id INT NOT NULL,
+    word VARCHAR(10) NOT NULL,
+    sennryuu_id INT NOT NULL
+);
+
+
+

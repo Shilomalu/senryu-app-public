@@ -162,35 +162,58 @@ app.get('/api/users/me', authenticateToken, async (req, res) => {
 
 // 川柳投稿 (要認証)
 app.post('/api/posts', authenticateToken, async (req, res) => {
-    try {
-        const { content1, content2, content3 } = req.body;
-        const userId = req.user.id; // ミドルウェアがセットしたユーザーIDを使用
-        if(!content1 || !content2 || !content3){
-            return res.status(400).json({ error: 'すべての句を入力してください。'});
-        }
-        let num = 0;
-        const can_kaminoku = await check575(content1,5);
-        const can_nakanoku = await check575(content2,7);
-        const can_shimonoku = await check575(content3,5);
-        if(!can_kaminoku){
-            num = num + 1;
-        }
-        if(!can_nakanoku){
-            num = num + 2;
-        }
-        if(!can_shimonoku){
-            num = num + 4;
-        }
-        if(num != 0){
-            return res.status(400).json({ errorCode: num, message: '句の音の数が正しくありません。' });
-        }
-        const content = `${content1} ${content2} ${content3}`;
-        const sql = "INSERT INTO posts (user_id, content) VALUES (?, ?)";
-        await pool.execute(sql, [userId, content]);
-        res.status(201).json({ message: '投稿成功' });
-    } catch (error) {
-        res.status(500).json({ error: '投稿エラー' });
+  try {
+    const { content1, content2, content3 } = req.body;
+    const userId = req.user.id;
+
+    if (!content1 || !content2 || !content3) {
+      return res.status(400).json({ error: 'すべての句を入力してください。' });
     }
+
+    // --- 句ごとの5-7-5チェック ---
+    const { flag: can_kaminoku, word_id: word_id1 ,words:word1} = await check575(content1, 5);
+    const { flag: can_nakanoku, word_id: word_id2 ,words:word2} = await check575(content2, 7);
+    const { flag: can_shimonoku, word_id: word_id3,words:word3 } = await check575(content3, 5);
+
+    let num = 0;
+    if (!can_kaminoku) num += 1;
+    if (!can_nakanoku) num += 2;
+    if (!can_shimonoku) num += 4;
+
+    if (num !== 0) {
+      return res.status(400).json({ errorCode: num, message: '句の音の数が正しくありません。' });
+    }
+
+    // --- 投稿をDBに保存して投稿IDを取得 ---
+    const content = `${content1} ${content2} ${content3}`;
+    const [postResult] = await pool.execute(
+      "INSERT INTO posts (user_id, content) VALUES (?, ?)",
+      [userId, content]
+    );
+
+    const sennryuu_id = postResult.insertId; // ← 実際に登録されたID！
+    console.log("登録された川柳ID:", sennryuu_id);
+
+    // --- dictionaryテーブルにword_idを登録 ---
+    const word_id_array = [...(word_id1 || []), ...(word_id2 || []), ...(word_id3 || [])];
+     const word_array = [...(word1 || []), ...(word2 || []), ...(word3 || [])];
+    console.log("登録するword_id_array:", word_id_array);
+
+    for (let i = 0; i < word_id_array.length; i++) {
+      if (word_id_array[i] == null) continue; // nullスキップ
+      await pool.execute(
+        "INSERT INTO dictionary (word_id, word, sennryuu_id) VALUES (?, ?, ?)",
+        [word_id_array[i], word_array[i], sennryuu_id]
+      );
+    }
+
+    console.log("dictionary 登録完了");
+    res.status(201).json({ message: '投稿成功', sennryuu_id });
+
+  } catch (error) {
+    console.error("投稿エラー詳細:", error);
+    res.status(500).json({ error: '投稿エラー', detail: error.message });
+  }
 });
 
 
@@ -381,6 +404,95 @@ app.delete('/api/replies/:id', authenticateToken, async (req, res) => {
         console.error('リプライ削除エラー:', err);
         res.status(500).json({ error: 'リプライの削除に失敗しました' });
     }
+});
+
+//ここから検索処理
+const {checkPart}=require('./senryu-checker.js');
+
+app.get('/api/search',async(req,res)=>{
+
+    try{
+        const keyword=req.query.q;
+        
+        if(!keyword){
+            return res.status(400).json({error:'検索ワードを入力してね'});
+        }
+
+        //検索ワードを形態素解析して各単語のIDを取得
+        const result=await checkPart(keyword);
+        const word_id_array=result.word_id;//形態素解析で得た単語のIDを格納した配列
+
+        if(word_id_array.length===0){
+            return res.json([]);
+        }
+
+        //データベースからword_idと一致する行を取得
+        const placeholders=word_id_array.map(()=>'?').join(',');
+        const dictionary=`
+            SELECT sennryuu_id, word_id
+            FROM dictionary
+            WHERE word_id IN (${placeholders})
+            `;
+        const [rows]=await pool.query(dictionary,word_id_array);
+
+        if(rows.length===0){
+            return res.json([]);
+        }
+
+        const sennryuu_count={};
+
+        for(let i=0;i<rows.length;i++){
+            const sennryuuID=rows[i].sennryuu_id;
+
+            if(sennryuu_count[sennryuuID]===undefined){
+                sennryuu_count[sennryuuID]=0;
+            }
+
+            sennryuu_count[sennryuuID]++;
+        }
+
+            //出現回数が高い順にソート
+           const sennryuuIds = Object.keys(sennryuu_count);
+
+        sennryuuIds.sort((a, b) => {
+        if (sennryuu_count[a] > sennryuu_count[b]) return -1; // aの方がスコア高い → 先
+        if (sennryuu_count[a] < sennryuu_count[b]) return 1;  // bの方がスコア高い → 後
+        return 0; // 同点なら順番変えない
+        });
+
+        //postsから該当する川柳を取得
+        const placeholders2=sennryuuIds.map(()=>'?').join(',');
+        const sql_message= `
+            SELECT posts.id, posts.content, users.username, posts.created_at
+            FROM posts
+            JOIN users ON posts.user_id = users.id
+            WHERE posts.id IN (${placeholders2})
+            `;
+        
+            const get_sennryuus=await pool.query(sql_message,sennryuuIds);
+            const target_sennryuus=get_sennryuus[0];
+            
+            const target_sennryuus_sort=[];
+            for(let i=0;i<sennryuuIds.length;i++){
+               const id = Number(sennryuuIds[i]);
+                const found =target_sennryuus.find(post => post.id === id);
+                if (found) {
+                    target_sennryuus_sort.push(found);
+                }
+            }
+
+            res.json(target_sennryuus_sort);
+
+
+        }
+        catch(error){
+            console.error('検索エラー：',error);
+            res.status(500).json({error:'検索中にエラーが発生しました。'});
+
+        }
+
+
+    
 });
 
 // --- 6. サーバー起動 ---

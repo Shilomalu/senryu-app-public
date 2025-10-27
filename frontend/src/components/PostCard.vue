@@ -1,5 +1,5 @@
 <template>
-  <div class="card" :class="{ 'card-expanded': showReplies }">
+  <div class="card">
     <button class="author-btn" @click="goToProfile">
       👤 {{ post.authorName || post.author }}
     </button>
@@ -28,7 +28,7 @@
 
     <div v-if="showReplies" class="replies">
       <div v-if="!replies.length" class="no-replies">返信はありません</div>
-        <div v-else class="reply-scroll-container">
+        <div v-else>
           <div v-for="reply in replies" :key="reply.id" class="reply">
             <ReplyCard 
               :reply="reply" 
@@ -131,11 +131,12 @@ const goToProfile = () => {
   background-color: #fff;
   box-sizing: border-box;
   color: #000;
+  position: relative;
   height: 400px; /* 返信を閉じているときの高さ */
   transition: height 0.3s ease;
 }
 .card-expanded {
-  height: 960px; /* 返信を開いたときの高さ */
+  height: 900px; /* 返信を開いたときの高さ */
 }
 
 .author-btn {
@@ -162,6 +163,7 @@ const goToProfile = () => {
   background-color: #fafafa;
   box-sizing: border-box;
   height: 250px;
+  transition: height 0.3s ease;
 }
 
 .poem {
@@ -181,9 +183,16 @@ const goToProfile = () => {
 }
 
 .actions {
+  position: absolute;
+  top: calc(1rem + 250px + 1rem); /* 上余白 + 川柳高さ + 間隔 */
+  right: 1rem;
   display: flex;
-  justify-content: flex-end;
   gap: 1rem;
+  transition: top 0.3s ease;
+}
+
+.card-expanded .actions {
+  top: calc(1rem + 180px + 1rem); /* 川柳が小さくなった分、位置を上に */
 }
 
 .reply-btn {
@@ -225,30 +234,6 @@ const goToProfile = () => {
 
 .reply {
   margin-bottom: 0.3rem;
-}
-
-/* 3件ぶんだけ表示し、縦スクロールを許可 */
-.reply-scroll-container {
-  height: 360px; /* 1件=120px × 3件分など */
-  overflow-y: auto;
-  scroll-snap-type: y mandatory;
-  scroll-behavior: smooth;
-  border-top: 1px solid #eee;
-  border-bottom: 1px solid #eee;
-}
-
-/* 各返信カードをスナップ対象に */
-.reply-scroll-container > .reply {
-  scroll-snap-align: start;
-  flex-shrink: 0;
-}
-
-/* スクロールバー非表示（任意） */
-.reply-scroll-container::-webkit-scrollbar {
-  display: none;
-}
-.reply-scroll-container {
-  scrollbar-width: none;
 }
 
 .no-replies {

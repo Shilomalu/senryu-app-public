@@ -110,7 +110,6 @@ const goEdit = () => {
   color: #000;
 }
 
-/* プロフィール情報のセクション */
 .profile-info {
   text-align: left;
   margin-top: 2rem;
@@ -122,9 +121,8 @@ const goEdit = () => {
 }
 
 .profile-info li {
-  margin-bottom: 1.2rem; /* 少し間隔を広げる */
+  margin-bottom: 1rem;
   font-size: 1.1rem;
-  color: #555; /* 通常テキストの色 */
 }
 
 .button-container {
@@ -179,27 +177,11 @@ const goEdit = () => {
   background-color: #a71d2a;
 }
 
-/* 編集ボタン */
-.edit-btn {
-  background-color: #007bff; /* 青色 */
-}
-.edit-btn:hover {
-  background-color: #0056b3;
-}
-
-/* ログアウトボタン */
-.logout-btn {
-  background-color: #dc3545; /* 赤色 */
-}
-.logout-btn:hover {
-  background-color: #a71d2a;
-}
-
-/* --- ログインを促す画面用のスタイル --- */
+/* ログインを促す画面用のスタイル */
 .auth-prompt {
   max-width: 500px;
   margin: 4rem auto;
-  padding: 2.5rem; /* 少し余白を増やす */
+  padding: 2rem;
   text-align: center;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -207,8 +189,7 @@ const goEdit = () => {
 }
 
 .auth-prompt h2 {
-  margin-bottom: 1.5rem; /* 間隔調整 */
-  color: #333; /* 見出しの色 */
+  margin-bottom: 1rem;
 }
 
 .auth-prompt p {
@@ -216,25 +197,19 @@ const goEdit = () => {
   color: #000;
 }
 
-/* 認証画面へのボタングループ */
-.auth-prompt .button-group {
+.button-group {
   display: flex;
   justify-content: center;
-  gap: 1.5rem; /* ボタン間のスペース */
+  gap: 1rem;
 }
 
-/* 認証画面へのボタン */
-.auth-prompt .button {
+.button {
   display: inline-block;
   padding: 12px 24px;
   background-color: #007bff;
-  color: white; /* 文字色 */
+  color: white;
   text-decoration: none;
   border-radius: 5px;
   font-weight: bold;
-  transition: background-color 0.2s ease;
-}
-.auth-prompt .button:hover {
-  background-color: #0056b3;
 }
 </style>

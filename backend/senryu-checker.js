@@ -30,8 +30,10 @@ const checkPart = (text) => {
       const tokens = tokenizer.tokenize(text);
       const reading = tokens.map(t => t.reading || '').join('');
       const hiragana = cleanReading(reading);
-      
-      resolve(countMora(hiragana));
+      const word_id=tokens.map(t=>t.word_id);
+      const words=tokens.map((t)=>t.surface_form)
+      const moraCount=countMora(hiragana);
+      resolve({ moraCount,word_id,words });
     });
   });
 };
@@ -40,12 +42,16 @@ const checkPart = (text) => {
 const check575 = async (content,num) => {
   console.log('\n--- 5-7-5 Checker Start ---');
   try{
-    const moraCount = await checkPart(content);
-    return moraCount === num;
+    const {moraCount,word_id,words} = await checkPart(content);
+    console.log(moraCount);
+    const flag = moraCount === num
+    console.log(word_id);
+    return {flag,word_id,words}
+    
   }catch(error){
     console.error('エラー発生！');
     return false;
   }
 };
 
-module.exports = { check575 };
+module.exports = { check575,checkPart };
