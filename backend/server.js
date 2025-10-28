@@ -18,16 +18,19 @@ app.use(express.json());
 const JWT_SECRET = process.env.JWT_SECRET || 'your-very-secret-key'; // .envファイルで設定推奨
 
 // --- 3. データベース接続 ---
-/*
+
 const pool = mysql.createPool({
     host: process.env.DB_HOST || 'localhost',
     port: 3306,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME || 'senryu_sns_db',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
-*/
 
+/*
 const pool = mysql.createPool({
   host: 'localhost',
   user: 'Project_Team6_user',
@@ -37,7 +40,7 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0
 });
-
+*/
 
 // --- 4. 認証ミドルウェア ---
 // 特定のAPI（投稿など）の前に、ログイン状態をチェックする関数
