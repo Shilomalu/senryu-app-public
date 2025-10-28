@@ -1,11 +1,13 @@
 <script setup>
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import PostCard from '@/components/PostCard.vue'
 
 
 const keyword = ref('')
 const results = ref([])
 const is_searched=ref(false);
+const scroll_target=ref(null) ;//検索ボタンを押した際に自動でスクロールさせる用
+const show_postcard=ref(false);
 //refをつけることによって画面をリロードすることなくテンプレートを変えられるようになる
 
 const search_method = async (e) => {
@@ -24,7 +26,7 @@ e.preventDefault();//リロードしないようにしてる
       return;
     }
     is_searched.value=true;//refをつけたものの値を変えるときは.valueをつけるって
-
+    show_postcard.value=false;
     const search_result=await response.json();
     results.value=search_result;
 
@@ -32,6 +34,16 @@ e.preventDefault();//リロードしないようにしてる
       return "該当する川柳がありません";
     }
 
+    //スクロールさせる
+    await nextTick()
+
+// ① まずスクロール（これがすぐ動く）
+scroll_target.value?.scrollIntoView({ behavior: 'smooth' })
+
+// ② 0.4秒待ってから（スクロール完了タイミング）、アニメーション再描画
+setTimeout(() => {
+  show_postcard.value=true;
+}, 800)
   }
  catch (err) {
     console.error("検索中にエラーが発生:", err);
@@ -56,7 +68,7 @@ e.preventDefault();//リロードしないようにしてる
       
       <button type="submit" id="search_button">検索</button>
     </form>
-    
+    <div ref="scroll_target" style="width: 100%;">
     <div v-if="is_searched===false">
     <h2 style="margin-top: 40px;">検索結果</h2>
     </div>
@@ -68,18 +80,25 @@ e.preventDefault();//リロードしないようにしてる
     </div>
 
     <div v-else class="search_results">
-      <PostCard
-      v-for="item in results"
-      class="postcard_search"
-      :key="item.id"
+  <div
+    v-for="(item, index) in results"
+    :key="item.id"
+    class="postcard_search"
+    :class="{fadeUpCard:show_postcard}"
+    :style="{ animationDelay: `${index * 0.1}s` }"
+  >
+    <PostCard
       :post="{
-      id: item.id,
-      authorName: item.username,
-      user_id: item.user_id,
-      content: item.content,
-      created_at: item.created_at
-    }"/>
-    </div>
+        id: item.id,
+        authorName: item.username,
+        user_id: item.user_id,
+        content: item.content,
+        created_at: item.created_at
+      }"
+    />
+  </div>
+</div>
+  </div>
   </div>
  
 </template>
@@ -123,14 +142,26 @@ e.preventDefault();//リロードしないようにしてる
 
 .search_results{
   display: flex;
-  flex-direction: column;
+ display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
+
+  
 }
 
 .postcard_search{
-  width: 400px;
+  width: 450px;
+  margin-bottom: 30px;
+  opacity: 0;
   
+  
+}
+
+@media(max-width:450px){
+  .postcard_search{
+    width: 80%;
+  }
 }
 
 .search_field{
@@ -144,5 +175,22 @@ form{
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.fadeUpCard {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeUp 0.5s ease forwards;
+}
+
+
+</style>
+
+<style>
+@keyframes fadeUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
