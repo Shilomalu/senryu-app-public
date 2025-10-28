@@ -34,7 +34,7 @@ CREATE TABLE users (
     username VARCHAR(50) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    -- profile_text VARCHAR(255) DEFAULT 'よろしくお願いします。',
+    profile_text VARCHAR(255) DEFAULT 'よろしくお願いします。',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

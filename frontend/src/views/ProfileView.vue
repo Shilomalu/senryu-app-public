@@ -38,7 +38,7 @@ const loadProfile = async () => {
     posts.value = timelineRes.data.filter(p => p.user_id === res.data.id);
   } catch (err) {
     console.error(err);
-    alert('プロフィールの取得に失敗しました');
+    alert('プロフィールの取得に失敗しました1');
     isLoggedIn.value = false;
   }
 };
