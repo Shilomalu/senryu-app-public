@@ -498,6 +498,102 @@ app.get('/api/search',async(req,res)=>{
     
 });
 
+// --- 「いとをかし」機能API ---
+// --- 「いとをかし」機能API ---
+app.get('/api/posts/:postId/likes', async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const [rows] = await pool.query(
+      `SELECT users.id, users.username 
+       FROM likes 
+       JOIN users ON likes.user_id = users.id 
+       WHERE likes.post_id = ?`,
+      [postId]
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error('いとをかし一覧取得エラー:', error);
+    res.status(500).json({ error: 'いとをかし一覧取得に失敗しました' });
+  }
+});
+
+// 特定ユーザーの「いとをかし」状態取得
+app.get('/api/posts/:postId/likes/status', authenticateToken, async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.user.id;
+
+    // 自分が「いとをかし」しているか？
+    const [likedRows] = await pool.query(
+      `SELECT * FROM likes WHERE post_id = ? AND user_id = ?`,
+      [postId, userId]
+    );
+
+    // 全体の数
+    const [countRows] = await pool.query(
+      `SELECT COUNT(*) AS count FROM likes WHERE post_id = ?`,
+      [postId]
+    );
+
+    // 誰が「いとをかし」したか
+    const [users] = await pool.query(
+      `SELECT users.id, users.username 
+       FROM likes 
+       JOIN users ON likes.user_id = users.id 
+       WHERE likes.post_id = ?`,
+      [postId]
+    );
+
+    res.json({
+      liked: likedRows.length > 0,
+      count: countRows[0].count,
+      users
+    });
+  } catch (error) {
+    console.error('いとをかし状態取得エラー:', error);
+    res.status(500).json({ error: 'いとをかし状態取得に失敗しました' });
+  }
+});
+
+// 「いとをかし」追加
+app.post('/api/posts/:postId/like', authenticateToken, async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.user.id;
+
+    await pool.query(
+      `INSERT IGNORE INTO likes (post_id, user_id) VALUES (?, ?)`,
+      [postId, userId]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('いとをかし追加エラー:', error);
+    res.status(500).json({ error: 'いとをかし追加に失敗しました' });
+  }
+});
+
+// 「いとをかし」解除
+app.delete('/api/posts/:postId/like', authenticateToken, async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.user.id;
+
+    await pool.query(
+      `DELETE FROM likes WHERE post_id = ? AND user_id = ?`,
+      [postId, userId]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('いとをかし解除エラー:', error);
+    res.status(500).json({ error: 'いとをかし解除に失敗しました' });
+  }
+});
+
+
+
+
 // --- 6. サーバー起動 ---
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`サーバーがポート${PORT}で起動しました。`));
