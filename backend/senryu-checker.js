@@ -32,9 +32,16 @@ const checkPart = (text) => {
       const tokens = tokenizer.tokenize(adjust_text);
 
       let zk = '';
+      let word_id = [];
+      let words = [];
       for (let i = 0; i < tokens.length; ++i) {
-        if (tokens[i].word_type == 'KNOWN') zk += HGtoZK(tokens[i].reading);
-        else zk += HGtoZK(tokens[i].surface_form);
+        if (tokens[i].word_type == 'KNOWN') {
+          zk += HGtoZK(tokens[i].reading);
+          word_id.push(tokens[i].word_id);
+          words.push(tokens[i].surface_form);
+        } else {
+          zk += HGtoZK(tokens[i].surface_form);
+        }
       }
 
       console.log(zk);
@@ -43,7 +50,7 @@ const checkPart = (text) => {
       let symbolCount = countSymbol(adjust_text);
       moraCount -= symbolCount;
 
-      resolve({ moraCount, symbolCount });
+      resolve({ moraCount, symbolCount, word_id, words });
     });
   });
 };
@@ -52,9 +59,10 @@ const checkPart = (text) => {
 const check575 = async (content, num) => {
   console.log('\n--- 5-7-5 Checker Start ---');
   try{
-    const { moraCount, symbolCount} = await checkPart(content);
+    const { moraCount, symbolCount, word_id, words} = await checkPart(content);
     const flag = (moraCount === num);
-    return { flag, symbolCount };
+    return { flag, symbolCount, word_id, words };
+    
   }catch(error){
     console.error('エラー発生！');
     return false;

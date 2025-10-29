@@ -26,6 +26,7 @@ DROP TABLE IF EXISTS follows;
 DROP TABLE IF EXISTS replies;
 DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS dictionary;
 
 
 CREATE TABLE users (
@@ -42,7 +43,8 @@ CREATE TABLE posts (
     user_id INT NOT NULL,
     content VARCHAR(100) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    likes_num INT DEFAULT 0
 );
 
 CREATE TABLE likes (
@@ -72,3 +74,14 @@ CREATE TABLE replies (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 );
+
+
+CREATE TABLE dictionary(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    word_id INT NOT NULL,
+    word VARCHAR(10) NOT NULL,
+    sennryuu_id INT NOT NULL
+);
+
+
+

@@ -38,7 +38,7 @@ const loadProfile = async () => {
     posts.value = timelineRes.data.filter(p => p.user_id === res.data.id);
   } catch (err) {
     console.error(err);
-    alert('プロフィールの取得に失敗しました');
+    alert('プロフィールの取得に失敗しました1');
     isLoggedIn.value = false;
   }
 };
@@ -185,7 +185,7 @@ const goEdit = () => {
   text-align: center;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
-  color: #000;
+  
 }
 
 .auth-prompt h2 {
@@ -194,7 +194,7 @@ const goEdit = () => {
 
 .auth-prompt p {
   margin-bottom: 2rem;
-  color: #000;
+  
 }
 
 .button-group {

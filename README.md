@@ -1,4 +1,4 @@
-# Project_Team6
+ # Project_Team6
 
 このプロジェクトは川柳SNSを作成するためのアプリケーションです、
    

@@ -82,6 +82,7 @@ const cancel = () => {
 h2 {
   text-align: center;
   margin-bottom: 1rem;
+  color: #000;
 }
 
 .form-group {
@@ -93,6 +94,7 @@ h2 {
 label {
   margin-bottom: 0.5rem;
   font-weight: 500;
+  color: #000;
 }
 
 input, textarea {
