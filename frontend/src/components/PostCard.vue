@@ -1,8 +1,16 @@
 <template>
   <div class="card" :class="{ 'card-expanded': showReplies }">
-    <button class="author-btn" @click="goToProfile">
-      👤 {{ post.authorName || post.author }}
-    </button>
+    <div class="card-header">
+      <button class="author-btn" @click="goToProfile">
+        👤 {{ post.authorName || post.author }}
+      </button>
+
+      <FollowButton
+        v-if="currentUser && post.user_id !== currentUser.id"
+        :targetUserId="post.user_id"
+        :currentUserId="currentUser.id"
+      />
+    </div>
 
     <div class="poem-wrapper">
       <div class="poem">
@@ -13,7 +21,7 @@
     </div>
 
     <div class="actions">
-      <LikeButton />
+      <LikeButton :postId="post.id" :currentUserId="currentUser?.id || 0" />
       <button class="reply-btn" @click="toggleReplies">
         返信{{ post.repliesCount || 0 }}
       </button>
@@ -50,6 +58,7 @@
 import { defineProps, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import LikeButton from './LikeButton.vue';
+import FollowButton from './FollowButton.vue';
 import ReplyForm from './ReplyForm.vue';
 import ReplyCard from './ReplyCard.vue';
 
@@ -58,8 +67,8 @@ const props = defineProps({
     type: Object,
     required: true,
     default: () => ({
-    authorName: 'テストユーザー',
-    user_id: 1,
+      authorName: 'テストユーザー',
+      user_id: 1,
       content: '花散るや　風にまかせて　時は過ぐ',
       replies: []
     })
@@ -84,11 +93,10 @@ const toggleReplies = async () => {
   }
 };
 
-// 返信を取得
 const fetchReplies = async () => {
   isLoadingReplies.value = true;
   try {
-  const res = await fetch(`/api/posts/${props.post.id}`);
+    const res = await fetch(`/api/posts/${props.post.id}`);
     if (!res.ok) throw new Error('返信の取得に失敗しました');
     const data = await res.json();
     replies.value = data.replies || [];
@@ -99,15 +107,12 @@ const fetchReplies = async () => {
   }
 };
 
-// 返信が投稿されたときの処理
 const handleReplyPosted = () => {
   fetchReplies();
 };
 
-// 返信が削除されたときの処理
 const handleReplyDeleted = (replyId) => {
   replies.value = replies.value.filter(reply => reply.id !== replyId);
-  // 返信数を更新
   if (props.post.repliesCount) {
     props.post.repliesCount--;
   }
@@ -131,12 +136,19 @@ const goToProfile = () => {
   background-color: #fff;
   box-sizing: border-box;
   color: #000;
-  height: 400px; /* 返信を閉じているときの高さ */
+  height: 400px;
   transition: height 0.3s ease;
   overflow: hidden;
 }
 .card-expanded {
-  height: 960px; /* 返信を開いたときの高さ */
+  height: 960px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
 }
 
 .author-btn {
@@ -145,7 +157,6 @@ const goToProfile = () => {
   font-weight: bold;
   cursor: pointer;
   padding: 0;
-  margin-bottom: 0.5rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -181,7 +192,6 @@ const goToProfile = () => {
   color: #000;
 }
 
-/* いいね・返信ボタンは川柳の下に固定 */
 .actions {
   display: flex;
   justify-content: flex-end;
@@ -231,30 +241,24 @@ const goToProfile = () => {
   margin-bottom: 0.3rem;
 }
 
-/* 3件ぶんだけ表示し、縦スクロールを許可 */
 .reply-scroll-container {
-  height: 360px; /* 1件=120px × 3件分など */
+  height: 360px;
   overflow-y: auto;
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
   border-top: 1px solid #eee;
   border-bottom: 1px solid #eee;
 }
-
-/* 各返信カードをスナップ対象に */
 .reply-scroll-container > .reply {
   scroll-snap-align: start;
   flex-shrink: 0;
 }
-
-/* スクロールバー非表示（任意） */
 .reply-scroll-container::-webkit-scrollbar {
   display: none;
 }
 .reply-scroll-container {
   scrollbar-width: none;
 }
-
 .no-replies {
   color: #888;
   font-style: italic;
