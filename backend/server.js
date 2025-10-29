@@ -190,9 +190,6 @@ app.post('/api/posts', authenticateToken, async (req, res) => {
         const sql = "INSERT INTO posts (user_id, content) VALUES (?, ?)";
         await pool.execute(sql, [userId, content]);
         res.status(201).json({ message: '投稿成功' });
-    } catch (error) {
-        res.status(500).json({ error: '投稿エラー' });
-
     // --- 投稿をDBに保存して投稿IDを取得 ---
     const content = `${content1} ${content2} ${content3}`;
     const [postResult] = await pool.execute(
