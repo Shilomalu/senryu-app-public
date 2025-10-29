@@ -233,7 +233,7 @@ const goToProfile = () => {
 
 /* 3件ぶんだけ表示し、縦スクロールを許可 */
 .reply-scroll-container {
-  height: 365px; /* 1件=120px × 3件分など */
+  height: 360px;
   display: flex;               /* 横並びにする */
   flex-direction: row-reverse;
   overflow-x: auto;            /* 横スクロール有効 */
@@ -246,7 +246,7 @@ const goToProfile = () => {
 /* 各返信カードをスナップ対象に */
 .reply-scroll-container > .reply {
   scroll-snap-align: start;    /* スナップ基準は左端 */
-  flex: 0 0 100px;             /* カード幅を固定（例: 300px） */
+  flex: 0 0 150px;             /* カード幅を固定（例: 300px） */
   margin-left: 10px;          /* カード間の隙間 */
 }
 

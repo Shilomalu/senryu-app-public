@@ -89,8 +89,11 @@ async function handleDelete() {
 }
 
 .reply-content-wrapper {
-  /* justify-content: center;    縦書きの「主軸方向」中央揃え */
-  align-items: center;        /* 縦書きの「交差軸方向」中央揃え */
+  display: flex;
+  justify-content: center;   /* 縦方向中央（主軸） */
+  align-items: center;       /* 横方向中央（交差軸） */
+  height: 70%;
+  width: 100%;
 }
 
 .reply-header {
@@ -101,10 +104,10 @@ async function handleDelete() {
 }
 
 .reply-content {
-  margin-bottom: 0.5rem;
-  white-space: pre-wrap;
-  writing-mode: vertical-rl;
-  text-align: center;
+  writing-mode: vertical-rl;  /* 縦書き（右→左） */
+  text-orientation: upright;  /* 縦方向で文字を立てる */
+  text-align: center;         /* 行内の中央寄せ */
+  white-space: pre-wrap;      /* 改行・空白を維持 */
 }
 
 .reply-footer {
