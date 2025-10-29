@@ -364,9 +364,9 @@ app.post('/api/posts/:id/reply', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'すべての句を入力してください。'});
         }
         let num = 0;
-        const can_kaminoku = await check575(content1,5);
-        const can_nakanoku = await check575(content2,7);
-        const can_shimonoku = await check575(content3,5);
+        const {flag: can_kaminoku} = await check575(content1,5);
+        const {flag:can_nakanoku} = await check575(content2,7);
+        const {flag:can_shimonoku} = await check575(content3,5);
         if(!can_kaminoku){
             num = num + 1;
         }
