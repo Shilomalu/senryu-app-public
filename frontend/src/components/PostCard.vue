@@ -224,18 +224,20 @@ const goToProfile = () => {
   margin-top: 0.5rem;
   border-top: 1px solid #ccc;
   padding-top: 0.5rem;
-  overflow-y: auto;
+  /* overflow-y: auto; */
 }
 
 .reply {
-  margin-bottom: 0.3rem;
+  /* margin-bottom: 0.3rem; */
 }
 
 /* 3件ぶんだけ表示し、縦スクロールを許可 */
 .reply-scroll-container {
-  height: 360px; /* 1件=120px × 3件分など */
-  overflow-y: auto;
-  scroll-snap-type: y mandatory;
+  height: 365px; /* 1件=120px × 3件分など */
+  display: flex;               /* 横並びにする */
+  flex-direction: row-reverse;
+  overflow-x: auto;            /* 横スクロール有効 */
+  scroll-snap-type: x mandatory; /* 横方向スナップ */
   scroll-behavior: smooth;
   border-top: 1px solid #eee;
   border-bottom: 1px solid #eee;
@@ -243,8 +245,9 @@ const goToProfile = () => {
 
 /* 各返信カードをスナップ対象に */
 .reply-scroll-container > .reply {
-  scroll-snap-align: start;
-  flex-shrink: 0;
+  scroll-snap-align: start;    /* スナップ基準は左端 */
+  flex: 0 0 100px;             /* カード幅を固定（例: 300px） */
+  margin-left: 10px;          /* カード間の隙間 */
 }
 
 /* スクロールバー非表示（任意） */
