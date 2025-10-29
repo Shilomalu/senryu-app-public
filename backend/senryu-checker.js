@@ -69,4 +69,4 @@ const check575 = async (content, num) => {
   }
 };
 
-module.exports = { check575 };
+module.exports = { check575, checkPart };
