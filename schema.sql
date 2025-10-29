@@ -43,7 +43,8 @@ CREATE TABLE posts (
     user_id INT NOT NULL,
     content VARCHAR(100) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    likes_num DEFAULT 0
 );
 
 CREATE TABLE likes (
