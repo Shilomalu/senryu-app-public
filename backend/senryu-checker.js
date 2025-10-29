@@ -2,46 +2,59 @@ const kuromoji = require('kuromoji');
 
 const builder = kuromoji.builder({ dicPath: 'node_modules/kuromoji/dict' });
 
-// カタカナをひらがなに変換するヘルパー関数
-const cleanReading = (reading) => {
-  if (!reading) return '';
-  return reading.replace(/[\u30a1-\u30f6]/g, (match) => {
-    return String.fromCharCode(match.charCodeAt(0) - 0x60);
-  });
-};
+const { HKtoZK, HGtoZK } = require('./helper_fun.js');
 
 const countMora = (text) => {
   let count = 0;
-  const smallVowels = ['ゃ', 'ゅ', 'ょ', 'ぁ', 'ぃ', 'ぅ', 'ぇ', 'ぉ'];
+  const smallVowels = ['ャ', 'ュ', 'ョ', 'ァ', 'ィ', 'ゥ', 'ェ', 'ォ'];
   for (let i = 0; i < text.length; i++) {
-    if (smallVowels.includes(text[i])) {
-      continue;
-    }
-    count++;
+    if (!smallVowels.includes(text[i])) count++;
   }
   return count;
 };
+
+const countSymbol = (text) => {
+  let count = 0;
+  const symbolmap = ['。', '、', '「', '」', '・', '！', '？'];
+  for (let i = 0; i < text.length; ++i) {
+    if (symbolmap.includes(text[i])) count++;
+  }
+  return count;
+}
 
 const checkPart = (text) => {
   return new Promise((resolve, reject) => {
     builder.build((err, tokenizer) => {
       if (err) return reject(err);
       
-      const tokens = tokenizer.tokenize(text);
-      const reading = tokens.map(t => t.reading || '').join('');
-      const hiragana = cleanReading(reading);
+      const adjust_text = HKtoZK(text);
+
+      const tokens = tokenizer.tokenize(adjust_text);
+
+      let zk = '';
+      for (let i = 0; i < tokens.length; ++i) {
+        if (tokens[i].word_type == 'KNOWN') zk += HGtoZK(tokens[i].reading);
+        else zk += HGtoZK(tokens[i].surface_form);
+      }
+
+      console.log(zk);
       
-      resolve(countMora(hiragana));
+      let moraCount = countMora(zk);
+      let symbolCount = countSymbol(adjust_text);
+      moraCount -= symbolCount;
+
+      resolve({ moraCount, symbolCount });
     });
   });
 };
 
 // メインの5-7-5チェック関数
-const check575 = async (content,num) => {
+const check575 = async (content, num) => {
   console.log('\n--- 5-7-5 Checker Start ---');
   try{
-    const moraCount = await checkPart(content);
-    return moraCount === num;
+    const { moraCount, symbolCount} = await checkPart(content);
+    const flag = (moraCount === num);
+    return { flag, symbolCount };
   }catch(error){
     console.error('エラー発生！');
     return false;

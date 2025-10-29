@@ -6,6 +6,7 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { check575 } = require('./senryu-checker.js');
+const { HKtoZK, HGtoZK } = require('./helper_fun.js');
 
 var { PythonShell } = require("python-shell");
 var pyshell = new PythonShell("senryu-checker.py");
@@ -158,32 +159,30 @@ app.get('/api/users/me', authenticateToken, async (req, res) => {
 });
 
 
-
-
 // 川柳投稿 (要認証)
 app.post('/api/posts', authenticateToken, async (req, res) => {
     try {
-        const { content1, content2, content3 } = req.body;
+        let { content1, content2, content3 } = req.body;
         const userId = req.user.id; // ミドルウェアがセットしたユーザーIDを使用
         if(!content1 || !content2 || !content3){
             return res.status(400).json({ error: 'すべての句を入力してください。'});
         }
         let num = 0;
-        const can_kaminoku = await check575(content1,5);
-        const can_nakanoku = await check575(content2,7);
-        const can_shimonoku = await check575(content3,5);
-        if(!can_kaminoku){
-            num = num + 1;
-        }
-        if(!can_nakanoku){
-            num = num + 2;
-        }
-        if(!can_shimonoku){
-            num = num + 4;
-        }
-        if(num != 0){
+        const { flag: can_kaminoku, symbolCount: symbolCount1 } = await check575(content1, 5);
+        const { flag: can_nakanoku, symbolCount: symbolCount2 } = await check575(content2, 7);
+        const { flag: can_shimonoku, symbolCount: symbolCount3 } = await check575(content3, 5);
+        if (!can_kaminoku) num = num + 1;
+        if (!can_nakanoku) num = num + 2;
+        if (!can_shimonoku) num = num + 4;
+
+        if (num != 0) {
             return res.status(400).json({ errorCode: num, message: '句の音の数が正しくありません。' });
         }
+        const symbolCount = symbolCount1 + symbolCount2 + symbolCount3
+        if (symbolCount > 4) {
+            return res.status(400).json({ errorCode: -1, message: '記号などが多すぎます。' });
+        }
+        content1 = HKtoZK(content1); content2 = HKtoZK(content2); content3 = HKtoZK(content3);
         const content = `${content1} ${content2} ${content3}`;
         const sql = "INSERT INTO posts (user_id, content) VALUES (?, ?)";
         await pool.execute(sql, [userId, content]);
