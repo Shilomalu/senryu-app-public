@@ -692,6 +692,63 @@ app.delete('/api/posts/:postId/like', authenticateToken, async (req, res) => {
   }
 });
 
+// --- フォロー機能API ---
+
+// フォローする
+app.post('/api/users/:id/follow', authenticateToken, async (req, res) => {
+  try {
+    const followedId = req.params.id; // フォローされる側
+    const followerId = req.user.id;   // フォローする側（ログイン中のユーザー）
+
+    if (Number(followedId) === Number(followerId)) {
+      return res.status(400).json({ message: '自分自身はフォローできません。' });
+    }
+
+    // すでにフォローしているかチェック
+    const [rows] = await pool.query(
+      `SELECT * FROM follows WHERE follower_id = ? AND followed_id = ?`,
+      [followerId, followedId]
+    );
+    if (rows.length > 0) {
+      return res.status(400).json({ message: 'すでにフォローしています。' });
+    }
+
+    // 新規フォロー登録
+    await pool.query(
+      `INSERT INTO follows (follower_id, followed_id) VALUES (?, ?)`,
+      [followerId, followedId]
+    );
+
+    res.status(200).json({ message: 'フォローしました。' });
+  } catch (error) {
+    console.error('フォローAPIエラー:', error);
+    res.status(500).json({ error: 'フォローに失敗しました。' });
+  }
+});
+
+// フォロー解除
+app.delete('/api/users/:id/follow', authenticateToken, async (req, res) => {
+  try {
+    const followedId = req.params.id; // フォローを解除される側
+    const followerId = req.user.id;   // フォロー解除を実行する側
+
+    const [result] = await pool.query(
+      `DELETE FROM follows WHERE follower_id = ? AND followed_id = ?`,
+      [followerId, followedId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'フォロー関係が見つかりません。' });
+    }
+
+    res.status(200).json({ message: 'フォロー解除しました。' });
+  } catch (error) {
+    console.error('フォロー解除APIエラー:', error);
+    res.status(500).json({ error: 'フォロー解除に失敗しました。' });
+  }
+});
+
+
 
 
 
