@@ -364,13 +364,20 @@ app.post('/api/posts/:id/reply', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'すべての句を入力してください。'});
         }
         let num = 0;
-        const can_kaminoku = await check575(content1, 5);
-        const can_nakanoku = await check575(content2, 7);
-        const can_shimonoku = await check575(content3, 5);
-        if (!can_kaminoku) num += 1;
-        if (!can_nakanoku) num += 2;
-        if (!can_shimonoku) num += 4;
-        if (num != 0) {
+
+        const {flag: can_kaminoku} = await check575(content1,5);
+        const {flag:can_nakanoku} = await check575(content2,7);
+        const {flag:can_shimonoku} = await check575(content3,5);
+        if(!can_kaminoku){
+            num = num + 1;
+        }
+        if(!can_nakanoku){
+            num = num + 2;
+        }
+        if(!can_shimonoku){
+            num = num + 4;
+        }
+        if(num != 0){
             return res.status(400).json({ errorCode: num, message: '句の音の数が正しくありません。' });
         }
         const content = `${content1} ${content2} ${content3}`;
