@@ -174,9 +174,9 @@ app.post('/api/posts', authenticateToken, async (req, res) => {
       const { flag: can_kaminoku, symbolCount: symbolCount1, word_id: word_id1, words: word1 } = await check575(content1, 5);
       const { flag: can_nakanoku, symbolCount: symbolCount2, word_id: word_id2, words: word2 } = await check575(content2, 7);
       const { flag: can_shimonoku, symbolCount: symbolCount3, word_id: word_id3, words: word3 } = await check575(content3, 5);
-      if (!can_kaminoku) num = num + 1;
-      if (!can_nakanoku) num = num + 2;
-      if (!can_shimonoku) num = num + 4;
+      if (!can_kaminoku) num += 1;
+      if (!can_nakanoku) num += 2;
+      if (!can_shimonoku) num += 4;
 
       if (num != 0) {
         return res.status(400).json({ errorCode: num, message: '句の音の数が正しくありません。' });
@@ -357,29 +357,34 @@ app.get('/api/posts/:id', async (req, res) => {
 // リプライ投稿 (要認証)
 app.post('/api/posts/:id/reply', authenticateToken, async (req, res) => {
     try {
-        const { content1, content2, content3 } = req.body;
+        let { content1, content2, content3 } = req.body;
         const userId = req.user.id; // ミドルウェアがセットしたユーザーIDを使用
         const postId = req.params.id;
+
         if(!content1 || !content2 || !content3){
             return res.status(400).json({ error: 'すべての句を入力してください。'});
         }
         let num = 0;
 
-        const {flag: can_kaminoku} = await check575(content1,5);
-        const {flag:can_nakanoku} = await check575(content2,7);
-        const {flag:can_shimonoku} = await check575(content3,5);
-        if(!can_kaminoku){
-            num = num + 1;
-        }
-        if(!can_nakanoku){
-            num = num + 2;
-        }
-        if(!can_shimonoku){
-            num = num + 4;
-        }
-        if(num != 0){
+        const { flag: can_kaminoku, symbolCount: symbolCount1 } = await check575(content1, 5);
+        const { flag: can_nakanoku, symbolCount: symbolCount2 } = await check575(content2, 7);
+        const { flag: can_shimonoku, symbolCount: symbolCount3 } = await check575(content3, 5);
+        if (!can_kaminoku) num += 1;
+        if (!can_nakanoku) num += 2;
+        if (!can_shimonoku) num += 4;
+
+        if (num !== 0) {
             return res.status(400).json({ errorCode: num, message: '句の音の数が正しくありません。' });
         }
+        
+        /*
+        const symbolCount = symbolCount1 + symbolCount2 + symbolCount3
+        if (symbolCount > 4) {
+          return res.status(400).json({ errorCode: -1, message: '記号などが多すぎます。' });
+        }
+        */
+
+        content1 = HKtoZK(content1); content2 = HKtoZK(content2); content3 = HKtoZK(content3);
         const content = `${content1} ${content2} ${content3}`;
 
         if (!content) return res.status(400).json({ error: 'リプライの内容が必要です' });

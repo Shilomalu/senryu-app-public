@@ -237,9 +237,11 @@ const goToProfile = () => {
   /* overflow-y: auto; */
 }
 
+/*
 .reply {
-  /* margin-bottom: 0.3rem; */
+  margin-bottom: 0.3rem;
 }
+*/
 
 .reply-scroll-container {
   height: 360px;
