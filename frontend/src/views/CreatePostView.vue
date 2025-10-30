@@ -34,12 +34,14 @@ const handlePost = async () => {
     const data = await res.json();
 
     if (!res.ok) {
-      if (data.errorCode) {
+      if (data.errorCode > 0) {
         let errorMessages = [];
         if (data.errorCode & 1) errorMessages.push('上の句が5音ではありません。');
         if (data.errorCode & 2) errorMessages.push('中の句が7音ではありません。');
         if (data.errorCode & 4) errorMessages.push('下の句が5音ではありません。');
         throw new Error(errorMessages.join('\n'));
+      } else if (data.errorCode === -1) {
+        throw new Error('記号などが多すぎます。');
       }
       throw new Error(data.error || '投稿に失敗しました。');
     }

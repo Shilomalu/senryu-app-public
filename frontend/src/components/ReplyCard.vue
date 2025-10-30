@@ -67,8 +67,10 @@ async function handleDelete() {
         削除
       </button>
     </div>
-    <div class="reply-content">
-      {{ reply.content }}
+    <div class="reply-content-wrapper">
+      <div class="reply-content">
+        {{ reply.content }}
+      </div>
     </div>
     <div class="reply-footer">
       <small class="timestamp">{{ formatDate(reply.created_at) }}</small>
@@ -81,9 +83,17 @@ async function handleDelete() {
   padding: 1rem;
   border-top: 1px solid #f0f0f0;
   background-color: #fafafa;
-  height: 120px; /* 固定高さ（好みで調整） */
+  height: 360px; /* 固定高さ（好みで調整） */
   box-sizing: border-box;
   overflow: hidden;
+}
+
+.reply-content-wrapper {
+  display: flex;
+  justify-content: center;   /* 縦方向中央（主軸） */
+  align-items: center;       /* 横方向中央（交差軸） */
+  height: 70%;
+  width: 100%;
 }
 
 .reply-header {
@@ -94,8 +104,10 @@ async function handleDelete() {
 }
 
 .reply-content {
-  margin-bottom: 0.5rem;
-  white-space: pre-wrap;
+  writing-mode: vertical-rl;  /* 縦書き（右→左） */
+  text-orientation: upright;  /* 縦方向で文字を立てる */
+  text-align: center;         /* 行内の中央寄せ */
+  white-space: pre-wrap;      /* 改行・空白を維持 */
 }
 
 .reply-footer {
