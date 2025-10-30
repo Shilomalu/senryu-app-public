@@ -9,6 +9,7 @@ import ProfileView from '../views/ProfileView.vue'
 import SearchView from '../views/SearchView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import EditProfileView from '../views/EditProfileView.vue'
+import PostDescriptionView from '../views/PostDescriptionView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -30,6 +31,12 @@ const router = createRouter({
       path: '/post',
       name: 'post',
       component: CreatePostView
+    },
+    // 追加: 投稿可能な文字の詳細説明
+    {
+      path: '/post/description',
+      name: 'post-description',
+      component: PostDescriptionView
     },
     // 4. 自分のプロフィールページ（タブバーから飛ぶ用）
     {
