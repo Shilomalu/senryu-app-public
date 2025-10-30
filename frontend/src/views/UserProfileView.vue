@@ -20,7 +20,7 @@ const token = localStorage.getItem('token');
 const loadUserProfile = async () => {
   try {
     // プロフィール情報の取得
-    const userRes = await axios.get(`http://localhost:3000/api/users/${userId}`, {
+    const userRes = await axios.get(`/api/users/${userId}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
 
@@ -30,7 +30,7 @@ const loadUserProfile = async () => {
     profile_text.value = userData.profile_text;
 
     // 投稿データの取得
-    const postRes = await axios.get(`http://localhost:3000/api/posts/user/${userId}`, {
+    const postRes = await axios.get(`/api/posts/user/${userId}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
 

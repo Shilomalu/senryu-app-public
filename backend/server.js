@@ -437,6 +437,37 @@ app.get('/api/users/:id', async (req, res) => {
   }
 });
 
+// 特定ユーザーの投稿一覧取得
+app.get('/api/posts/user/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // 特定のユーザーIDに一致する投稿を、新しい順に取得
+    const sql = `
+      SELECT 
+        posts.id, 
+        posts.content, 
+        posts.created_at, 
+        posts.user_id,
+        users.username AS authorName
+      FROM posts 
+      JOIN users ON posts.user_id = users.id
+      WHERE posts.user_id = ?
+      ORDER BY posts.created_at DESC 
+      LIMIT 50;
+    `;
+    
+    // db.all ではなく、pool.execute を使う
+    const [posts] = await pool.execute(sql, [userId]);
+    
+    res.json(posts); // 投稿の配列を返す
+
+  } catch (error) {
+    console.error('特定ユーザーの投稿取得エラー:', error);
+    res.status(500).json({ error: '投稿の取得に失敗しました' });
+  }
+});
+
 
 //ここから検索処理
 const {checkPart}=require('./senryu-checker.js');
