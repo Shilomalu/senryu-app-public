@@ -9,6 +9,7 @@ import ProfileView from '../views/ProfileView.vue'
 import SearchView from '../views/SearchView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import EditProfileView from '../views/EditProfileView.vue'
+import UserProfile from '../views/UserProfileView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -66,6 +67,7 @@ const router = createRouter({
       name: 'user-profile',
       component: ProfileView
     },
+     { path: '/profile/:id', component: UserProfile },
     // 8. 投稿詳細ページ（動的ルート）
     // 例: /posts/456 のようにアクセスする
     {
