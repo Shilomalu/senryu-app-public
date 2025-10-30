@@ -415,6 +415,29 @@ app.delete('/api/replies/:id', authenticateToken, async (req, res) => {
     }
 });
 
+// --- 他のユーザーのプロフィール取得 ---
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // DBからユーザー情報を取得
+    const [rows] = await pool.execute(
+      'SELECT id, username, email, profile_text FROM users WHERE id = ?',
+      [userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'ユーザーが見つかりません' });
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('プロフィール取得エラー:', error);
+    res.status(500).json({ error: 'プロフィール取得に失敗しました' });
+  }
+});
+
+
 //ここから検索処理
 const {checkPart}=require('./senryu-checker.js');
 
