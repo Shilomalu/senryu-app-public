@@ -17,7 +17,7 @@ e.preventDefault();//リロードしないようにしてる
     return;
   }
 
-  const target_url= `http://localhost:3001/api/search?q=${encodeURIComponent(keyword.value)}`;
+  const target_url= `/api/search?q=${encodeURIComponent(keyword.value)}`;
   try{
     const response=await fetch(target_url);
 

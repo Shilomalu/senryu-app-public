@@ -415,6 +415,60 @@ app.delete('/api/replies/:id', authenticateToken, async (req, res) => {
     }
 });
 
+// --- 他のユーザーのプロフィール取得 ---
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // DBからユーザー情報を取得
+    const [rows] = await pool.execute(
+      'SELECT id, username, email, profile_text FROM users WHERE id = ?',
+      [userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'ユーザーが見つかりません' });
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('プロフィール取得エラー:', error);
+    res.status(500).json({ error: 'プロフィール取得に失敗しました' });
+  }
+});
+
+// 特定ユーザーの投稿一覧取得
+app.get('/api/posts/user/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // 特定のユーザーIDに一致する投稿を、新しい順に取得
+    const sql = `
+      SELECT 
+        posts.id, 
+        posts.content, 
+        posts.created_at, 
+        posts.user_id,
+        users.username AS authorName
+      FROM posts 
+      JOIN users ON posts.user_id = users.id
+      WHERE posts.user_id = ?
+      ORDER BY posts.created_at DESC 
+      LIMIT 50;
+    `;
+    
+    // db.all ではなく、pool.execute を使う
+    const [posts] = await pool.execute(sql, [userId]);
+    
+    res.json(posts); // 投稿の配列を返す
+
+  } catch (error) {
+    console.error('特定ユーザーの投稿取得エラー:', error);
+    res.status(500).json({ error: '投稿の取得に失敗しました' });
+  }
+});
+
+
 //ここから検索処理
 const {checkPart}=require('./senryu-checker.js');
 
