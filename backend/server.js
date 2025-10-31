@@ -171,6 +171,7 @@ app.post('/api/posts', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'すべての句を入力してください。'});
     }
 
+    // 使用不可の文字があればエラーを出す
     const regex = /^[\u3040-\u309F\u30A0-\u30FF\uFF65-\uFF9F\u4E00-\u9FFF。｡、､「｢」｣・･！!？?]+$/;
     if (!regex.test(content1) || !regex.test(content2) || !regex.test(content3)) {
       return res.status(400).json({ error: '入力できない文字が含まれています。' });
@@ -184,13 +185,10 @@ app.post('/api/posts', authenticateToken, async (req, res) => {
     if (!can_nakanoku) num += 2;
     if (!can_shimonoku) num += 4;
 
-    if (num != 0) {
-      return res.status(400).json({ errorCode: num, message: '句の音の数が正しくありません。' });
-    }
+    if (num !== 0) return res.status(400).json({ errorCode: num, message: '句の音の数が正しくありません。' });
+
     const symbolCount = symbolCount1 + symbolCount2 + symbolCount3
-    if (symbolCount > 4) {
-      return res.status(400).json({ errorCode: -1, message: '記号などが多すぎます。' });
-    }
+    if (symbolCount > 4) return res.status(400).json({ error: '記号などが多すぎます。' });
 
     // --- 投稿をDBに保存して投稿IDを取得 ---
     content1 = HKtoZK(content1); content2 = HKtoZK(content2); content3 = HKtoZK(content3);
@@ -370,6 +368,7 @@ app.post('/api/posts/:id/reply', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'すべての句を入力してください。'});
     }
 
+    // 使用不可の文字があればエラーを出す
     const regex = /^[\u3040-\u309F\u30A0-\u30FF\uFF65-\uFF9F\u4E00-\u9FFF。｡、､「｢」｣・･！!？?]+$/;
     if (!regex.test(content1) || !regex.test(content2) || !regex.test(content3)) {
       return res.status(400).json({ error: '入力できない文字が含まれています。' });
@@ -383,16 +382,10 @@ app.post('/api/posts/:id/reply', authenticateToken, async (req, res) => {
     if (!can_nakanoku) num += 2;
     if (!can_shimonoku) num += 4;
 
-    if (num !== 0) {
-      return res.status(400).json({ errorCode: num, message: '句の音の数が正しくありません。' });
-    }
-        
-    /*
-    const symbolCount = symbolCount1 + symbolCount2 + symbolCount3
-    if (symbolCount > 4) {
-      return res.status(400).json({ errorCode: -1, message: '記号などが多すぎます。' });
-    }
-    */
+    if (num !== 0) return res.status(400).json({ errorCode: num, message: '句の音の数が正しくありません。' });
+
+    const symbolCount = symbolCount1 + symbolCount2 + symbolCount3;
+    if (symbolCount > 4) return res.status(400).json({ errorCode: -1, message: '記号などが多すぎます。' });
 
     content1 = HKtoZK(content1); content2 = HKtoZK(content2); content3 = HKtoZK(content3);
     const content = `${content1} ${content2} ${content3}`;
