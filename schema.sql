@@ -6,7 +6,7 @@
 -- sqlを起動する際は
 --「mysql -u root -p --default-character-set=utf8mb4」
 -- 下の文を表示するとデータベースを削除して再作成
-DROP DATABASE IF EXISTS Project_Team6_db;
+-- DROP DATABASE IF EXISTS Project_Team6_db;
 
 CREATE DATABASE IF NOT EXISTS Project_Team6_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
