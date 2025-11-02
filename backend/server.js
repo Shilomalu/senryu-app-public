@@ -102,9 +102,31 @@ app.post('/api/users/login', async (req, res) => {
 });
 
 
+
+// JWT 認証付きで自分のプロフィールを取得
+app.get('/api/users/me', authenticateToken, async (req, res) => {
+  const id = req.user.id;
+  console.log('--- /api/users/me ---');
+  console.log('req.user.id:', id);
+  try {
+    const [rows] = await pool.execute(
+      "SELECT id, username, email, profile_text, favorite_id FROM users WHERE id = ?",
+      [id]
+    );
+    console.log('DB結果:', rows);
+    if (rows.length === 0) return res.status(404).json({ message: "User not found" });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 // 認証付きプロフィール更新API
 app.put("/api/users/me", authenticateToken, async (req, res) => {
-  const { username, profile_text } = req.body;
+
+  const { username, profile_text, favorite_id } = req.body;
   const id = req.user.id; // JWT から自動取得
 
   try {
@@ -115,9 +137,15 @@ app.put("/api/users/me", authenticateToken, async (req, res) => {
       updates.push("username = ?");
       values.push(username);
     }
+
     if (profile_text !== undefined) {
       updates.push("profile_text = ?");
       values.push(profile_text);
+    }
+
+    if (favorite_id !== undefined) {
+      updates.push("favorite_id = ?");
+      values.push(favorite_id);
     }
 
     if (updates.length === 0)
@@ -131,7 +159,7 @@ app.put("/api/users/me", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
 
     const [rows] = await pool.execute(
-      "SELECT id, username, email, profile_text FROM users WHERE id = ?",
+      "SELECT id, username, email, profile_text, favorite_id FROM users WHERE id = ?",
       [id]
     );
     res.json({ message: "Profile updated successfully", user: rows[0] });
@@ -141,26 +169,58 @@ app.put("/api/users/me", authenticateToken, async (req, res) => {
   }
 });
 
-
-// JWT 認証付きで自分のプロフィールを取得
-app.get('/api/users/me', authenticateToken, async (req, res) => {
-  const id = req.user.id;
-  console.log('--- /api/users/me ---');
-  console.log('req.user.id:', id);
+/*
+// お気に入りの一句を設定
+app.put('/api/users/me', authenticateToken, async (req, res) => {
   try {
-    const [rows] = await pool.execute(
-      "SELECT id, username, email, profile_text FROM users WHERE id = ?",
-      [id]
+    const userId = req.user.id;
+    const { favorite_id } = req.body;
+
+    // favorite_post_id を更新
+    await pool.execute(
+      "UPDATE users SET favorite_id = ? WHERE id = ?",
+      [favorite_id, userId]
     );
-    console.log('DB結果:', rows);
-    if (rows.length === 0) return res.status(404).json({ message: "User not found" });
-    res.json(rows[0]);
+
+    // 更新後のユーザー情報を返す
+    const [rows] = await pool.execute(
+      "SELECT id, username, email, profile_text, favorite_id FROM users WHERE id = ?",
+      [userId]
+    );
+
+    res.json({ message: 'お気に入りの一句を更新しました', user: rows[0] });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ error: 'お気に入り設定に失敗しました' });
   }
 });
+*/
 
+// 特定ユーザーの投稿一覧取得
+app.get('/api/posts/user/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const [rows] = await pool.query(
+      `SELECT 
+         posts.id, 
+         posts.content, 
+         posts.user_id, 
+         users.username AS authorName,
+         (SELECT COUNT(*) FROM replies WHERE replies.post_id = posts.id) AS repliesCount,
+         (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS likesCount
+       FROM posts
+       JOIN users ON posts.user_id = users.id
+       WHERE posts.user_id = ?
+       ORDER BY posts.created_at DESC`,
+      [userId]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error('特定ユーザー投稿取得エラー:', err);
+    res.status(500).json({ message: '投稿の取得に失敗しました' });
+  }
+});
 
 // 川柳投稿 (要認証)
 app.post('/api/posts', authenticateToken, async (req, res) => {

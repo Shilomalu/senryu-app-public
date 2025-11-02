@@ -3,6 +3,11 @@
 -- (以前確定させた接続情報に一致させています)
 -- --------------------------------------------------
 
+-- sqlを起動する際は
+--「mysql -u root -p --default-character-set=utf8mb4」
+-- 下の文を表示するとデータベースを削除して再作成
+DROP DATABASE IF EXISTS Project_Team6_db;
+
 CREATE DATABASE IF NOT EXISTS Project_Team6_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 USE Project_Team6_db;
@@ -34,7 +39,8 @@ CREATE TABLE users (
     username VARCHAR(50) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    profile_text VARCHAR(255) DEFAULT 'よろしくお願いします。',
+    profile_text VARCHAR(255) DEFAULT 'よろしくお願いします。' ,
+    favorite_id INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
