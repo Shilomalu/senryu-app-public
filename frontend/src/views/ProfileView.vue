@@ -155,7 +155,7 @@ const goEdit = () => {
           <li><strong>自己紹介：</strong> {{ profile_text }}</li>
           <li>
             <strong>お気に入りの一句：</strong>
-            <div v-if="favorite">
+            <div v-if="favorite" >
               {{ favorite.content }}
               <button @click="openFavoriteModal" class="edit-favorite-btn">変更</button>
             </div>
@@ -193,13 +193,14 @@ const goEdit = () => {
     <!-- 過去投稿モーダル -->
     <div v-if="showModal" class="modal-overlay">
       <div class="modal">
-        <h3>お気に入りに設定する句を選択</h3>
+        <h3 style="color: black;">お気に入りに設定する句を選択</h3>
         <button class="close-btn" @click="closeModal">×</button>
         <div class="modal-content">
           <ul>
             <li v-for="post in posts" :key="post.id"  
             @click="selectFavorite(post)" 
-            class="selectable-post">
+            class="selectable-post"
+            style="color: black;">
               {{ post.content }}
             </li>
 
