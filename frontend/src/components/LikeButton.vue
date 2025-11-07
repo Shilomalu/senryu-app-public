@@ -9,51 +9,55 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import axios from 'axios'
+
+const props = defineProps({
+  postId: { type: Number, required: true },
+  initialLiked: { type: Boolean, default: false },
+  initialCount: { type: Number, default: 0 }
+})
 
 const emit = defineEmits(['like-updated'])
 
-const props = defineProps({
-  postId: { type: Number, required: true }
-})
+const liked = ref(props.initialLiked)
+const likeCount = ref(props.initialCount)
 
-const liked = ref(false)
-const likeCount = ref(0)
+// props が更新されたら ref を同期
+watch(() => props.initialLiked, (newVal) => {
+  liked.value = newVal
+})
+watch(() => props.initialCount, (newVal) => {
+  likeCount.value = newVal
+})
 
 const auth = () => ({
   headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
 })
 
-const fetchStatus = async () => {
-  try {
-    const res = await axios.get(`/api/posts/${props.postId}/likes/status`, auth())
-    liked.value = res.data.liked
-    likeCount.value = res.data.count
-  } catch {}
-}
-
 const toggleLike = async () => {
   const previous = { liked: liked.value, likeCount: likeCount.value }
 
-  // UI即時更新（楽観的更新）
   if (!liked.value) {
     liked.value = true
     likeCount.value++
     axios.post(`/api/posts/${props.postId}/like`, {}, auth())
-      .catch(() => Object.assign(liked, previous))
+      .catch(() => {
+        liked.value = previous.liked
+        likeCount.value = previous.likeCount
+      })
   } else {
     liked.value = false
     likeCount.value--
     axios.delete(`/api/posts/${props.postId}/like`, auth())
-      .catch(() => Object.assign(liked, previous))
+      .catch(() => {
+        liked.value = previous.liked
+        likeCount.value = previous.likeCount
+      })
   }
 
-  // ✅ いいねが更新されたことを親に通知
   emit('like-updated')
 }
-
-onMounted(fetchStatus)
 </script>
 
 <style scoped>
