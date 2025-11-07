@@ -14,22 +14,19 @@ import axios from 'axios'
 
 const props = defineProps({
   postId: { type: Number, required: true },
-  initialLiked: { type: Boolean, default: false },
-  initialCount: { type: Number, default: 0 }
+  currentUserId: { type: Number, default: 0 },
+  initialIsLiked: { type: Boolean, default: false },      // PostCardから受け取る名前に合わせる
+  initialLikesCount: { type: Number, default: 0 }        // PostCardから受け取る名前に合わせる
 })
 
 const emit = defineEmits(['like-updated'])
 
-const liked = ref(props.initialLiked)
-const likeCount = ref(props.initialCount)
+const liked = ref(props.initialIsLiked)
+const likeCount = ref(props.initialLikesCount)
 
 // props が更新されたら ref を同期
-watch(() => props.initialLiked, (newVal) => {
-  liked.value = newVal
-})
-watch(() => props.initialCount, (newVal) => {
-  likeCount.value = newVal
-})
+watch(() => props.initialIsLiked, (newVal) => liked.value = newVal)
+watch(() => props.initialLikesCount, (newVal) => likeCount.value = newVal)
 
 const auth = () => ({
   headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
@@ -38,25 +35,21 @@ const auth = () => ({
 const toggleLike = async () => {
   const previous = { liked: liked.value, likeCount: likeCount.value }
 
-  if (!liked.value) {
-    liked.value = true
-    likeCount.value++
-    axios.post(`/api/posts/${props.postId}/like`, {}, auth())
-      .catch(() => {
-        liked.value = previous.liked
-        likeCount.value = previous.likeCount
-      })
-  } else {
-    liked.value = false
-    likeCount.value--
-    axios.delete(`/api/posts/${props.postId}/like`, auth())
-      .catch(() => {
-        liked.value = previous.liked
-        likeCount.value = previous.likeCount
-      })
+  try {
+    if (!liked.value) {
+      liked.value = true
+      likeCount.value++
+      await axios.post(`/api/posts/${props.postId}/like`, {}, auth())
+    } else {
+      liked.value = false
+      likeCount.value--
+      await axios.delete(`/api/posts/${props.postId}/like`, auth())
+    }
+    emit('like-updated', props.postId, liked.value, likeCount.value)
+  } catch {
+    liked.value = previous.liked
+    likeCount.value = previous.likeCount
   }
-
-  emit('like-updated')
 }
 </script>
 
