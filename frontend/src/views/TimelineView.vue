@@ -4,16 +4,25 @@
     <div class="fixed-header">
       <h1 class="page-title">🎍川柳SNS🎍</h1>
       <div class="tabs">
-        <button :class="{ active: filter === 'all' }" @click="filter = 'all'">一覧</button>
-        <button :class="{ active: filter === 'likes' }" @click="filter = 'likes'">いいね</button>
-        <button :class="{ active: filter === 'following' }" @click="filter = 'following'">フォロー中</button>
+        <button
+          :class="{ active: filter === 'all' }"
+          @click="changeFilter('all')"
+        >一覧</button>
+        <button
+          :class="{ active: filter === 'likes' }"
+          @click="changeFilter('likes')"
+        >いいね</button>
+        <button
+          :class="{ active: filter === 'following' }"
+          @click="changeFilter('following')"
+        >フォロー中</button>
       </div>
     </div>
 
     <!-- タイムライン -->
     <div class="timeline-content">
-      <ul v-if="filteredTimeline.length" class="timeline">
-        <li v-for="post in filteredTimeline" :key="post.id">
+      <ul v-if="timeline.length" class="timeline">
+        <li v-for="post in timeline" :key="post.id">
           <PostCard :post="post" :currentUser="currentUser" @delete="handleDelete" />
         </li>
       </ul>
@@ -33,24 +42,49 @@ const message = ref('');
 const token = ref(localStorage.getItem('token'));
 const currentUser = ref(token.value ? jwtDecode(token.value) : null);
 
+/**
+ * フィルター（一覧／いいね／フォロー中）の変更時に呼ばれる
+ */
+const changeFilter = (mode) => {
+  filter.value = mode;
+  fetchTimeline();
+};
+
+/**
+ * 投稿データを取得（filter.value に応じてAPI変更）
+ */
 const fetchTimeline = async () => {
   try {
-    const res = await fetch('/api/posts/timeline');
-    const data = await res.json();
-    if (!res.ok) throw new Error('タイムラインの読み込みに失敗しました。');
+    let endpoint = '/api/posts/timeline';
+    if (filter.value === 'likes') endpoint = '/api/posts/likes';
+    else if (filter.value === 'following') endpoint = '/api/posts/following';
 
-    // ✅ いいねの user_id 配列を作る（timeline自体は崩さない）
+    const res = await fetch(endpoint, {
+      headers: { 'Authorization': `Bearer ${token.value}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'タイムラインの読み込みに失敗しました。');
+
+    // ここで likesCount を確実に数値にする
     timeline.value = data.map(post => ({
       ...post,
-      likedUserIds: post.likes ? post.likes.map(like => like.user_id) : []
+      likesCount: Number(post.likesCount ?? post.likeCount ?? 0), // いずれのフィールド名でも対応
+      isLiked: Boolean(post.isLiked || post.is_liked || post.isLiked === 1),
+      // 既存の likedUserIds 処理が必要なら残す
+      likedUserIds: post.likes ? post.likes.map(like => like.user_id) : (post.likedUserIds || []),
     }));
 
   } catch (err) {
+    console.error(err);
     message.value = err.message || 'データの取得中にエラーが発生しました。';
     timeline.value = [];
   }
 };
 
+
+/**
+ * 投稿削除処理
+ */
 const handleDelete = async (postId) => {
   if (!confirm('本当にこの投稿を削除しますか？')) return;
   try {
@@ -67,20 +101,9 @@ const handleDelete = async (postId) => {
   }
 };
 
-const filteredTimeline = computed(() => {
-  if (filter.value === 'all') return timeline.value;
-
-  // ✅ 「いいねタブ」だけ変更
-  if (filter.value === 'likes') {
-    return timeline.value.filter(post =>
-      post.likedUserIds.includes(currentUser.value.id)
-    );
-  }
-
-  if (filter.value === 'following') return timeline.value.filter(post => post.authorFollowed);
-  return timeline.value;
-});
-
+/**
+ * タブごとのメッセージ
+ */
 const emptyMessage = computed(() => {
   if (filter.value === 'all') return '投稿はありません';
   if (filter.value === 'likes') return 'いいねした投稿はありません';
@@ -176,7 +199,6 @@ onMounted(fetchTimeline);
     grid-template-columns: repeat(2, 500px);
   }
 }
-
 
 .timeline li {
   list-style: none;

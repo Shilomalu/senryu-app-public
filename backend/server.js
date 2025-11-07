@@ -311,6 +311,36 @@ app.get('/api/posts/timeline', async (req, res) => {
     }
 });
 
+app.get('/api/posts/likes', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [rows] = await pool.query(`
+      SELECT 
+        posts.id,
+        posts.content,
+        posts.created_at,
+        posts.user_id,
+        users.username AS authorName,
+        1 AS isLiked,  -- いいね済み確定
+        (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS likesCount,
+        (SELECT COUNT(*) FROM replies WHERE replies.post_id = posts.id) AS repliesCount
+      FROM posts
+      JOIN users ON posts.user_id = users.id
+      JOIN likes ON likes.post_id = posts.id
+      WHERE likes.user_id = ?
+      ORDER BY posts.created_at DESC
+      LIMIT 50;
+    `, [userId]);
+
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'いいね投稿の取得に失敗しました' });
+  }
+});
+
+
 app.delete('/api/posts/:id', authenticateToken, async (req, res) => {
     try {
         const postId = req.params.id;   // URLから削除したい投稿のIDを取得
@@ -599,13 +629,13 @@ app.get('/api/posts/:postId/likes/status', authenticateToken, async (req, res) =
       [postId, userId]
     );
 
-    // 全体の数
+    // 全体の「いとをかし」数
     const [countRows] = await pool.query(
       `SELECT COUNT(*) AS count FROM likes WHERE post_id = ?`,
       [postId]
     );
 
-    // 誰が「いとをかし」したか
+    // 誰が「いとをかし」したか一覧
     const [users] = await pool.query(
       `SELECT users.id, users.username 
        FROM likes 
@@ -615,13 +645,14 @@ app.get('/api/posts/:postId/likes/status', authenticateToken, async (req, res) =
     );
 
     res.json({
-      liked: likedRows.length > 0,
-      count: countRows[0].count,
-      users
+      isLiked: likedRows.length > 0,  // 自分が押しているかどうか
+      likeCount: countRows[0].count,  // 総数
+      likedUsers: users               // 押したユーザー一覧
     });
+
   } catch (error) {
     console.error('いとをかし状態取得エラー:', error);
-    res.status(500).json({ error: 'いとをかし状態取得に失敗しました' });
+    res.status(500).json({ error: 'いとをかし状態の取得に失敗しました' });
   }
 });
 
