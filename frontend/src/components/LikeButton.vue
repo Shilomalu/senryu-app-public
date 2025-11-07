@@ -5,97 +5,66 @@
       <span v-else>💠 いとをかし</span>
       <span class="count">{{ likeCount }}</span>
     </button>
-
-    <div v-if="users?.length > 0" class="like-users">
-      <small>いいねしたユーザー: {{ users.map(u => u.username).join(', ') }}</small>
-    </div>
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 
-export default {
-  name: 'LikeButton',
-  props: {
-    postId: {
-      type: Number,
-      required: true
-    }
-  },
-  setup(props) {
-    const liked = ref(false)
-    const likeCount = ref(0)
-    const users = ref([])
+const emit = defineEmits(['like-updated'])
 
-    const token = localStorage.getItem('token')
-    const config = {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    }
+const props = defineProps({
+  postId: { type: Number, required: true }
+})
 
-    // 初期状態取得
-    const fetchLikeStatus = async () => {
-      try {
-        const res = await axios.get(`/api/posts/${props.postId}/likes/status`, config)
-        liked.value = res.data.liked
-        likeCount.value = res.data.count || 0
-        users.value = res.data.users || []
-      } catch (err) {
-        console.error('いいね状態取得エラー:', err)
-      }
-    }
+const liked = ref(false)
+const likeCount = ref(0)
 
-    const toggleLike = async () => {
-      try {
-        let res
-        if (!liked.value) {
-          res = await axios.post(`/api/posts/${props.postId}/like`, {}, config)
-          liked.value = true
-        } else {
-          res = await axios.delete(`/api/posts/${props.postId}/like`, config)
-          liked.value = false
-        }
-        likeCount.value = res.data.count || 0
-        users.value = res.data.users || []
-      } catch (err) {
-        console.error('いいね切り替えエラー:', err)
-        alert('いいねできませんでした。')
-      }
-    }
+const auth = () => ({
+  headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+})
 
-    onMounted(() => {
-      fetchLikeStatus()
-    })
-
-    return { liked, likeCount, users, toggleLike }
-  }
+const fetchStatus = async () => {
+  try {
+    const res = await axios.get(`/api/posts/${props.postId}/likes/status`, auth())
+    liked.value = res.data.liked
+    likeCount.value = res.data.count
+  } catch {}
 }
+
+const toggleLike = async () => {
+  const previous = { liked: liked.value, likeCount: likeCount.value }
+
+  // UI即時更新（楽観的更新）
+  if (!liked.value) {
+    liked.value = true
+    likeCount.value++
+    axios.post(`/api/posts/${props.postId}/like`, {}, auth())
+      .catch(() => Object.assign(liked, previous))
+  } else {
+    liked.value = false
+    likeCount.value--
+    axios.delete(`/api/posts/${props.postId}/like`, auth())
+      .catch(() => Object.assign(liked, previous))
+  }
+
+  // ✅ いいねが更新されたことを親に通知
+  emit('like-updated')
+}
+
+onMounted(fetchStatus)
 </script>
 
 <style scoped>
-.like-wrapper {
-  margin-top: 5px;
-}
 .like-button {
   cursor: pointer;
-  background-color: #f0f0f0;
+  background-color: #eee;
   border: none;
-  padding: 5px 10px;
-  border-radius: 5px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: .2s;
 }
-.like-button.liked {
-  background-color: #ffc0cb;
-}
-.count {
-  margin-left: 5px;
-  font-weight: bold;
-}
-.like-users {
-  margin-top: 3px;
-  font-size: 0.8em;
-  color: #555;
-}
+.like-button.liked { background-color: #ffc0cb; }
+.count { margin-left: 5px; font-weight: bold; }
 </style>
