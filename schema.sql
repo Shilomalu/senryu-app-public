@@ -82,6 +82,3 @@ CREATE TABLE dictionary(
     word VARCHAR(10) NOT NULL,
     sennryuu_id INT NOT NULL
 );
-
-
-
