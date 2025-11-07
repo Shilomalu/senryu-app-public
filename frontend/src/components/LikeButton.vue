@@ -1,7 +1,7 @@
 <template>
   <div class="like-wrapper">
     <button @click="toggleLike" :class="['like-button', liked ? 'liked' : '']">
-      <span v-if="liked">🌸 いとをかし済み</span>
+      <span v-if="liked">🌸 いとをかし</span>
       <span v-else>💠 いとをかし</span>
       <span class="count">{{ likeCount }}</span>
     </button>
