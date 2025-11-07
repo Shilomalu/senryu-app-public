@@ -23,7 +23,7 @@ const handlePost = async () => {
   };
 
   try {
-    const res = await fetch('http://localhost:3001/api/posts', {
+    const res = await fetch('/api/posts', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -34,12 +34,14 @@ const handlePost = async () => {
     const data = await res.json();
 
     if (!res.ok) {
-      if (data.errorCode) {
+      if (data.errorCode > 0) {
         let errorMessages = [];
         if (data.errorCode & 1) errorMessages.push('上の句が5音ではありません。');
         if (data.errorCode & 2) errorMessages.push('中の句が7音ではありません。');
         if (data.errorCode & 4) errorMessages.push('下の句が5音ではありません。');
         throw new Error(errorMessages.join('\n'));
+      } else if (data.errorCode === -1) {
+        throw new Error('記号などが多すぎます。');
       }
       throw new Error(data.error || '投稿に失敗しました。');
     }
@@ -49,11 +51,19 @@ const handlePost = async () => {
     message.value = err.message;
   }
 };
+
+// 入力可能文字種の詳細へ遷移
+const goDescription = () => {
+  router.push('/post/description');
+};
 </script>
 
 <template>
   <div class="form-container">
     <h1>川柳を詠む</h1>
+    <div class="text-wrapper">
+      <p class="form-text" @click="goDescription">入力できる文字種一覧はこちら</p>
+    </div>
     <form @submit.prevent="handlePost">
       <div class="senryu-inputs">
         <input v-model="content1" type="text" placeholder="上の句（五）" required maxlength="10">
@@ -71,6 +81,18 @@ const handlePost = async () => {
   max-width: 500px;
   margin: 0 auto;
   text-align: center;
+}
+
+.text-wrapper{
+  text-align: right;
+}
+.form-text {
+  display: inline-block;
+  color: #3366bb;
+  cursor: pointer;
+}
+.form-text:hover {
+  text-decoration: underline;
 }
 
 /* 入力欄を縦に並べるスタイル */

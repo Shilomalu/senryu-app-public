@@ -35,22 +35,28 @@ const currentUser = ref(token.value ? jwtDecode(token.value) : null);
 
 const fetchTimeline = async () => {
   try {
-    const res = await fetch('/api/posts/timeline'); // 修正
+    const res = await fetch('/api/posts/timeline');
     const data = await res.json();
     if (!res.ok) throw new Error('タイムラインの読み込みに失敗しました。');
-    timeline.value = data;
-  } catch {
+
+    // ✅ いいねの user_id 配列を作る（timeline自体は崩さない）
+    timeline.value = data.map(post => ({
+      ...post,
+      likedUserIds: post.likes ? post.likes.map(like => like.user_id) : []
+    }));
+
+  } catch (err) {
     message.value = err.message || 'データの取得中にエラーが発生しました。';
-    timeline.value = []; // エラー時は空にする
+    timeline.value = [];
   }
 };
 
 const handleDelete = async (postId) => {
   if (!confirm('本当にこの投稿を削除しますか？')) return;
   try {
-    const res = await fetch(`/api/posts/${postId}`, { // ← 相対パスに修正
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token.value}` },
+    const res = await fetch(`/api/posts/${postId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token.value}` },
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
@@ -63,7 +69,14 @@ const handleDelete = async (postId) => {
 
 const filteredTimeline = computed(() => {
   if (filter.value === 'all') return timeline.value;
-  if (filter.value === 'likes') return timeline.value.filter(post => post.likes && post.likes.includes(currentUser.value.id));
+
+  // ✅ 「いいねタブ」だけ変更
+  if (filter.value === 'likes') {
+    return timeline.value.filter(post =>
+      post.likedUserIds.includes(currentUser.value.id)
+    );
+  }
+
   if (filter.value === 'following') return timeline.value.filter(post => post.authorFollowed);
   return timeline.value;
 });
@@ -75,9 +88,7 @@ const emptyMessage = computed(() => {
   return '';
 });
 
-onMounted(() => {
-  fetchTimeline();
-});
+onMounted(fetchTimeline);
 </script>
 
 <style scoped>

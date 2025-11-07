@@ -9,6 +9,8 @@ import ProfileView from '../views/ProfileView.vue'
 import SearchView from '../views/SearchView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import EditProfileView from '../views/EditProfileView.vue'
+import UserProfile from '../views/UserProfileView.vue';
+import PostDescriptionView from '../views/PostDescriptionView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -30,6 +32,12 @@ const router = createRouter({
       path: '/post',
       name: 'post',
       component: CreatePostView
+    },
+    // 追加: 投稿可能な文字の詳細説明ページ
+    {
+      path: '/post/description',
+      name: 'post-description',
+      component: PostDescriptionView
     },
     // 4. 自分のプロフィールページ（タブバーから飛ぶ用）
     {
@@ -66,6 +74,7 @@ const router = createRouter({
       name: 'user-profile',
       component: ProfileView
     },
+     { path: '/profile/:id', component: UserProfile },
     // 8. 投稿詳細ページ（動的ルート）
     // 例: /posts/456 のようにアクセスする
     {

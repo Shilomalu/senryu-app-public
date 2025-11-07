@@ -234,24 +234,29 @@ const goToProfile = () => {
   margin-top: 0.5rem;
   border-top: 1px solid #ccc;
   padding-top: 0.5rem;
-  overflow-y: auto;
+  /* overflow-y: auto; */
 }
 
+/*
 .reply {
   margin-bottom: 0.3rem;
 }
+*/
 
 .reply-scroll-container {
   height: 360px;
-  overflow-y: auto;
-  scroll-snap-type: y mandatory;
+  display: flex;               /* 横並びにする */
+  flex-direction: row-reverse;
+  overflow-x: auto;            /* 横スクロール有効 */
+  scroll-snap-type: x mandatory; /* 横方向スナップ */
   scroll-behavior: smooth;
   border-top: 1px solid #eee;
   border-bottom: 1px solid #eee;
 }
 .reply-scroll-container > .reply {
-  scroll-snap-align: start;
-  flex-shrink: 0;
+  scroll-snap-align: start;    /* スナップ基準は左端 */
+  flex: 0 0 150px;             /* カード幅を固定（例: 300px） */
+  margin-left: 10px;          /* カード間の隙間 */
 }
 .reply-scroll-container::-webkit-scrollbar {
   display: none;
