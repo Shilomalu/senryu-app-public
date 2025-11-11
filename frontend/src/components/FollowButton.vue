@@ -83,29 +83,9 @@ const toggleFollow = async () => {
   }
 };
 
-// --- WebSocket接続（フォロワー数更新をリアルタイム反映）---
-const connectSocket = () => {
-  socket = new WebSocket(`wss://your-server-domain/ws/users/${props.targetUserId}`);
-
-  socket.onmessage = (event) => {
-    const msg = JSON.parse(event.data);
-    if (msg.type === 'follow_update' && msg.userId === props.targetUserId) {
-      followerCount.value = msg.count;
-      followers.value = msg.users;
-    }
-  };
-
-  socket.onopen = () => console.log('WebSocket接続成功');
-  socket.onclose = () => console.log('WebSocket切断');
-};
-
 // --- ライフサイクル ---
 onMounted(() => {
   fetchFollowStatus();
-  connectSocket();
-});
-onUnmounted(() => {
-  if (socket) socket.close();
 });
 watch(() => props.targetUserId, fetchFollowStatus);
 </script>
