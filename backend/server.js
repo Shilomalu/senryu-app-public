@@ -725,6 +725,67 @@ app.delete('/api/posts/:postId/like', authenticateToken, async (req, res) => {
 
 // --- フォロー機能API ---
 
+// 特定ユーザーのフォロー状態、フォロワー数、フォロワー一覧を取得 
+app.get('/api/users/:id/followers/status', async (req, res) => {
+  try {
+    const targetUserId = req.params.id; // フォローされているユーザー
+    const currentUserId = req.query.userId; // ログインユーザー（フォローしているかチェックする側）
+
+    // フォロー状態のチェック
+    const [statusRows] = await pool.query(
+      `SELECT * FROM follows WHERE follower_id = ? AND followed_id = ?`,
+      [currentUserId, targetUserId]
+    );
+    const isFollowing = statusRows.length > 0;
+
+    // フォロワー数の取得
+    const [countRows] = await pool.query(
+      `SELECT COUNT(*) AS count FROM follows WHERE followed_id = ?`,
+      [targetUserId]
+    );
+    const count = countRows[0].count;
+
+    // フォロワー一覧の取得
+    const [followerUsers] = await pool.query(
+      `SELECT users.id, users.username 
+       FROM follows 
+       JOIN users ON follows.follower_id = users.id 
+       WHERE follows.followed_id = ?
+       ORDER BY follows.created_at DESC`,
+      [targetUserId]
+    );
+
+    res.json({
+      following: isFollowing,
+      count: count,
+      users: followerUsers
+    });
+  } catch (error) {
+    console.error('フォロー状態取得エラー:', error);
+    res.status(500).json({ error: 'フォロー状態の取得に失敗しました' });
+  }
+});
+
+// フォロワー一覧取得API
+app.get('/api/users/:id/followers', async (req, res) => {
+  try {
+    const targetUserId = req.params.id;
+    const [users] = await pool.query(
+      `SELECT users.id, users.username 
+       FROM follows 
+       JOIN users ON follows.follower_id = users.id 
+       WHERE follows.followed_id = ?
+       ORDER BY follows.created_at DESC`,
+      [targetUserId]
+    );
+
+    res.json(users);
+  } catch (error) {
+    console.error('フォロワー一覧取得エラー:', error);
+    res.status(500).json({ error: 'フォロワー一覧の取得に失敗しました' });
+  }
+});
+
 // フォローする
 app.post('/api/users/:id/follow', authenticateToken, async (req, res) => {
   try {
