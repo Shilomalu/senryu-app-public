@@ -66,20 +66,32 @@ const toggleFollowerList = async () => {
 
 // --- フォロー/解除処理 ---
 const toggleFollow = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+      console.error('認証トークンがありません。');
+      isFollowing.value = !isFollowing.value;
+      followerCount.value += isFollowing.value ? -1 : 1;
+      return;
+  }
+
   isFollowing.value = !isFollowing.value;
   followerCount.value += isFollowing.value ? 1 : -1;
 
   try {
     await fetch(`/api/users/${props.targetUserId}/follow`, {
       method: isFollowing.value ? 'POST' : 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ followerId: props.currentUserId })
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
     });
 
     emit('follow-toggled', { targetUserId: props.targetUserId, following: isFollowing.value });
     emit('update-followers', { targetUserId: props.targetUserId, following: isFollowing.value });
   } catch (err) {
     console.error('フォロー処理失敗:', err);
+    isFollowing.value = !isFollowing.value;
+    followerCount.value += isFollowing.value ? -1 : 1;
   }
 };
 

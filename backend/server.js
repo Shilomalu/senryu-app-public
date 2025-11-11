@@ -348,23 +348,26 @@ app.get('/api/posts/timeline/following', authenticateToken, async (req, res) => 
 
     const sql = `
       SELECT 
-        posts.id, 
-        posts.content, 
-        posts.created_at, 
-        posts.user_id,
-        users.username AS authorName,
-        (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS likesCount,
-        (SELECT COUNT(*) FROM replies WHERE replies.post_id = posts.id) AS repliesCount
-      FROM posts
-      JOIN users ON users.id = posts.user_id
-      WHERE posts.user_id IN (
-        SELECT followed_id FROM follows WHERE follower_id = ?
-      )
-      ORDER BY posts.created_at DESC
-      LIMIT 50;
+            p.*, 
+            u.username AS authorName,
+            (SELECT COUNT(*) FROM likes WHERE post_id = p.id) AS likesCount, 
+            (SELECT EXISTS (
+                SELECT 1 
+                FROM likes 
+                WHERE post_id = p.id AND user_id = ?
+            )) AS isLiked
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        WHERE p.user_id IN (
+            SELECT followed_id 
+            FROM follows 
+            WHERE follower_id = ?
+        )
+        ORDER BY p.created_at DESC
+        LIMIT 50
     `;
 
-    const [posts] = await pool.execute(sql, [userId]);
+    const [posts] = await pool.query(sql, [userId, userId]);
     res.json(posts);
   } catch (error) {
     console.error('フォロー中タイムライン取得エラー:', error);
