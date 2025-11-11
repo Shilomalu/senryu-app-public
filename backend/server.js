@@ -341,6 +341,37 @@ app.get('/api/posts/likes', authenticateToken, async (req, res) => {
 });
 
 
+// --- フォローしているユーザーの投稿だけを取得するタイムライン ---
+app.get('/api/posts/timeline/following', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const sql = `
+      SELECT 
+        posts.id, 
+        posts.content, 
+        posts.created_at, 
+        posts.user_id,
+        users.username AS authorName,
+        (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS likesCount,
+        (SELECT COUNT(*) FROM replies WHERE replies.post_id = posts.id) AS repliesCount
+      FROM posts
+      JOIN users ON users.id = posts.user_id
+      WHERE posts.user_id IN (
+        SELECT followed_id FROM follows WHERE follower_id = ?
+      )
+      ORDER BY posts.created_at DESC
+      LIMIT 50;
+    `;
+
+    const [posts] = await pool.execute(sql, [userId]);
+    res.json(posts);
+  } catch (error) {
+    console.error('フォロー中タイムライン取得エラー:', error);
+    res.status(500).json({ error: 'フォロー中タイムライン取得に失敗しました。' });
+  }
+});
+
 app.delete('/api/posts/:id', authenticateToken, async (req, res) => {
     try {
         const postId = req.params.id;   // URLから削除したい投稿のIDを取得

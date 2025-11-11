@@ -55,23 +55,26 @@ const changeFilter = (mode) => {
  */
 const fetchTimeline = async () => {
   try {
+    // --- タブごとに取得先を切り替える ---
     let endpoint = '/api/posts/timeline';
     if (filter.value === 'likes') endpoint = '/api/posts/likes';
-    else if (filter.value === 'following') endpoint = '/api/posts/following';
+    else if (filter.value === 'following') endpoint = '/api/posts/timeline/following';
 
     const res = await fetch(endpoint, {
-      headers: { 'Authorization': `Bearer ${token.value}` },
+      headers: { Authorization: `Bearer ${token.value}` },
     });
+
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'タイムラインの読み込みに失敗しました。');
 
-    // ここで likesCount を確実に数値にする
+    // --- 各投稿のデータを整形 ---
     timeline.value = data.map(post => ({
       ...post,
-      likesCount: Number(post.likesCount ?? post.likeCount ?? 0), // いずれのフィールド名でも対応
+      likesCount: Number(post.likesCount ?? post.likeCount ?? 0),
       isLiked: Boolean(post.isLiked || post.is_liked || post.isLiked === 1),
-      // 既存の likedUserIds 処理が必要なら残す
-      likedUserIds: post.likes ? post.likes.map(like => like.user_id) : (post.likedUserIds || []),
+      likedUserIds: post.likes
+        ? post.likes.map(like => like.user_id)
+        : (post.likedUserIds || []),
     }));
 
   } catch (err) {
@@ -80,6 +83,7 @@ const fetchTimeline = async () => {
     timeline.value = [];
   }
 };
+
 
 
 /**
