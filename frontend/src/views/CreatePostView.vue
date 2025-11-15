@@ -6,8 +6,20 @@ const content1 = ref(''); // 上の句（5）
 const content2 = ref(''); // 中の句（7）
 const content3 = ref(''); // 下の句（5）
 
+const selectedGenre = ref(null);
 const message = ref('');
 const router = useRouter();
+
+const genres = [
+  { id : 1, name : '＃春'},
+  { id : 2, name : '＃夏'},
+  { id : 3, name : '＃秋'},
+  { id : 4, name : '＃冬'},
+  { id : 5, name : '＃スポーツ'},
+  { id : 6, name : '＃食べ物'},
+  { id : 7, name : '＃学校'},
+  { id : 8, name : '＃旅行'},
+];
 
 const handlePost = async () => {
   const token = localStorage.getItem('token');
@@ -20,6 +32,7 @@ const handlePost = async () => {
     content1: content1.value,
     content2: content2.value,
     content3: content3.value,
+    genre_id: selectedGenre.value,
   };
 
   try {
@@ -65,13 +78,31 @@ const goDescription = () => {
       <p class="form-text" @click="goDescription">入力できる文字種一覧はこちら</p>
     </div>
     <form @submit.prevent="handlePost">
-      <div class="senryu-inputs">
-        <input v-model="content1" type="text" placeholder="上の句（五）" required maxlength="10">
-        <input v-model="content2" type="text" placeholder="中の句（七）" required maxlength="15">
-        <input v-model="content3" type="text" placeholder="下の句（五）" required maxlength="10">
-      </div>
-      <button type="submit">投稿</button>
-    </form>
+
+  <div class="senryu-inputs">
+    <input v-model="content1" type="text" placeholder="上の句（五）" required maxlength="10">
+    <input v-model="content2" type="text" placeholder="中の句（七）" required maxlength="15">
+    <input v-model="content3" type="text" placeholder="下の句（五）" required maxlength="10">
+  </div>
+
+  <!-- ジャンル選択ボタン -->
+  <div class="genre-buttons">
+    <button 
+      v-for="genre in genres"
+      :key="genre.id"
+      type="button"
+      :class="{ active: selectedGenre === genre.id }"
+      @click="selectedGenre = genre.id"
+    >
+      {{ genre.name }}
+    </button>
+  </div>
+
+  <!-- 投稿ボタン -->
+  <button type="submit">投稿</button>
+
+</form>
+
     <p v-if="message">{{ message }}</p>
   </div>
 </template>
@@ -109,7 +140,32 @@ const goDescription = () => {
   text-align: center;
 }
 
-button {
+.genre-buttons {
+  display : grid;
+  grid-template-columns : repeat(4,1fr);
+  gap : 10px;
+  margin-bottom : 20px;
+}
+
+.genre-buttons button {
+  padding : 8px;
+  font-size : 0.9em;
+  border-radius: 6px;
+  border: 1px solid #007bff;
+  background-color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.genre-buttons button.active {
+  background-color: #007bff;
+  color: white;
+}
+.genre-buttons button:hover {
+  background-color: #0056b3;
+  color: white;
+}
+
+button[type="submit"] {
   width: 100%;
   padding: 10px;
   font-size: 1em;
@@ -119,7 +175,7 @@ button {
   border-radius: 6px;
   cursor: pointer;
 }
-button:hover {
+button[type="submit"]:hover {
   background-color: #0056b3;
 }
 </style>
