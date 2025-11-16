@@ -6,7 +6,7 @@ const content1 = ref(''); // 上の句（5）
 const content2 = ref(''); // 中の句（7）
 const content3 = ref(''); // 下の句（5）
 
-const selectedGenre = ref(null);
+const selectedGenre = ref(1);
 const message = ref('');
 const router = useRouter();
 
@@ -87,19 +87,20 @@ const goDescription = () => {
 
   <!-- ジャンル選択ボタン -->
   <div class="genre-buttons">
-    <button 
-      v-for="genre in genres"
-      :key="genre.id"
-      type="button"
-      :class="{ active: selectedGenre === genre.id }"
-      @click="selectedGenre = genre.id"
-    >
-      {{ genre.name }}
-    </button>
-  </div>
+  <button 
+    v-for="genre in genres"
+    :key="genre.id"
+    type="button"
+    :class="{ active: selectedGenre === genre.id }"
+    @click="selectedGenre = genre.id"
+  >
+    {{ genre.name }}
+  </button>
+</div>
 
   <!-- 投稿ボタン -->
-  <button type="submit">投稿</button>
+  <button type="submit" class="submit-btn">投稿</button>
+
 
 </form>
 
@@ -165,7 +166,7 @@ const goDescription = () => {
   color: white;
 }
 
-button[type="submit"] {
+.submit-btn {
   width: 100%;
   padding: 10px;
   font-size: 1em;
@@ -175,7 +176,7 @@ button[type="submit"] {
   border-radius: 6px;
   cursor: pointer;
 }
-button[type="submit"]:hover {
+.submit-btn:hover {
   background-color: #0056b3;
 }
 </style>

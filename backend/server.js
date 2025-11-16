@@ -207,15 +207,21 @@ app.get('/api/posts/user/:userId', async (req, res) => {
 });
 
 // 川柳投稿 (要認証)
+// 川柳投稿 (ジャンル対応・要認証)
 app.post('/api/posts', authenticateToken, async (req, res) => {
   try {
-    let { content1, content2, content3 } = req.body;
+    let { content1, content2, content3, genre_id } = req.body;
     const userId = req.user.id; // ミドルウェアがセットしたユーザーIDを使用
+
     if (!content1 || !content2 || !content3) {
-      return res.status(400).json({ error: 'すべての句を入力してください。'});
+      return res.status(400).json({ error: 'すべての句を入力してください。' });
     }
 
-    // 使用不可の文字があればエラーを出す
+    if (!genre_id) {
+      return res.status(400).json({ error: 'ジャンルを選択してください。' });
+    }
+
+    // 使用不可の文字チェック
     const regex = /^[\u3040-\u309F\u30A0-\u30FF\uFF65-\uFF9F\u4E00-\u9FFF。｡、､「｢」｣・･！!？?]+$/;
     if (!regex.test(content1) || !regex.test(content2) || !regex.test(content3)) {
       return res.status(400).json({ error: '入力できない文字が含まれています。' });
@@ -231,18 +237,22 @@ app.post('/api/posts', authenticateToken, async (req, res) => {
 
     if (num !== 0) return res.status(400).json({ errorCode: num, message: '句の音の数が正しくありません。' });
 
-    const symbolCount = symbolCount1 + symbolCount2 + symbolCount3
+    const symbolCount = symbolCount1 + symbolCount2 + symbolCount3;
     if (symbolCount > 4) return res.status(400).json({ error: '記号などが多すぎます。' });
 
-    // --- 投稿をDBに保存して投稿IDを取得 ---
-    content1 = HKtoZK(content1); content2 = HKtoZK(content2); content3 = HKtoZK(content3);
+    // 半角→全角変換
+    content1 = HKtoZK(content1); 
+    content2 = HKtoZK(content2); 
+    content3 = HKtoZK(content3);
     const content = `${content1} ${content2} ${content3}`;
+
+    // --- 投稿をDBに保存して投稿IDを取得 ---
     const [postResult] = await pool.execute(
-      "INSERT INTO posts (user_id, content) VALUES (?, ?)",
-      [userId, content]
+      "INSERT INTO posts (user_id, content, genre_id) VALUES (?, ?, ?)",
+      [userId, content, genre_id]
     );
 
-    const sennryuu_id = postResult.insertId; // ← 実際に登録されたID！
+    const sennryuu_id = postResult.insertId; 
     console.log("登録された川柳ID:", sennryuu_id);
 
     // --- dictionaryテーブルにword_idを登録 ---
@@ -251,7 +261,7 @@ app.post('/api/posts', authenticateToken, async (req, res) => {
     console.log("登録するword_id_array:", word_id_array);
 
     for (let i = 0; i < word_id_array.length; i++) {
-      if (word_id_array[i] == null) continue; // nullスキップ
+      if (word_id_array[i] == null) continue; 
       await pool.execute(
         "INSERT INTO dictionary (word_id, word, sennryuu_id) VALUES (?, ?, ?)",
         [word_id_array[i], word_array[i], sennryuu_id]
@@ -262,8 +272,8 @@ app.post('/api/posts', authenticateToken, async (req, res) => {
     res.status(201).json({ message: '投稿成功', sennryuu_id });
 
   } catch (error) {
-      console.error("投稿エラー詳細:", error);
-      res.status(500).json({ error: '投稿エラー', detail: error.message });
+    console.error("投稿エラー詳細:", error);
+    res.status(500).json({ error: '投稿エラー', detail: error.message });
   }
 });
 

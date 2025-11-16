@@ -44,13 +44,33 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ジャンルテーブルの作成
+CREATE TABLE genres (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL
+);
+
+INSERT INTO genres (name) VALUES
+('春'),('夏'),('秋'),('冬'),('スポーツ'),('食べ物'),('学校'),('旅行');
+
+-- posts テーブルに genre_id を追加
+ALTER TABLE posts
+ADD COLUMN genre_id INT NOT NULL DEFAULT 1;
+
+-- 外部キーの設定
+ALTER TABLE posts
+ADD CONSTRAINT fk_posts_genre
+FOREIGN KEY (genre_id) REFERENCES genres(id);
+
 CREATE TABLE posts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     content VARCHAR(100) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    likes_num INT DEFAULT 0
+    likes_num INT DEFAULT 0,
+    genre_id INT NOT NULL,
+    FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE CASCADE
 );
 
 CREATE TABLE likes (
