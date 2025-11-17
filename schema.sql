@@ -32,6 +32,7 @@ DROP TABLE IF EXISTS replies;
 DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS dictionary;
+DROP TABLE IF EXISTS directmessages;
 
 
 CREATE TABLE users (
@@ -107,4 +108,16 @@ CREATE TABLE dictionary(
     word_id INT NOT NULL,
     word VARCHAR(10) NOT NULL,
     sennryuu_id INT NOT NULL
+);
+
+CREATE TABLE directmessages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sender_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+    content VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    reply_77 BOOLEAN NOT NULL DEFAULT FALSE,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
 );
