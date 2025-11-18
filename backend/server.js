@@ -383,6 +383,39 @@ app.get("/api/posts/likes", authenticateToken, async (req, res) => {
   }
 });
 
+// --- フォローしているユーザーの投稿だけを取得するタイムライン ---
+app.get('/api/posts/timeline/following', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const sql = `
+      SELECT
+            p.*,
+            u.username AS authorName,
+            (SELECT COUNT(*) FROM likes WHERE post_id = p.id) AS likesCount,
+            (SELECT EXISTS (
+                SELECT 1
+                FROM likes
+                WHERE post_id = p.id AND user_id = ?
+            )) AS isLiked
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        WHERE p.user_id IN (
+            SELECT followed_id
+            FROM follows
+            WHERE follower_id = ?
+        )
+        ORDER BY p.created_at DESC
+        LIMIT 50
+    `;
+
+    const [posts] = await pool.query(sql, [userId, userId]);
+    res.json(posts);
+  } catch (error) {
+    console.error('フォロー中タイムライン取得エラー:', error);
+    res.status(500).json({ error: 'フォロー中タイムライン取得に失敗しました。' });
+  }
+});
 app.delete("/api/posts/:id", authenticateToken, async (req, res) => {
   try {
     const postId = req.params.id; // URLから削除したい投稿のIDを取得
@@ -794,9 +827,288 @@ app.delete("/api/posts/:postId/like", authenticateToken, async (req, res) => {
 
     res.json({ success: true });
   } catch (error) {
-    console.error("いとをかし解除エラー:", error);
-    res.status(500).json({ error: "いとをかし解除に失敗しました" });
+    console.error('いとをかし解除エラー:', error);
+    res.status(500).json({ error: 'いとをかし解除に失敗しました' });
   }
+});
+
+// --- フォロー機能API ---
+
+// 特定ユーザーのフォロー状態、フォロワー数、フォロワー一覧を取得 
+app.get('/api/users/:id/followers/status', async (req, res) => {
+  try {
+    const targetUserId = req.params.id; // フォローされているユーザー
+    const currentUserId = req.query.userId; // ログインユーザー（フォローしているかチェックする側）
+
+    // フォロー状態のチェック
+    const [statusRows] = await pool.query(
+      `SELECT * FROM follows WHERE follower_id = ? AND followed_id = ?`,
+      [currentUserId, targetUserId]
+    );
+    const isFollowing = statusRows.length > 0;
+
+    // フォロワー数の取得
+    const [countRows] = await pool.query(
+      `SELECT COUNT(*) AS count FROM follows WHERE followed_id = ?`,
+      [targetUserId]
+    );
+    const count = countRows[0].count;
+
+    // フォロワー一覧の取得
+    const [followerUsers] = await pool.query(
+      `SELECT users.id, users.username 
+       FROM follows 
+       JOIN users ON follows.follower_id = users.id 
+       WHERE follows.followed_id = ?
+       ORDER BY follows.created_at DESC`,
+      [targetUserId]
+    );
+
+    res.json({
+      following: isFollowing,
+      count: count,
+      users: followerUsers
+    });
+  } catch (error) {
+    console.error('フォロー状態取得エラー:', error);
+    res.status(500).json({ error: 'フォロー状態の取得に失敗しました' });
+  }
+});
+
+// フォロワー一覧取得API
+app.get('/api/users/:id/followers', async (req, res) => {
+  try {
+    const targetUserId = req.params.id;
+    const [users] = await pool.query(
+      `SELECT users.id, users.username 
+       FROM follows 
+       JOIN users ON follows.follower_id = users.id 
+       WHERE follows.followed_id = ?
+       ORDER BY follows.created_at DESC`,
+      [targetUserId]
+    );
+
+    res.json(users);
+  } catch (error) {
+    console.error('フォロワー一覧取得エラー:', error);
+    res.status(500).json({ error: 'フォロワー一覧の取得に失敗しました' });
+  }
+});
+
+// フォローする
+app.post('/api/users/:id/follow', authenticateToken, async (req, res) => {
+  try {
+    const followedId = req.params.id; // フォローされる側
+    const followerId = req.user.id;   // フォローする側（ログイン中のユーザー）
+
+    if (Number(followedId) === Number(followerId)) {
+      return res.status(400).json({ message: '自分自身はフォローできません。' });
+    }
+
+    // すでにフォローしているかチェック
+    const [rows] = await pool.query(
+      `SELECT * FROM follows WHERE follower_id = ? AND followed_id = ?`,
+      [followerId, followedId]
+    );
+    if (rows.length > 0) {
+      return res.status(400).json({ message: 'すでにフォローしています。' });
+    }
+
+    // 新規フォロー登録
+    await pool.query(
+      `INSERT INTO follows (follower_id, followed_id) VALUES (?, ?)`,
+      [followerId, followedId]
+    );
+
+    res.status(200).json({ message: 'フォローしました。' });
+  } catch (error) {
+    console.error('フォローAPIエラー:', error);
+    res.status(500).json({ error: 'フォローに失敗しました。' });
+  }
+});
+
+// フォロー解除
+app.delete('/api/users/:id/follow', authenticateToken, async (req, res) => {
+  try {
+    const followedId = req.params.id; // フォローを解除される側
+    const followerId = req.user.id;   // フォロー解除を実行する側
+
+    const [result] = await pool.query(
+      `DELETE FROM follows WHERE follower_id = ? AND followed_id = ?`,
+      [followerId, followedId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'フォロー関係が見つかりません。' });
+    }
+
+    res.status(200).json({ message: 'フォロー解除しました。' });
+  } catch (error) {
+    console.error('フォロー解除APIエラー:', error);
+    res.status(500).json({ error: 'フォロー解除に失敗しました。' });
+  }
+});
+
+//ダイレクトふみを送信できるフォロー中取得
+// --- フォローしているユーザーの投稿だけを取得するタイムライン ---
+app.post('/api/users/following', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const sql = `
+      SELECT 
+          u.id,
+          u.username,
+          latest.id AS dm_id,
+          latest.sender_id,
+          latest.receiver_id,
+          latest.content,
+          latest.created_at AS latest_dm,
+          latest.reply_77,
+          latest.is_read
+      FROM users u
+      JOIN follows f ON u.id = f.followed_id
+
+      LEFT JOIN (
+          SELECT 
+              d1.*
+          FROM directmessages d1
+          JOIN (
+              SELECT 
+                  LEAST(sender_id, receiver_id) AS a,
+                  GREATEST(sender_id, receiver_id) AS b,
+                  MAX(created_at) AS max_created
+              FROM directmessages
+              GROUP BY a, b
+          ) latest2
+          ON (
+              LEAST(d1.sender_id, d1.receiver_id) = latest2.a AND
+              GREATEST(d1.sender_id, d1.receiver_id) = latest2.b AND
+              d1.created_at = latest2.max_created
+          )
+      ) latest
+      ON (
+          (latest.sender_id = u.id AND latest.receiver_id = ?) OR
+          (latest.receiver_id = u.id AND latest.sender_id = ?)
+      )
+
+      WHERE f.follower_id = ?
+      ORDER BY latest_dm IS NULL ASC, latest_dm DESC;
+    `;
+
+    const [partners] = await pool.query(sql, [userId, userId, userId]);
+    res.status(212).json(partners);
+  } catch (error) {
+    console.error('フォロー中タイムライン取得エラー:', error);
+    res.status(500).json({ error: 'フォロー中タイムライン取得に失敗しました。' });
+  }
+});
+
+// ダイレクトふみ取得
+app.post('/api/users/:id/dfumi/messages', authenticateToken, async (req, res) => {
+    try {
+        const partnerId = req.params.id; // 相手側
+        const userId = req.user.id;   // 自分側（ログイン中のユーザー
+
+        const sql = `
+          SELECT
+            dm.id,
+            (dm.sender_id = ?) AS senderFlag,
+            dm.content,
+            dm.created_at,
+            dm.reply_77,
+            dm.is_read     
+          FROM directmessages dm       
+          WHERE 
+            (dm.sender_id = ? AND dm.receiver_id = ?)
+            OR (dm.sender_id = ? AND dm.receiver_id = ?)
+          ORDER BY dm.created_at ASC
+        `;
+        
+        const [messages] = await pool.execute(sql, [userId, userId, partnerId, partnerId, userId]);
+        res.status(210).json(messages);
+    } catch (error) {
+        console.error('ダイレクトふみ取得エラー:', error);
+        res.status(500).json({ error: 'ダイレクトふみ取得エラー' });
+    }
+});
+
+// ダイレクトふみ送信 (要認証)
+app.post('/api/users/:id/dfumi/sending', authenticateToken, async (req, res) => {
+  try {
+    let { content1, content2, content3, reply77Flag } = req.body;
+    console.log(req.body);
+    const userId = req.user.id; // ミドルウェアがセットしたユーザーIDを使用
+    const partnerId = req.params.id;
+
+    if (!reply77Flag) { // 七七を送る → content1, content2 が必要
+      if (!content1 || !content2) {
+        return res.status(400).json({ error: 'すべての句を入力してください。' });
+      }
+    } else { // 五七五を送る → content1, content2, content3 が必要
+      if (!content1 || !content2 || !content3) {
+        return res.status(400).json({ error: 'すべての句を入力してください。' });
+      }
+    }
+
+    // 使用不可の文字があればエラーを出す
+    const regex = /^[\u3040-\u309F\u30A0-\u30FF\uFF65-\uFF9F\u4E00-\u9FFF。｡、､「｢」｣・･！!？?]+$/;
+    if (!regex.test(content1) || !regex.test(content2) || (reply77Flag && !regex.test(content3))) {
+      return res.status(400).json({ error: '入力できない文字が含まれています。' });
+    }
+
+    let num = 0;
+    const { flag: can_kaminoku, symbolCount: symbolCount1, word_id: word_id1, words: word1 } = (reply77Flag) ? await check575(content1, 5) : await check575(content1, 7);
+    const { flag: can_nakanoku, symbolCount: symbolCount2, word_id: word_id2, words: word2 } = await check575(content2, 7);
+    const { flag: can_shimonoku, symbolCount: symbolCount3, word_id: word_id3, words: word3 } = (reply77Flag) ? await check575(content3, 5) : { flag: true, symbolCount: 0, word_id: null, words: null };
+
+    if (!can_kaminoku) num += 1;
+    if (!can_nakanoku) num += 2;
+    if (!can_shimonoku) num += 4;
+
+    if (num !== 0) return res.status(400).json({ errorCode: num, message: '句の音の数が正しくありません。' });
+
+    const symbolCount = symbolCount1 + symbolCount2 + symbolCount3
+    if (symbolCount > 4) return res.status(400).json({ error: '記号などが多すぎます。' });
+
+    // --- 投稿をDBに保存して投稿IDを取得 ---
+    content1 = HKtoZK(content1); content2 = HKtoZK(content2); content3 = HKtoZK(content3);
+    const content = `${content1} ${content2} ${content3}`;
+    console.log(content);
+    const [dmResult] = await pool.execute(
+      "INSERT INTO directmessages (sender_id, receiver_id, content, reply_77) VALUES (?, ?, ?, ?)",
+      [userId, partnerId, content, reply77Flag]
+    );
+
+    res.status(201).json({ message: 'ふみを送信しました' });
+
+  } catch (error) {
+      console.error("投稿エラー詳細:", error);
+      res.status(500).json({ error: '投稿エラー', detail: error.message });
+  }
+});
+
+// ダイレクトふみ既読
+app.post('/api/users/:id/dfumi/isread', authenticateToken, async (req, res) => {
+    try {
+        const partnerId = req.params.id; // 相手側
+        const userId = req.user.id;   // 自分側（ログイン中のユーザー
+
+        const sql = `
+          UPDATE
+            directmessages
+          SET
+            is_read = true
+          WHERE
+            sender_id = ? AND receiver_id = ?;
+        `;
+        
+        await pool.execute(sql, [partnerId, userId]);
+        res.status(210).json({message: "既読情報更新"});
+    } catch (error) {
+        console.error('既読情報取得エラー:', error);
+        res.status(500).json({ error: '既読情報取得エラー' });
+    }
 });
 
 // --- 6. サーバー起動 ---
