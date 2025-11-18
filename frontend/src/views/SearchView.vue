@@ -25,12 +25,22 @@ const selectedGenre = ref(null)
 
 const search_method = async (e) => {
   e.preventDefault() //リロードしないようにしてる
-  if (keyword.value === '') {
+  if (keyword.value === '' && selectedGenre.value === null) {
     alert('検索ワードを入力してください')
     return
   }
 
-  const target_url = `/api/search?q=${encodeURIComponent(keyword.value)}`
+  const search_value = new URLSearchParams()
+
+  if (keyword.value !== '') {
+    search_value.append('input_words', keyword.value)
+  }
+
+  if (selectedGenre.value !== null) {
+    search_value.append('genre', selectedGenre.value)
+  }
+
+  const target_url = `/api/search?${search_value.toString()}`
   try {
     const response = await fetch(target_url)
 
@@ -50,10 +60,10 @@ const search_method = async (e) => {
     //スクロールさせる
     await nextTick()
 
-    // ① まずスクロール（これがすぐ動く）
+    // まずスクロール（これがすぐ動く）
     scroll_target.value?.scrollIntoView({ behavior: 'smooth' })
 
-    // ② 0.4秒待ってから（スクロール完了タイミング）、アニメーション再描画
+    //0.4秒待ってから（スクロール完了タイミング）、アニメーション再描画
     setTimeout(() => {
       show_postcard.value = true
     }, 800)
@@ -61,6 +71,12 @@ const search_method = async (e) => {
     console.error('検索中にエラーが発生:', err)
     alert('検索中にエラーが発生しました。')
   }
+}
+
+const set_genreId=(id)=>{
+  const numId=Number(id);
+  selectedGenre.value=numId;
+  console.log('[chooseGenre] id:', id, '→ set to selectedGenre:', selectedGenre.value);
 }
 </script>
 
@@ -73,58 +89,64 @@ const search_method = async (e) => {
       <input id="search_input" placeholder="検索ワードを入力してください" v-model="keyword" />
       <br />
 
-      <button type="button" id="genre_button" @click="show_genres = !show_genres">
+      <button
+        type="button"
+        id="genre_button"
+        @click="show_genres = !show_genres"
+        :class="{ active: show_genres }"
+      >
         <div v-if="show_genres == false">ジャンルで検索する</div>
         <div v-else>閉じる</div>
       </button>
 
       <div v-if="show_genres == true" class="genre_section">
         <button
-          v-for="genre in genres"
+          v-for="(genre, index) in genres"
           :key="genre.id"
           type="button"
-          :class="{ active: selectedGenre === genre.id }"
-          @click="selectedGenre = genre.id"
+          :class="{ active: selectedGenre=== Number(genre.id) }"
+          @click="set_genreId(genre.id)" 
+          :style="{ animationDelay: index * 0.08 + 's' }"
         >
           {{ genre.name }}
         </button>
       </div>
 
       <button type="submit" id="search_button">検索</button>
-    
-    <div id="search_result">
-      <div ref="scroll_target" style="width: 100%">
-        <div v-if="is_searched === false">
-          <h2 style="margin-top: 40px">検索結果</h2>
-        </div>
-        <div v-else>
-          <h2 style="margin-top: 40px">検索結果:{{ results.length }}件</h2>
-        </div>
-        <div v-if="results.length === 0">
-          <p>検索結果がありません。</p>
-        </div>
 
-        <div v-else class="search_results">
-          <div
-            v-for="(item, index) in results"
-            :key="item.id"
-            class="postcard_search"
-            :class="{ fadeUpCard: show_postcard }"
-            :style="{ animationDelay: `${index * 0.1}s` }"
-          >
-            <PostCard
-              :post="{
-                id: item.id,
-                authorName: item.username,
-                user_id: item.user_id,
-                content: item.content,
-                created_at: item.created_at,
-              }"
-            />
+      <div id="search_result">
+        <div ref="scroll_target" style="width: 100%">
+          <div v-if="is_searched === false">
+            <h2 style="margin-top: 40px">検索結果</h2>
+          </div>
+          <div v-else>
+            <h2 style="margin-top: 40px">検索結果:{{ results.length }}件</h2>
+          </div>
+          <div v-if="results.length === 0">
+            <p>検索結果がありません。</p>
+          </div>
+
+          <div v-else class="search_results">
+            <div
+              v-for="(item, index) in results"
+              :key="item.id"
+              class="postcard_search"
+              :class="{ fadeUpCard: show_postcard }"
+              :style="{ animationDelay: `${index * 0.1}s` }"
+            >
+              <PostCard
+                :post="{
+                  id: item.id,
+                  authorName: item.username,
+                  user_id: item.user_id,
+                  content: item.content,
+                  created_at: item.created_at,
+                }"
+              />
+            </div>
           </div>
         </div>
       </div>
-    </div>
     </form>
   </div>
 </template>
@@ -153,6 +175,8 @@ const search_method = async (e) => {
   width: 500px;
   height: 50px;
   margin-top: 20px;
+  border-radius: 6px;
+  border: 1px solid #007bff;
 }
 #search_button {
   width: 200px;
@@ -177,8 +201,6 @@ const search_method = async (e) => {
   padding: 15px;
   border-bottom: 1px solid #ddd;
 }
-
-
 
 .postcard_search {
   width: 450px;
@@ -231,17 +253,21 @@ form {
   height: 40px;
   margin-top: -10px;
   margin-bottom: 30px;
-  background-color: #6c757d;
-  color: white;
-  border: none;
   border-radius: 6px;
+  border: 1px solid #007bff;
+  background-color: white;
   cursor: pointer;
   transition: 0.2s;
   align-self: flex-start;
 }
 
+#genre_button.active {
+  background-color: #007bff;
+  color: white;
+}
+
 #genre_button:hover {
-  background-color: #5a6268;
+  transform: scale(1.1);
 }
 
 .genre_section {
@@ -259,6 +285,19 @@ form {
   background-color: white;
   cursor: pointer;
   transition: 0.2s;
+  opacity: 0;
+  animation: fadeup 0.3s forwards ease-out;
+}
+
+@keyframes fadeup {
+  from {
+    opacity: 0;
+    transform: scale(0.5) translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .genre_section button.active {
