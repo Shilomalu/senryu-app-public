@@ -49,6 +49,9 @@ onMounted(() => {
     <RouterLink to="/profile" class="tab-link">
       <span>プロフィール</span>
     </RouterLink>
+    <RouterLink to="/dfumi" class="tab-link">
+      <span>ダイレクトふみ</span>
+    </RouterLink>
   </footer>
 </template>
 
