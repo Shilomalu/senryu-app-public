@@ -56,13 +56,14 @@ const handlePost = async () => {
 const goDescription = () => {
   router.push('/post/description');
 };
+
 </script>
 
 <template>
   <div class="form-container">
     <h1>川柳を詠む</h1>
     <div class="text-wrapper">
-      <p class="form-text" @click="goDescription">入力できる文字種一覧はこちら</p>
+      <p class="form-text" @click="goDescription">初めての方はこちら</p>
     </div>
     <form @submit.prevent="handlePost">
       <div class="senryu-inputs">
