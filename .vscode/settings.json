@@ -27,6 +27,20 @@
       "name": "project",
       "database": "Project_Team6_db",
       "username": "Project_Team6_user"
+    },
+    {
+      "mysqlOptions": {
+        "authProtocol": "default",
+        "enableSsl": "Disabled"
+      },
+      "ssh": "Disabled",
+      "previewLimit": 50,
+      "server": "www.dmgpt.site",
+      "port": 3306,
+      "driver": "MariaDB",
+      "name": "dbms_class",
+      "database": "db_class",
+      "username": "student"
     }
   ]
 }

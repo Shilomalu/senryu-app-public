@@ -120,26 +120,37 @@ input:focus {
 }
 
 /* 席入りボタンの改善 (和風カラーの採用) */
-.login-button { 
-    width: 100%; 
-    padding: 14px; 
-    background-color: #7b8e5c; /* 渋めの緑 (苔色や若草色) */
+.login-button {
+    width: 100%;
+    padding: 16px; /* パディングを増やしてふっくらと */
+    margin-top: 10px;
+    
+    background-color: #5c7b45; /* 座布団の色：深めの緑色 */
     color: white; 
-    border: none; 
-    border-radius: 6px; 
-    cursor: pointer; 
+    
+    border: 3px solid #3d502d; /* 濃いめの縁取り */
+    border-radius: 8px; 
+    
+    box-shadow: 0 6px 0 0 #3d502d; /* 影で立体感を強調 */
+    
+    cursor: pointer;
     font-size: 18px;
     font-weight: bold;
-    letter-spacing: 1px;
-    transition: background-color 0.3s, transform 0.1s;
-}
-.login-button:hover {
-    background-color: #5d6d45; /* ホバーで暗く */
-}
-.login-button:active {
-    transform: translateY(1px); /* クリック時に沈む効果 */
+    letter-spacing: 2px; 
+    
+    transition: all 0.15s ease;
 }
 
+/* クリック時 (座布団が沈む効果) */
+.login-button:active {
+    background-color: #536b3d;
+    box-shadow: 0 2px 0 0 #3d502d; /* 影を小さくして沈ませる */
+    transform: translateY(4px); /* ボタン全体を下に動かす */
+}
+
+.login-button:hover {
+    background-color: #6a8b51; /* ホバーで少し明るく */
+}
 /* メッセージのスタイル (エラー/成功) */
 .error-message {
     color: #d9534f; /* 赤色 */
