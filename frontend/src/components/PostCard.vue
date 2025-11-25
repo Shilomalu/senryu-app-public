@@ -27,8 +27,8 @@
     :currentUserId="currentUser?.id || 0"
     :initialIsLiked="post.isLiked"
     :initialLikesCount="post.likesCount"
-    @update-like="handleLikeUpdate"
   />
+  <!-- @update-like="handleLikeUpdate" は，いとおかし処理をLikeButton側toggleLikeで行っているので消しました -->
   <button class="reply-btn" @click="toggleReplies">
     返信{{ post.repliesCount || 0 }}
   </button>
