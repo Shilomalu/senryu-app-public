@@ -999,8 +999,68 @@ app.post('/api/users/following', authenticateToken, async (req, res) => {
     const [partners] = await pool.query(sql, [userId, userId, userId]);
     res.status(212).json(partners);
   } catch (error) {
-    console.error('フォロー中タイムライン取得エラー:', error);
-    res.status(500).json({ error: 'フォロー中タイムライン取得に失敗しました。' });
+    console.error('フォロー中ふみ取得エラー:', error);
+    res.status(500).json({ error: 'フォロー中ふみ取得に失敗しました。' });
+  }
+});
+
+// 未フォローで受け取ったふみを取得（LINEの「友達かも」風）
+app.post('/api/users/notfollow', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const sql = `
+      SELECT 
+          u.id,
+          u.username,
+          latest.id AS dm_id,
+          latest.sender_id,
+          latest.receiver_id,
+          latest.content,
+          latest.created_at AS latest_dm,
+          latest.reply_77,
+          latest.is_read
+      FROM users u
+
+      -- 自分はフォローしていない相手
+      LEFT JOIN follows f 
+          ON u.id = f.followed_id AND f.follower_id = ?
+
+      -- 最新DMサブクエリ
+      LEFT JOIN (
+          SELECT 
+              d1.*
+          FROM directmessages d1
+          JOIN (
+              SELECT 
+                  LEAST(sender_id, receiver_id) AS a,
+                  GREATEST(sender_id, receiver_id) AS b,
+                  MAX(created_at) AS max_created
+              FROM directmessages
+              GROUP BY a, b
+          ) latest2
+          ON (
+              LEAST(d1.sender_id, d1.receiver_id) = latest2.a AND
+              GREATEST(d1.sender_id, d1.receiver_id) = latest2.b AND
+              d1.created_at = latest2.max_created
+          )
+      ) latest
+      ON (
+          latest.sender_id = u.id AND latest.receiver_id = ?
+      )
+
+      -- フォロー中ではない AND 自分宛にDMがある
+      WHERE f.followed_id IS NULL 
+        AND latest.id IS NOT NULL
+
+      ORDER BY latest_dm DESC;
+    `;
+
+    const [partners] = await pool.query(sql, [userId, userId]);
+    res.status(214).json(partners);
+  } catch (error) {
+    console.error('非フォローふみ取得エラー:', error);
+    res.status(500).json({ error: '非フォローふみ取得に失敗しました。' });
   }
 });
 
@@ -1086,29 +1146,6 @@ app.post('/api/users/:id/dfumi/sending', authenticateToken, async (req, res) => 
       console.error("投稿エラー詳細:", error);
       res.status(500).json({ error: '投稿エラー', detail: error.message });
   }
-});
-
-// ダイレクトふみ既読
-app.post('/api/users/:id/dfumi/isread', authenticateToken, async (req, res) => {
-    try {
-        const partnerId = req.params.id; // 相手側
-        const userId = req.user.id;   // 自分側（ログイン中のユーザー
-
-        const sql = `
-          UPDATE
-            directmessages
-          SET
-            is_read = true
-          WHERE
-            sender_id = ? AND receiver_id = ?;
-        `;
-        
-        await pool.execute(sql, [partnerId, userId]);
-        res.status(210).json({message: "既読情報更新"});
-    } catch (error) {
-        console.error('既読情報取得エラー:', error);
-        res.status(500).json({ error: '既読情報取得エラー' });
-    }
 });
 
 // --- 6. サーバー起動 ---
