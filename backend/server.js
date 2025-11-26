@@ -110,7 +110,7 @@ app.get('/api/users/me', authenticateToken, async (req, res) => {
   console.log('req.user.id:', id);
   try {
     const [rows] = await pool.execute(
-      "SELECT id, username, email, profile_text, favorite_id FROM users WHERE id = ?",
+      "SELECT id, username, email, profile_text, favorite_id, icon_index FROM users WHERE id = ?",
       [id]
     );
     console.log('DB結果:', rows);
@@ -166,6 +166,30 @@ app.put("/api/users/me", authenticateToken, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+// アイコン変更
+app.post('/api/users/me/icon', authenticateToken,  async (req, res) => {
+  const userId = req.user.id;
+  const { icon } = req.body;
+
+  if (icon === undefined || icon === null) {
+    return res.status(400).json({ error: "icon を指定してください" });
+  }
+
+  try {
+    const sql = `
+      UPDATE users
+      SET icon_index = ?
+      WHERE id = ?
+    `;
+    await pool.query(sql, [icon, userId]);
+
+    res.json({ message: "アイコンを更新しました", icon });
+  } catch (error) {
+    console.error("Error updating icon:", error);
+    res.status(500).json({ error: "アイコン更新中にエラーが発生しました" });
   }
 });
 
