@@ -10,10 +10,6 @@ const props = defineProps({
     type: Object,
     required: true
   },
-  currentUser: {
-    type: Object,
-    default: null
-  }
 })
 
 const emit = defineEmits(['message-sent'])
@@ -23,18 +19,14 @@ const content3 = ref('')
 const isSubmitting = ref(false)
 const isReply77 = ref(false); // 次に送信するふみが七七であるかどうか（つまり，最新のふみが五七五であるかどうか）
 onMounted(() => {
-  () => props.latestMessage,
-    console.log("late4st:",props.latestMessage);
-    isReply77.value = props.latestMessage.reply_77
-})
+  // latestMessage が存在するかチェックして reply_77 を取得
+  isReply77.value = props.latestMessage?.reply_77 ?? false;
+});
 
-watch(
-  () => props.latestMessage,
-  () => {
-    isReply77.value = props.latestMessage.reply_77
-    console.log(isReply77.value)
-  }
-);
+watch(() => {
+  // latestMessage が存在するかチェックして reply_77 を取得
+  isReply77.value = props.latestMessage?.reply_77 ?? false;
+});
 
 async function handleSubmitMessage(e) {
   e.preventDefault()
@@ -80,29 +72,6 @@ async function handleSubmitMessage(e) {
     isSubmitting.value = false
   }
 }
-
-const fetchFlag = async () => {
-  try {
-    let endpoint = `/api/users/${props.partnerId}/dfumi/isreply77`;
-
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token.value}`
-      },
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'ふみフラグの読み込みに失敗しました。');
-    isReply77.value = data;
-
-  } catch (err) {
-    console.error(err);
-    partners.value = err.message || 'データの取得中にエラーが発生しました。';
-    partners.value = [];
-  }
-};
 </script>
 
 <template>

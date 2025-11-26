@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 
 const token = ref(localStorage.getItem('token'));
-const partners = ref([]);
-const fetchPartners = async () => {
-  try {
-    // --- タブごとに取得先を切り替える ---
-    let endpoint = `/api/users/following`;
+const partners1 = ref([]);
+const partners2 = ref([]);
 
+const fetchPartners = async (endpoint, partners) => {
+  try {
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -33,28 +32,48 @@ function formatDate(dateString) {
   return date.toLocaleString('ja-JP')
 }
 
-onMounted(fetchPartners);
+onMounted(() => {
+  fetchPartners('api/users/following', partners1);
+  fetchPartners('api/users/notfollow', partners2);
+});
 </script>
 
 <!-- フォロー中のユーザ一覧からdirectfumi.vueにとべるように -->
 <template>
   <div class="dfumi-wrapper">
-  <h1>ダイレクトふみ</h1>
-  <p>フォロー中の人にのみ送信できます。</p>
-  <div>
-    <ul>
-      <li v-for="p in partners" :key="p.id" :class="{ 'partner-item': true, 'new-msg': !p.is_read && p.sender_id == p.id}">
-        <router-link :to="{ name: 'DirectFumi', params: { partnerId: p.id } }" class="partner-link">
-          <span class="partner-name">{{ p.username }}</span>
-          <span v-if="!p.is_read && p.sender_id == p.id" class="new-msg-notice">新規メッセージあり</span>
-          <span class="latest-msg">
-            {{ p.content || '' }} 
-            <small v-if="p.latest_dm">({{ formatDate(p.latest_dm) }})</small>
-          </span>
-        </router-link>
-      </li>
-    </ul>
-  </div>
+    <h1>ダイレクトふみ</h1>
+    <h2>フォロー中</h2>
+    <div>
+      <ul>
+        <li v-for="p in partners1" :key="p.id" :class="{ 'partner-item': true, 'new-msg': !p.is_read && p.sender_id == p.id}">
+          <router-link :to="{ name: 'DirectFumi', params: { partnerId: p.id } }" class="partner-link">
+            <span class="partner-name">{{ p.username }}</span>
+            <span v-if="!p.is_read && p.sender_id == p.id" class="new-msg-notice">新規メッセージあり</span>
+            <span class="latest-msg">
+              {{ p.content || '' }} 
+              <small v-if="p.latest_dm">({{ formatDate(p.latest_dm) }})</small>
+            </span>
+          </router-link>
+        </li>
+        <li v-if="partners1.length == 0">ダイレクトふみはありません</li>
+      </ul>
+    </div>
+    <h2>未フォロー</h2>
+    <div>
+      <ul>
+        <li v-for="p in partners2" :key="p.id" :class="{ 'partner-item': true, 'new-msg': !p.is_read && p.sender_id == p.id}">
+          <router-link :to="{ name: 'DirectFumi', params: { partnerId: p.id } }" class="partner-link">
+            <span class="partner-name">{{ p.username }}</span>
+            <span v-if="!p.is_read && p.sender_id == p.id" class="new-msg-notice">新規メッセージあり</span>
+            <span class="latest-msg">
+              {{ p.content || '' }} 
+              <small v-if="p.latest_dm">({{ formatDate(p.latest_dm) }})</small>
+            </span>
+          </router-link>
+        </li>
+        <li v-if="partners2.length == 0">ダイレクトふみはありません</li>
+      </ul>
+    </div>
   </div>
 </template>
 

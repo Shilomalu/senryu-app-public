@@ -24,9 +24,10 @@
 リプライ投稿	/api/posts/:id/reply	POST	必要	{ "content" }	201: { "message", "newReply" }
 リプライ削除	/api/posts/:id/reply	DELETE	必要	(なし)	200: { "message", "リプライを削除しました" }
 
-ダイレクトふみ相手候補のフォロー中取得 /api/users/following POST 必要 (なし) 212: [{"id", "username", "latest_dm"}]
-ダイレクトふみ送信	/api/users/:id/dfumi	POST	必要	{ "content1", "content2", "content3", "reply77Flag" }	210: { "message": "ふみを送信しました。" }
-ダイレクトふみ取得	/api/users/:id/dfumi	POST	必要	(なし)	211: [ { "id", "senderFlag", "content", "created_at", "reply_77", "is_read" }, ... ]
+ダイレクトふみ相手としてフォロー中取得 /api/users/following POST 必要 (なし) 212: [{"id", "username", "latest_dm"}]
+ダイレクトふみ相手として非フォロー中取得 /api/users/notfollow POST 必要 (なし) 214: [{"id", "username", "latest_dm"}]
+ダイレクトふみ送信	/api/users/:id/dfumi/sending	POST	必要	{ "content1", "content2", "content3", "reply77Flag" }	210: { "message": "ふみを送信しました。" }
+ダイレクトふみ取得	/api/users/:id/dfumi/messages	POST	必要	(なし)	211: [ { "id", "senderFlag", "content", "created_at", "reply_77", "is_read" }, ... ]
 
 検索関連 (/api/search)
 機能	エンドポイント	メソッド	認証	クエリパラメータ	成功レスポンス (2xx)

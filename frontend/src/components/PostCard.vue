@@ -37,25 +37,25 @@
     </div>
 
     <div class="actions" v-if="!isPreview">
-      <!-- LikeButton に初期いいね状態とカウントを渡し、toggle 時に post の likesCount を更新 -->
-      <LikeButton
-        :postId="post.id"
-        :currentUserId="currentUser?.id || 0"
-        :initialIsLiked="post.isLiked"
-        :initialLikesCount="post.likesCount"
-        @update-like="handleLikeUpdate"
-      />
-      <button class="reply-btn" @click="toggleReplies">
-        返信{{ post.repliesCount || 0 }}
-      </button>
-      <button 
-        v-if="currentUser && post.user_id === currentUser.id"
-        class="delete-btn" 
-        @click="$emit('delete', post.id)"
-      >
-        削除
-      </button>
-    </div>
+  <!-- LikeButton に初期いいね状態とカウントを渡し、toggle 時に post の likesCount を更新 -->
+  <LikeButton
+    :postId="post.id"
+    :currentUserId="currentUser?.id || 0"
+    :initialIsLiked="post.isLiked"
+    :initialLikesCount="post.likesCount"
+  />
+  <!-- @update-like="handleLikeUpdate" は，いとおかし処理をLikeButton側toggleLikeで行っているので消しました -->
+  <button class="reply-btn" @click="toggleReplies">
+    返信{{ post.repliesCount || 0 }}
+  </button>
+  <button 
+    v-if="currentUser && post.user_id === currentUser.id"
+    class="delete-btn" 
+    @click="$emit('delete', post.id)"
+  >
+    削除
+  </button>
+</div>
 
 
     <div v-if="!isPreview && showReplies" class="replies">
