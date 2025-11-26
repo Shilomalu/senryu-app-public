@@ -20,10 +20,10 @@ const genres = [
   { id : 2, name : '＃夏'},
   { id : 3, name : '＃秋'},
   { id : 4, name : '＃冬'},
-  { id : 5, name : '＃スポーツ'},
+  { id : 5, name : '＃趣味'},
   { id : 6, name : '＃食べ物'},
   { id : 7, name : '＃学校'},
-  { id : 8, name : '＃旅行'},
+  { id : 8, name : '＃その他'},
 ];
 
 //しんじにバックエンド用のapiを作成依頼(未完了)
