@@ -56,7 +56,27 @@ const fetchDms = async () => {
   }
 };
 
+const updateIsRead = async () => {
+  try {
+    partnerName.value = props.partner.username;
+    partnerId.value = props.partner.id;
+    
+    let endpoint = `/api/users/${partnerId.value}/dfumi/isread`;
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token.value}` },
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 onMounted(fetchDms);
+onMounted(updateIsRead);
 </script>
 
 <style scoped>

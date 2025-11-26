@@ -1046,7 +1046,9 @@ app.post('/api/users/notfollow', authenticateToken, async (req, res) => {
           )
       ) latest
       ON (
-          latest.sender_id = u.id AND latest.receiver_id = ?
+        (latest.sender_id = u.id AND latest.receiver_id = ?)
+          OR
+        (latest.receiver_id = u.id AND latest.sender_id = ?)
       )
 
       -- フォロー中ではない AND 自分宛にDMがある
@@ -1056,7 +1058,7 @@ app.post('/api/users/notfollow', authenticateToken, async (req, res) => {
       ORDER BY latest_dm DESC;
     `;
 
-    const [partners] = await pool.query(sql, [userId, userId]);
+    const [partners] = await pool.query(sql, [userId, userId, userId]);
     res.status(214).json(partners);
   } catch (error) {
     console.error('非フォローふみ取得エラー:', error);
@@ -1146,6 +1148,28 @@ app.post('/api/users/:id/dfumi/sending', authenticateToken, async (req, res) => 
       console.error("投稿エラー詳細:", error);
       res.status(500).json({ error: '投稿エラー', detail: error.message });
   }
+});
+
+app.post('/api/users/:id/dfumi/isread', authenticateToken, async (req, res) => {
+    try {
+        const partnerId = req.params.id; // 相手側
+        const userId = req.user.id;   // 自分側（ログイン中のユーザー
+
+        const sql = `
+          UPDATE
+            directmessages
+          SET
+            is_read = true
+          WHERE
+            sender_id = ? AND receiver_id = ?;
+        `;
+
+        await pool.execute(sql, [partnerId, userId]);
+        res.status(216).json({message: "既読情報更新"});
+    } catch (error) {
+        console.error('既読情報取得エラー:', error);
+        res.status(500).json({ error: '既読情報取得エラー' });
+    }
 });
 
 // --- 6. サーバー起動 ---
