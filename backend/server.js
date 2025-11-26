@@ -7,7 +7,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { check575, checkPart } = require("./senryu-checker.js");
 const { HKtoZK } = require("./helper_fun.js");
-
+const { make_ruby } = require('./ruby.js');
 
 // --- 2. 基本設定 ---
 
@@ -289,6 +289,23 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
   } catch (error) {
     console.error("投稿エラー詳細:", error);
     res.status(500).json({ error: "投稿エラー", detail: error.message });
+  }
+});
+
+// ルビ関連
+app.post('/api/ruby', async (req, res) => {
+  const { text } = req.body;
+
+  if (!text) {
+    return res.status(400).json({ error: 'text が空です' });
+  }
+
+  try {
+    const result = await make_ruby(text);
+    res.json(result);
+  } catch (err) {
+    console.error('Ruby API error', err);
+    res.status(500).json({ error: 'ルビ解析に失敗しました' });
   }
 });
 

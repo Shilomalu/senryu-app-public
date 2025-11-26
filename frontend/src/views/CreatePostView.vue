@@ -3,7 +3,6 @@ import { ref, reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import PostCard from '../components/PostCard.vue';
-import make_ruby from '../../../backend/ruby';
 
 //こんな感じでJSONでdataの内容を受け取る予定、例[{text: "古池", ruby: "ふるいけ"}, {text: "や", ruby: null}]
 const phrases = reactive([
@@ -29,15 +28,15 @@ const genres = [
 
 //しんじにバックエンド用のapiを作成依頼(未完了)
 const analyzeText = async (index) => {
-  const text = phrases[index].text;
+  const text = phrases[index].word;
   if(!text){
     phrases[index].ruby_data = [];
     return;
   }
 
   try{
-    const res = await make_ruby(text);
-    phrases[index].ruby_data = res.ruby_data;
+    const res = await axios.post('/api/ruby', { text });
+    phrases[index].ruby_data = res.data.ruby_data;
   }catch(err){
     console.error('解析失敗', err);
     phrases[index].ruby_data = [{ word: text, ruby: null }];
