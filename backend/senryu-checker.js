@@ -44,7 +44,7 @@ const checkPart = (text) => {
       console.log(zk);
       
       let moraCount = countMora(zk);
-      let symbolCount = countSymbol(adjust_text);
+      let symbolCount = countSymbol(text);
       moraCount -= symbolCount;
 
       resolve({ moraCount, symbolCount, words });
