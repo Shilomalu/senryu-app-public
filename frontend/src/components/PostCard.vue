@@ -36,26 +36,31 @@
       </div>
     </div>
 
-    <div class="actions" v-if="!isPreview">
-  <!-- LikeButton に初期いいね状態とカウントを渡し、toggle 時に post の likesCount を更新 -->
-  <LikeButton
-    :postId="post.id"
-    :currentUserId="currentUser?.id || 0"
-    :initialIsLiked="post.isLiked"
-    :initialLikesCount="post.likesCount"
-  />
-  <!-- @update-like="handleLikeUpdate" は，いとおかし処理をLikeButton側toggleLikeで行っているので消しました -->
-  <button class="reply-btn" @click="toggleReplies">
-    返信{{ post.repliesCount || 0 }}
-  </button>
-  <button 
-    v-if="currentUser && post.user_id === currentUser.id"
-    class="delete-btn" 
-    @click="$emit('delete', post.id)"
-  >
-    削除
-  </button>
-</div>
+  <!-- アクションボタンエリア (修正: 2段組みに変更) -->
+    <div class="actions-container" v-if="!isPreview">
+      <!-- 上段：いいねと返信 -->
+      <div class="main-actions">
+        <LikeButton
+            :postId="post.id"
+            :currentUserId="currentUser?.id || 0"
+            :initialIsLiked="post.isLiked"
+            :initialLikesCount="post.likesCount"
+        />
+        <button class="reply-btn" @click="toggleReplies">
+            返信{{ post.repliesCount || 0 }}
+        </button>
+      </div>
+      
+      <!-- 下段：削除ボタン (少し下に配置) -->
+      <div class="delete-action" v-if="currentUser && post.user_id === currentUser.id">
+        <button 
+            class="delete-btn" 
+            @click="$emit('delete', post.id)"
+        >
+            削除
+        </button>
+      </div>
+    </div>
 
 
     <div v-if="!isPreview && showReplies" class="replies">
@@ -167,7 +172,7 @@ const goToProfile = () => {
   background-color: #fff;
   box-sizing: border-box;
   color: #000;
-  height: 400px;
+  height: 430px;
   transition: height 0.3s ease;
   overflow: hidden;
 }
@@ -271,6 +276,7 @@ rt {
   border: none;
   height: 35px;
   line-height: 35px;
+  border-radius: 8px;
   padding: 0 10px;
 }
 
@@ -331,5 +337,21 @@ rt {
   color: #888;
   font-style: italic;
   margin-bottom: 0.3rem;
+}
+
+.actions-container {
+  display: flex;
+  flex-direction: column; /* 全体は「縦」に積む (上段と下段) */
+  align-items: flex-end;  /* 全て右寄せにする */
+  gap: 0.5rem;            /* 上段と下段の隙間 */
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* 上段：いいねと返信ボタンを入れる箱 */
+.main-actions {
+  display: flex;          /* ★重要: これで中身を「横」に並べる */
+  align-items: center;    /* 上下の位置を揃える */
+  gap: 1rem;              /* ボタン同士の間隔 */
 }
 </style>
