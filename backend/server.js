@@ -240,23 +240,26 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
         .json({ error: "入力できない文字が含まれています。" });
     }
 
+    // 半角→全角変換
+    content1 = HKtoZK(content1);
+    content2 = HKtoZK(content2);
+    content3 = HKtoZK(content3);
+    const content = `${content1} ${content2} ${content3}`;
+
     let num = 0;
     const {
       flag: can_kaminoku,
       symbolCount: symbolCount1,
-      word_id: word_id1,
       words: word1,
     } = await check575(content1, 5);
     const {
       flag: can_nakanoku,
       symbolCount: symbolCount2,
-      word_id: word_id2,
       words: word2,
     } = await check575(content2, 7);
     const {
       flag: can_shimonoku,
       symbolCount: symbolCount3,
-      word_id: word_id3,
       words: word3,
     } = await check575(content3, 5);
     if (!can_kaminoku) num += 1;
@@ -272,12 +275,6 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
     if (symbolCount > 4)
       return res.status(400).json({ error: "記号などが多すぎます。" });
 
-    // 半角→全角変換
-    content1 = HKtoZK(content1);
-    content2 = HKtoZK(content2);
-    content3 = HKtoZK(content3);
-    const content = `${content1} ${content2} ${content3}`;
-
     // --- 投稿をDBに保存して投稿IDを取得 ---
     const [postResult] = await pool.execute(
       "INSERT INTO posts (user_id, content, genre_id) VALUES (?, ?, ?)",
@@ -287,24 +284,7 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
     const sennryuu_id = postResult.insertId;
     console.log("登録された川柳ID:", sennryuu_id);
 
-    // --- dictionaryテーブルにword_idを登録 ---
-    const word_id_array = [
-      ...(word_id1 || []),
-      ...(word_id2 || []),
-      ...(word_id3 || []),
-    ];
     const word_array = [...(word1 || []), ...(word2 || []), ...(word3 || [])];
-    console.log("登録するword_id_array:", word_id_array);
-
-    for (let i = 0; i < word_id_array.length; i++) {
-      if (word_id_array[i] == null) continue;
-      await pool.execute(
-        "INSERT INTO dictionary (word_id, word, sennryuu_id) VALUES (?, ?, ?)",
-        [word_id_array[i], word_array[i], sennryuu_id]
-      );
-    }
-
-    console.log("dictionary 登録完了");
     res.status(201).json({ message: "投稿成功", sennryuu_id });
   } catch (error) {
     console.error("投稿エラー詳細:", error);

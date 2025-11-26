@@ -3,12 +3,13 @@ import { ref, reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import PostCard from '../components/PostCard.vue';
+import make_ruby from '../../../backend/ruby';
 
 //こんな感じでJSONでdataの内容を受け取る予定、例[{text: "古池", ruby: "ふるいけ"}, {text: "や", ruby: null}]
 const phrases = reactive([
-  { text: '', data: [] },
-  { text: '', data: [] },
-  { text: '', data: [] }
+  { text: '', ruby_data: [] },
+  { text: '', ruby_data: [] },
+  { text: '', ruby_data: [] }
 ]);
 
 const selectedGenre = ref(1);
@@ -30,16 +31,16 @@ const genres = [
 const analyzeText = async (index) => {
   const text = phrases[index].text;
   if(!text){
-    phrases[index].data = [];
+    phrases[index].ruby_data = [];
     return;
   }
 
   try{
-    const res = await axios.post('/api/analyze', {text});
-    phrases[index].data = res.data;
+    const res = await make_ruby(text);
+    phrases[index].ruby_data = res.ruby_data;
   }catch(err){
     console.error('解析失敗', err);
-    phrases[index].data = [{ text: text, ruby: null }];
+    phrases[index].ruby_data = [{ word: text, ruby: null }];
   }
 }
 
@@ -47,10 +48,10 @@ const previewPost = computed(() => {
   const content = phrases.map(p => p.text).join(' ');
   
   const rubyContent = phrases.map(p => {
-    if (p.data && p.data.length > 0) {
-      return p.data;
+    if (p.ruby_data && p.ruby_data.length > 0) {
+      return p.ruby_data;
     }
-    return p.text ? [{ text: p.text, ruby: null }] : [];
+    return p.word ? [{ word: p.word, ruby: null }] : [];
   });
 
   return {
@@ -74,10 +75,10 @@ const handlePost = async () => {
   }
 
   const senryudata = {
-    content1: phrases[0].text,
-    content2: phrases[1].text,
-    content3: phrases[2].text,
-    ruby: phrases.map(p => p.data),
+    content1: phrases[0].word,
+    content2: phrases[1].word,
+    content3: phrases[2].word,
+    ruby: phrases.map(p => p.ruby_data),
     genre_id: selectedGenre.value,
   };
 
@@ -90,7 +91,7 @@ const handlePost = async () => {
     setTimeout(() => router.push('/'), 1500);
 
   } catch (err) {
-    const errorRes = err.response?.data;
+    const errorRes = err.response?.ruby_data;
     
     if (errorRes?.errorCode) {
         let errorMessages = [];
@@ -127,7 +128,7 @@ const goDescription = () => {
           
           <!-- テキスト入力 (変更確定時に解析) -->
           <input 
-            v-model="phrase.text" 
+            v-model="phrase.word" 
             type="text" 
             :placeholder="['五', '七', '五'][index]"
             @change="analyzeText(index)" 
@@ -137,10 +138,10 @@ const goDescription = () => {
           >
 
           <!-- ▼ ルビ編集エリア (解析結果がある場合のみ表示) ▼ -->
-          <div v-if="phrase.data.length > 0" class="ruby-edit-area">
+          <div v-if="phrase.ruby_data.length > 0" class="ruby-edit-area">
             <p class="ruby-label">ルビの調整 (漢字のみ)</p>
             <div class="ruby-items">
-              <div v-for="(item, i) in phrase.data" :key="i" class="ruby-item">
+              <div v-for="(item, i) in phrase.ruby_data" :key="i" class="ruby-item">
                 <!-- 単語の表示 -->
                 <span class="word-surface">{{ item.text }}</span>
                 
