@@ -29,7 +29,8 @@
           tag="ul"
           class="timeline"
         >
-          <li v-for="post in timeline" :key="post.id">
+          <!-- 逆順にして右端が最新 -->
+          <li v-for="post in orderedTimeline" :key="post.id">
             <PostCard :post="post" :currentUser="currentUser" @delete="handleDelete" />
           </li>
         </transition-group>
@@ -70,18 +71,21 @@ const currentUser = ref(token.value ? jwtDecode(token.value) : null);
 const PAGE_SIZE = 10;
 const hasMore = ref(true);
 const loadingMore = ref(false);
+const jumping = ref(''); // タブジャンプアニメ用
 
-// タブのジャンプアニメ用
-const jumping = ref('');
+/**
+ * 逆順で右端が最新になる
+ */
+const orderedTimeline = computed(() => {
+  return [...timeline.value].reverse();
+});
 
 /**
  * タブクリック時
  */
 const handleTabClick = (tabName) => {
-  jumping.value = tabName; // アニメ用クラスを付与
+  jumping.value = tabName;
   changeFilter(tabName);
-
-  // アニメ終了後にクラスを外す（0.5秒）
   setTimeout(() => jumping.value = '', 1000);
 };
 
@@ -122,6 +126,9 @@ const fetchTimeline = async () => {
     timeline.value.push(...newPosts);
 
     if (!newPosts.length || newPosts.length < PAGE_SIZE) hasMore.value = false;
+
+    // 最新を右端に自動スクロール
+    scrollToLatest();
 
   } catch (err) {
     console.error(err);
@@ -165,14 +172,35 @@ const emptyMessage = computed(() => {
   return '';
 });
 
-onMounted(fetchTimeline);
+/**
+ * タイムライン右端にスクロール
+ */
+const scrollToLatest = () => {
+  nextTick(() => {
+    const el = document.querySelector(".timeline");
+    if (el) {
+      // 少し遅延を入れると初期レンダリング後に確実にスクロールされる
+      setTimeout(() => {
+        el.scrollLeft = el.scrollWidth;
+      }, 0);
+    }
+  });
+};
+
+onMounted(async () => {
+  await fetchTimeline();
+  scrollToLatest();
+});
 </script>
 
 <style scoped>
 .page-title {
-  font-family: "Yu Mincho", "serif"; /* 和風フォント */
+  font-family: "Yu Mincho", "serif";
   font-size: 2em;
   font-weight: bold;
+  text-align: center;
+  margin: 10px 0 5px;
+  color: #333;
 }
 
 .page-container {
@@ -192,13 +220,6 @@ onMounted(fetchTimeline);
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-.page-title {
-  text-align: center;
-  margin: 10px 0 5px;
-  font-size: 1.8em;
-  color: #333;
-}
-
 .tabs {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -207,8 +228,8 @@ onMounted(fetchTimeline);
 
 .tab-btn {
   background: #f8f8f8;
-  border: 2px solid transparent; /* 枠線のスペースを確保 */
-  border-radius: 8px;           /* 丸角にする場合 */
+  border: 2px solid transparent;
+  border-radius: 8px;
   font-weight: 500;
   font-size: 0.85rem;
   font-family: 'Roboto', sans-serif;
@@ -217,41 +238,38 @@ onMounted(fetchTimeline);
   padding: 12px 0;
   transition: all 0.3s ease;
   border-bottom: 3px solid transparent;
-  display: inline-block; /* transform効かせる */
+  display: inline-block;
 }
 
 .tab-btn.active {
   background: #fff;
-  border: 2px solid #007bff;  /* 枠線も同色で囲む */
+  border: 2px solid #007bff;
   color: #007bff;
   border-bottom: 3px solid #007bff;
   font-weight: 700;
   font-size: 1.2rem;
   letter-spacing: 0.02em;
-  transform: scale(1.0);
 }
 
 .tab-btn:not(.active):hover {
   background: #eee;
   font-size: 1.2rem;
-  transform: scale(1.0);
   color: #007bff;
-}
-
-/* ぴょんバウンドアニメ */
-@keyframes bounce {
-  0%   { transform: translateY(0); }
-  30%  { transform: translateY(-1000px); }
-  60%  { transform: translateY(0); }
-  70%  { transform: translateY(-15px); }
-  80%  { transform: translateY(0); }
-  90%  { transform: translateY(-5px); }
-  100% { transform: translateY(0); }
 }
 
 .tab-btn.jump {
   font-size: 1.1rem;
-  animation: bounce 1.0s ease 4;
+  animation: bounce 1s ease 4;
+}
+
+@keyframes bounce {
+  0% { transform: translateY(0); }
+  30% { transform: translateY(-1000px); }
+  60% { transform: translateY(0); }
+  70% { transform: translateY(-15px); }
+  80% { transform: translateY(0); }
+  90% { transform: translateY(-5px); }
+  100% { transform: translateY(0); }
 }
 
 .timeline-content {
@@ -264,31 +282,23 @@ onMounted(fetchTimeline);
 }
 
 .timeline {
-  display: grid;
+  display: flex;
+  flex-direction: row;
   gap: 1.5rem;
-  justify-content: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  padding: 1rem;
+  scrollbar-width: none;
 }
-
-@media (max-width: 999px) {
-  .timeline {
-    grid-template-columns: 1fr;
-  }
+.timeline::-webkit-scrollbar {
+  display: none;
 }
-
-@media (min-width: 1000px) {
-  .timeline {
-    grid-template-columns: repeat(2, 500px);
-  }
-}
-
 .timeline li {
-  list-style: none;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  transition: transform 0.2s;
-}
-.timeline li:hover {
-  transform: scale(1.02);
+  flex: 0 0 auto;
+  width: 80%;
+  max-width: 500px;
+  scroll-snap-align: start;
 }
 
 .empty-message {
@@ -315,12 +325,10 @@ onMounted(fetchTimeline);
   cursor: pointer;
   transition: all 0.2s;
 }
-
 .load-more-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
-
 .load-more-btn:hover:not(:disabled) {
   background: #0056b3;
 }
@@ -331,9 +339,8 @@ onMounted(fetchTimeline);
   margin-top: 0.5rem;
   font-size: 0.95rem;
 }
-</style>
 
-<style>
+/* アニメーション */
 .fade-slide-enter-from {
   opacity: 0;
   transform: translateY(80px) scale(0.95);
