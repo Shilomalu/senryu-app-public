@@ -11,6 +11,8 @@ import NotFoundView from '../views/NotFoundView.vue'
 import EditProfileView from '../views/EditProfileView.vue'
 import UserProfile from '../views/UserProfileView.vue';
 import PostDescriptionView from '../views/PostDescriptionView.vue'
+import DirectFumiView from '@/views/DirectFumiView.vue'
+import DirectFumiPage from '@/components/DirectFumiPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -51,6 +53,20 @@ const router = createRouter({
       path: '/profile/edit',
       name: 'profile-edit',
       component: EditProfileView
+    },
+
+    // 追加: ダイレクトメッセージページ
+    {
+      path: '/dfumi',
+      name: 'dfumi',
+      component: DirectFumiView
+    },
+    // 追加: 各人のダイレクトメッセージページ
+    {
+      path: '/dfumi/:partnerId',
+      name: 'DirectFumi',
+      component: DirectFumiPage,
+      props: true, // URL パラメータを props として渡す
     },
 
     // --- 以下はタブバー以外の場所から遷移するページ ---

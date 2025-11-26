@@ -249,7 +249,8 @@ const goEdit = () => {
           <ul>
             <li v-for="post in posts" :key="post.id"  
             @click="selectFavorite(post)" 
-            class="selectable-post">
+            class="selectable-post"
+            style="color: black;">
               {{ post.content }}
             </li>
 

@@ -49,6 +49,9 @@ onMounted(() => {
     <RouterLink to="/profile" class="tab-link">
       <span>プロフィール</span>
     </RouterLink>
+    <RouterLink to="/dfumi" class="tab-link">
+      <span>ダイレクトふみ</span>
+    </RouterLink>
   </footer>
 </template>
 
@@ -63,24 +66,33 @@ onMounted(() => {
   left: 0;
   right: 0;
   display: flex;
-  justify-content: space-around;
-  align-items: center;
+  /* 高さを揃える */
   height: 60px;
   background-color: #ffffff;
   border-top: 1px solid #e0e0e0;
   box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+  align-items: stretch; /* ← 追加: タブの高さをバーに合わせる */
 }
+
 .tab-link {
+  flex: 1; /* 均等幅にする */
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  flex-grow: 1;
+  align-items: center;
   color: #888;
   text-decoration: none;
   font-size: 12px;
+  height: 100%; /* バーの高さに合わせる */
+  box-sizing: border-box; /* パディング込みで高さを固定 */
 }
+
 .router-link-active {
   color: #007bff;
+  border-bottom: 5px solid #007bff; /* 下線だけ */
+  border-radius: 0;                /* 丸角は不要 */
+  background-color: hwb(210 75% 0%);  /* 背景は透過 */
+  font-size: 1.1rem;
 }
+
 </style>

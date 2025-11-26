@@ -14,27 +14,56 @@
 
     <div class="poem-wrapper">
       <div class="poem">
-        <p v-for="(line, index) in lines" :key="index" class="post-line">
-          {{ line }}
-        </p>
+        <template v-if="post.ruby_content && post.ruby_content.length > 0">
+          <!-- 各句 (上・中・下) のループ -->
+          <div v-for="(phrase, pIndex) in post.ruby_content" :key="pIndex" class="post-line">
+             <!-- 単語ごとのループ -->
+             <span v-for="(word, wIndex) in phrase" :key="wIndex" class="word-unit">
+               <ruby v-if="word.ruby">
+                 {{ word.text }}<rt>{{ word.ruby }}</rt>
+               </ruby>
+               <span v-else>{{ word.text }}</span>
+             </span>
+          </div>
+        </template>
+
+        <!-- パターンB: ルビデータがない場合 (旧データ互換) -->
+        <template v-else>
+          <p v-for="(line, index) in lines" :key="index" class="post-line">
+            {{ line }}
+          </p>
+        </template>
       </div>
     </div>
 
-    <div class="actions">
-      <LikeButton :postId="post.id" :currentUserId="currentUser?.id || 0" />
-      <button class="reply-btn" @click="toggleReplies">
-        返信{{ post.repliesCount || 0 }}
-      </button>
-      <button 
-        v-if="currentUser && post.user_id === currentUser.id"
-        class="delete-btn" 
-        @click="$emit('delete', post.id)"
-      >
-        削除
-      </button>
+  <!-- アクションボタンエリア (修正: 2段組みに変更) -->
+    <div class="actions-container" v-if="!isPreview">
+      <!-- 上段：いいねと返信 -->
+      <div class="main-actions">
+        <LikeButton
+            :postId="post.id"
+            :currentUserId="currentUser?.id || 0"
+            :initialIsLiked="post.isLiked"
+            :initialLikesCount="post.likesCount"
+        />
+        <button class="reply-btn" @click="toggleReplies">
+            返信{{ post.repliesCount || 0 }}
+        </button>
+      </div>
+      
+      <!-- 下段：削除ボタン (少し下に配置) -->
+      <div class="delete-action" v-if="currentUser && post.user_id === currentUser.id">
+        <button 
+            class="delete-btn" 
+            @click="$emit('delete', post.id)"
+        >
+            削除
+        </button>
+      </div>
     </div>
 
-    <div v-if="showReplies" class="replies">
+
+    <div v-if="!isPreview && showReplies" class="replies">
       <div v-if="!replies.length" class="no-replies">返信はありません</div>
         <div v-else class="reply-scroll-container">
           <div v-for="reply in replies" :key="reply.id" class="reply">
@@ -76,6 +105,10 @@ const props = defineProps({
   currentUser: {
     type: Object,
     default: null
+  },
+    isPreview: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -119,14 +152,17 @@ const handleReplyDeleted = (replyId) => {
 };
 
 const goToProfile = () => {
-  router.push(`/profile/${props.post.user_id}`);
+  // プレビュー中は遷移させない
+  if (!props.isPreview && props.post.user_id) {
+      router.push(`/users/${props.post.user_id}`);
+  }
 };
 </script>
 
 <style scoped>
 .card {
-  width: 100%;
-  max-width: 500px;
+  width: 260px;       /* ← 好きな横幅に調整！ */
+  max-width: none; 
   padding: 1rem;
   border: 1px solid #ccc;
   border-radius: 10px;
@@ -136,7 +172,7 @@ const goToProfile = () => {
   background-color: #fff;
   box-sizing: border-box;
   color: #000;
-  height: 400px;
+  height: 430px;
   transition: height 0.3s ease;
   overflow: hidden;
 }
@@ -192,25 +228,58 @@ const goToProfile = () => {
   color: #000;
 }
 
+.word-unit {
+  display: inline-block; /* 単語ごとのまとまり */
+}
+
+/* ルビのスタイル */
+ruby {
+  ruby-position: over; /* 縦書きでは右側に表示 */
+  display: inline-flex;
+  flex-direction: column; /* 縦書き用 */
+  align-items: center;
+}
+
+rt {
+  font-size: 0.5em; /* ルビのサイズ */
+  color: #555;
+  text-align: center;
+  margin-bottom: -0.4em; /* 文字との距離調整 */
+}
+
+
 .actions {
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
+  align-items: center; /* ← ここで高さを揃える */
 }
 
+.actions button {
+  height: 35px;           /* 全ボタン共通の高さ */
+  line-height: 35px;      /* テキストを縦中央に */
+  padding: 0 12px;        /* 横の余白だけ設定 */
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.like-button {
+  height: 35px;           /* LikeButton がカスタムコンポーネントなら高さを統一 */
+}
 .reply-btn {
   background-color: #007bff;
+  color: #fff;
   border: none;
-  margin-top: 0.5rem;
-  padding: 5px 10px;
-  border-radius: 6px;
-  border: none;
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  height: 35px;
+  line-height: 35px;
+  border-radius: 8px;
+  padding: 0 10px;
 }
+
 .reply-btn:hover {
   background-color: #0056b3;
 }
@@ -268,5 +337,21 @@ const goToProfile = () => {
   color: #888;
   font-style: italic;
   margin-bottom: 0.3rem;
+}
+
+.actions-container {
+  display: flex;
+  flex-direction: column; /* 全体は「縦」に積む (上段と下段) */
+  align-items: flex-end;  /* 全て右寄せにする */
+  gap: 0.5rem;            /* 上段と下段の隙間 */
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* 上段：いいねと返信ボタンを入れる箱 */
+.main-actions {
+  display: flex;          /* ★重要: これで中身を「横」に並べる */
+  align-items: center;    /* 上下の位置を揃える */
+  gap: 1rem;              /* ボタン同士の間隔 */
 }
 </style>

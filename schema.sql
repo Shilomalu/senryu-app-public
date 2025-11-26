@@ -4,7 +4,7 @@
 -- --------------------------------------------------
 
 -- sqlを起動する際は
---「mysql -u root -p --default-character-set=utf8mb4」
+-- 「mysql -u root -p --default-character-set=utf8mb4」
 -- 下の文を表示するとデータベースを削除して再作成
 -- DROP DATABASE IF EXISTS Project_Team6_db;
 
@@ -32,6 +32,7 @@ DROP TABLE IF EXISTS replies;
 DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS dictionary;
+DROP TABLE IF EXISTS directmessages;
 
 
 CREATE TABLE users (
@@ -44,13 +45,34 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ジャンルテーブルの作成
+CREATE TABLE genres (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL
+);
+
+INSERT INTO genres (name) VALUES
+('春'),('夏'),('秋'),('冬'),('スポーツ'),('食べ物'),('学校'),('旅行');
+
+-- posts テーブルに genre_id を追加
+ALTER TABLE posts
+ADD COLUMN genre_id INT NOT NULL DEFAULT 1;
+
+-- 外部キーの設定
+ALTER TABLE posts
+ADD CONSTRAINT fk_posts_genre
+FOREIGN KEY (genre_id) REFERENCES genres(id);
+
 CREATE TABLE posts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     content VARCHAR(100) NOT NULL,
+    ruby_content JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    likes_num INT DEFAULT 0
+    likes_num INT DEFAULT 0,
+    genre_id INT NOT NULL,
+    FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE CASCADE
 );
 
 CREATE TABLE likes (
@@ -89,5 +111,14 @@ CREATE TABLE dictionary(
     sennryuu_id INT NOT NULL
 );
 
-
-
+CREATE TABLE directmessages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sender_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+    content VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    reply_77 BOOLEAN NOT NULL DEFAULT FALSE,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+);
