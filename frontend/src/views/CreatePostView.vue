@@ -142,29 +142,38 @@ const goDescription = () => {
 }
 
 .genre-buttons {
-  display : grid;
-  grid-template-columns : repeat(4,1fr);
-  gap : 10px;
-  margin-bottom : 20px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
 .genre-buttons button {
-  padding : 8px;
-  font-size : 0.9em;
-  border-radius: 6px;
+  height: 40px;           /* 全ボタン共通の高さ */
+  padding: 0;
+  font-size: 0.9em;
+  border-radius: 8px;
   border: 1px solid #007bff;
   background-color: white;
   cursor: pointer;
-  transition: 0.2s;
+  transition: 0.4s;               /* ← 回転も滑らかにするため少し長めに */
+  transform-origin: center center; /* 中央を基準に回転・拡大 */
 }
+
 .genre-buttons button.active {
   background-color: #007bff;
   color: white;
+  font-size: 1.1em;
+
+  /* 🔥 1回転+拡大 */
+  transform: rotate(360deg) scale(1.1);
 }
+
 .genre-buttons button:hover {
-  background-color: #0056b3;
+  background-color: #007bff;
   color: white;
 }
+
 
 .submit-btn {
   width: 100%;

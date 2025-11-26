@@ -206,19 +206,31 @@ const goToProfile = () => {
   gap: 1rem;
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
+  align-items: center; /* ← ここで高さを揃える */
 }
 
+.actions button {
+  height: 35px;           /* 全ボタン共通の高さ */
+  line-height: 35px;      /* テキストを縦中央に */
+  padding: 0 12px;        /* 横の余白だけ設定 */
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.like-button {
+  height: 35px;           /* LikeButton がカスタムコンポーネントなら高さを統一 */
+}
 .reply-btn {
   background-color: #007bff;
+  color: #fff;
   border: none;
-  margin-top: 0.5rem;
-  padding: 5px 10px;
-  border-radius: 6px;
-  border: none;
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  height: 35px;
+  line-height: 35px;
+  padding: 0 10px;
 }
+
 .reply-btn:hover {
   background-color: #0056b3;
 }
