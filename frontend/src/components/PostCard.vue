@@ -156,8 +156,8 @@ const goToProfile = () => {
 
 <style scoped>
 .card {
-  width: 100%;
-  max-width: 500px;
+  width: 260px;       /* ← 好きな横幅に調整！ */
+  max-width: none; 
   padding: 1rem;
   border: 1px solid #ccc;
   border-radius: 10px;
