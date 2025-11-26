@@ -235,6 +235,7 @@ onMounted(fetchTimeline);
   background: #eee;
   font-size: 1.2rem;
   transform: scale(1.0);
+  color: #007bff;
 }
 
 /* ぴょんバウンドアニメ */

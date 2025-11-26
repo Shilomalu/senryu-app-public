@@ -14,13 +14,29 @@
 
     <div class="poem-wrapper">
       <div class="poem">
-        <p v-for="(line, index) in lines" :key="index" class="post-line">
-          {{ line }}
-        </p>
+        <template v-if="post.ruby_content && post.ruby_content.length > 0">
+          <!-- 各句 (上・中・下) のループ -->
+          <div v-for="(phrase, pIndex) in post.ruby_content" :key="pIndex" class="post-line">
+             <!-- 単語ごとのループ -->
+             <span v-for="(word, wIndex) in phrase" :key="wIndex" class="word-unit">
+               <ruby v-if="word.ruby">
+                 {{ word.text }}<rt>{{ word.ruby }}</rt>
+               </ruby>
+               <span v-else>{{ word.text }}</span>
+             </span>
+          </div>
+        </template>
+
+        <!-- パターンB: ルビデータがない場合 (旧データ互換) -->
+        <template v-else>
+          <p v-for="(line, index) in lines" :key="index" class="post-line">
+            {{ line }}
+          </p>
+        </template>
       </div>
     </div>
 
-    <div class="actions">
+    <div class="actions" v-if="!isPreview">
   <!-- LikeButton に初期いいね状態とカウントを渡し、toggle 時に post の likesCount を更新 -->
   <LikeButton
     :postId="post.id"
@@ -42,7 +58,7 @@
 </div>
 
 
-    <div v-if="showReplies" class="replies">
+    <div v-if="!isPreview && showReplies" class="replies">
       <div v-if="!replies.length" class="no-replies">返信はありません</div>
         <div v-else class="reply-scroll-container">
           <div v-for="reply in replies" :key="reply.id" class="reply">
@@ -84,6 +100,10 @@ const props = defineProps({
   currentUser: {
     type: Object,
     default: null
+  },
+    isPreview: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -127,7 +147,10 @@ const handleReplyDeleted = (replyId) => {
 };
 
 const goToProfile = () => {
-  router.push(`/profile/${props.post.user_id}`);
+  // プレビュー中は遷移させない
+  if (!props.isPreview && props.post.user_id) {
+      router.push(`/users/${props.post.user_id}`);
+  }
 };
 </script>
 
@@ -199,6 +222,26 @@ const goToProfile = () => {
   text-align: center;
   color: #000;
 }
+
+.word-unit {
+  display: inline-block; /* 単語ごとのまとまり */
+}
+
+/* ルビのスタイル */
+ruby {
+  ruby-position: over; /* 縦書きでは右側に表示 */
+  display: inline-flex;
+  flex-direction: column; /* 縦書き用 */
+  align-items: center;
+}
+
+rt {
+  font-size: 0.5em; /* ルビのサイズ */
+  color: #555;
+  text-align: center;
+  margin-bottom: -0.4em; /* 文字との距離調整 */
+}
+
 
 .actions {
   display: flex;
