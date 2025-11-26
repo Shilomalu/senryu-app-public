@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, watchEffect } from 'vue'
 
 const props = defineProps({
   partnerId: {
@@ -23,7 +23,7 @@ onMounted(() => {
   isReply77.value = props.latestMessage?.reply_77 ?? false;
 });
 
-watch(() => {
+watchEffect(() => {
   // latestMessage が存在するかチェックして reply_77 を取得
   isReply77.value = props.latestMessage?.reply_77 ?? false;
 });

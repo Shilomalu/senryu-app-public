@@ -28,6 +28,7 @@
 ダイレクトふみ相手として非フォロー中取得 /api/users/notfollow POST 必要 (なし) 214: [{"id", "username", "latest_dm"}]
 ダイレクトふみ送信	/api/users/:id/dfumi/sending	POST	必要	{ "content1", "content2", "content3", "reply77Flag" }	210: { "message": "ふみを送信しました。" }
 ダイレクトふみ取得	/api/users/:id/dfumi/messages	POST	必要	(なし)	211: [ { "id", "senderFlag", "content", "created_at", "reply_77", "is_read" }, ... ]
+ダイレクトふみ既読情報更新	/api/users/:id/dfumi/isread	POST	必要	(なし)	216: { "message", "既読情報更新" }
 
 検索関連 (/api/search)
 機能	エンドポイント	メソッド	認証	クエリパラメータ	成功レスポンス (2xx)
