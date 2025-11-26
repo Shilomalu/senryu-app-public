@@ -315,6 +315,10 @@ const goDescription = () => {
   margin-bottom: 30px;
   border-top: 2px solid #eee;
   padding-top: 20px;
+  display: flex;
+  justify-content: center; /* 横中央 */
+  align-items: center;     /* 縦方向も中央寄せ（任意） */
+  flex-direction: column; 
 }
 .preview-section h2 { font-size: 1.2em; margin-bottom: 5px; color: #555; }
 .preview-note { font-size: 0.8em; color: #888; margin-bottom: 15px; }

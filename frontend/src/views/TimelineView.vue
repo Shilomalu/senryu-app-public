@@ -8,10 +8,12 @@
           :class="['tab-btn', { active: filter === 'all', jump: jumping === 'all' }]"
           @click="() => handleTabClick('all')"
         >一覧</button>
+
         <button
           :class="['tab-btn', { active: filter === 'likes', jump: jumping === 'likes' }]"
           @click="() => handleTabClick('likes')"
         >いとをかし</button>
+
         <button
           :class="['tab-btn', { active: filter === 'following', jump: jumping === 'following' }]"
           @click="() => handleTabClick('following')"
@@ -22,6 +24,7 @@
     <!-- タイムライン -->
     <div class="timeline-content">
       <transition name="switch" mode="out-in">
+
         <transition-group
           v-if="timeline.length"
           :key="filter"
@@ -30,32 +33,50 @@
           class="timeline"
           id="timeline-scroll-area"
         >
-          <!-- 逆順にして右端が最新 -->
-          <li v-for="post in orderedTimeline" :key="post.id">
-            <PostCard :post="post" :currentUser="currentUser" @delete="handleDelete" />
+
+          <!-- ▼ 左端（最古）に「もっと見る」 -->
+          <li key="load-more" class="more-area-left">
+            <div class="load-more-wrapper">
+              <button 
+                v-if="hasMore"
+                class="load-more-btn"
+                @click="loadMore"
+                :disabled="loadingMore"
+              >
+                {{ loadingMore ? '読み込み中...' : 'もっと見る' }}
+              </button>
+
+              <!-- ▼ 読み切ったらこれを表示 -->
+              <p v-else class="no-more-message">
+                これ以上投稿はありません
+              </p>
+            </div>
           </li>
+
+          <!-- ▼ 投稿一覧 -->
+          <li 
+            v-for="post in orderedTimeline"
+            :key="post.id"
+          >
+            <PostCard
+              :post="post"
+              :currentUser="currentUser"
+              @delete="handleDelete"
+            />
+          </li>
+
         </transition-group>
 
+        <!-- ▼ 投稿ゼロ -->
         <p v-else class="empty-message" :key="filter + '-empty'">
           {{ emptyMessage }}
         </p>
-      </transition>
 
-      <div class="load-more-container" v-if="timeline.length">
-        <!-- 左端（過去）にある「もっと見る」ボタン -->
-        <button 
-          v-if="hasMore" 
-          class="load-more-btn" 
-          @click="loadMore" 
-          :disabled="loadingMore"
-        >
-          {{ loadingMore ? '読み込み中...' : 'もっと見る' }}
-        </button>
-        <p v-else class="no-more-message">これ以上投稿はありません</p>
-      </div>
+      </transition>
     </div>
   </div>
 </template>
+
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue';
@@ -278,7 +299,6 @@ onMounted(async () => {
   box-sizing: border-box;
   /* 縦スクロールはさせない */
   overflow-y: hidden; 
-  height: 100vh; /* 画面いっぱいに */
   display: flex; /* 子要素を横に並べる */
   flex-direction: row;
 }
@@ -289,6 +309,7 @@ onMounted(async () => {
   gap: 1.5rem;
   overflow-x: auto;
   overflow-y: hidden;
+  height: auto;
   scroll-snap-type: x mandatory;
   padding: 1rem;
   scrollbar-width: none;
@@ -321,15 +342,23 @@ onMounted(async () => {
   order: -1; /* Flexboxの先頭（左端）に配置 */
 }
 
+.load-more-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center; /* 中央寄せ */
+  align-items: center;
+}
+
 .load-more-btn {
+  height: 400px; 
+  line-height: 400px; 
   background: #007bff;
-  color: #fff;
-  border: none;
+  color: white;
   padding: 0.6rem 1.2rem;
-  font-size: 1rem;
   border-radius: 8px;
+  border: none;
+  font-size: 1rem;
   cursor: pointer;
-  transition: all 0.2s;
   white-space: nowrap;
 }
 .load-more-btn:disabled {
@@ -341,10 +370,9 @@ onMounted(async () => {
 }
 
 .no-more-message {
+  color: #555;
+  font-size: 0.9rem;
   text-align: center;
-  color: #888;
-  font-size: 0.8rem;
-  writing-mode: vertical-rl; /* 縦書き */
 }
 
 /* アニメーション
