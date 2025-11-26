@@ -1,10 +1,15 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
+import PostCard from '../components/PostCard.vue';
 
-const content1 = ref(''); // 上の句（5）
-const content2 = ref(''); // 中の句（7）
-const content3 = ref(''); // 下の句（5）
+//こんな感じでJSONでdataの内容を受け取る予定、例[{text: "古池", ruby: "ふるいけ"}, {text: "や", ruby: null}]
+const phrases = reactive([
+  { text: '', data: [] },
+  { text: '', data: [] },
+  { text: '', data: [] }
+]);
 
 const selectedGenre = ref(1);
 const message = ref('');
@@ -21,6 +26,46 @@ const genres = [
   { id : 8, name : '＃旅行'},
 ];
 
+//しんじにバックエンド用のapiを作成依頼(未完了)
+const analyzeText = async (index) => {
+  const text = phrases[index].text;
+  if(!text){
+    phrases[index].data = [];
+    return;
+  }
+
+  try{
+    const res = await axios.post('/api/analyze', {text});
+    phrases[index].data = res.data;
+  }catch(err){
+    console.error('解析失敗', err);
+    phrases[index].data = [{ text: text, ruby: null }];
+  }
+}
+
+const previewPost = computed(() => {
+  const content = phrases.map(p => p.text).join(' ');
+  
+  const rubyContent = phrases.map(p => {
+    if (p.data && p.data.length > 0) {
+      return p.data;
+    }
+    return p.text ? [{ text: p.text, ruby: null }] : [];
+  });
+
+  return {
+    id: 'preview',
+    user_id: 0,
+    authorName: 'あなた',
+    content: content,
+    ruby_content: rubyContent, // これで「空っぽ」ではなく「文字データ」が渡る
+    repliesCount: 0,
+    likesCount: 0,
+    genre_id: selectedGenre.value
+  };
+});
+
+//postsを修正すること頼む(未完了)
 const handlePost = async () => {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -29,39 +74,35 @@ const handlePost = async () => {
   }
 
   const senryudata = {
-    content1: content1.value,
-    content2: content2.value,
-    content3: content3.value,
+    content1: phrases[0].text,
+    content2: phrases[1].text,
+    content3: phrases[2].text,
+    ruby: phrases.map(p => p.data),
     genre_id: selectedGenre.value,
   };
 
   try {
-    const res = await fetch('/api/posts', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(senryudata),
+    await axios.post('/api/posts', senryudata, {
+      headers: { Authorization: `Bearer ${token}` }
     });
-    const data = await res.json();
-
-    if (!res.ok) {
-      if (data.errorCode > 0) {
-        let errorMessages = [];
-        if (data.errorCode & 1) errorMessages.push('上の句が5音ではありません。');
-        if (data.errorCode & 2) errorMessages.push('中の句が7音ではありません。');
-        if (data.errorCode & 4) errorMessages.push('下の句が5音ではありません。');
-        throw new Error(errorMessages.join('\n'));
-      } else if (data.errorCode === -1) {
-        throw new Error('記号などが多すぎます。');
-      }
-      throw new Error(data.error || '投稿に失敗しました。');
-    }
+    
     message.value = '投稿しました！';
     setTimeout(() => router.push('/'), 1500);
+
   } catch (err) {
-    message.value = err.message;
+    const errorRes = err.response?.data;
+    
+    if (errorRes?.errorCode) {
+        let errorMessages = [];
+        if (errorRes.errorCode & 1) errorMessages.push('上の句が5音ではありません。');
+        if (errorRes.errorCode & 2) errorMessages.push('中の句が7音ではありません。');
+        if (errorRes.errorCode & 4) errorMessages.push('下の句が5音ではありません。');
+        message.value = errorMessages.join('\n');
+    } else if (errorRes?.errorCode === -1) {
+        message.value = '記号などが多すぎます。';
+    } else {
+        message.value = errorRes?.error || errorRes?.message || '投稿に失敗しました。';
+    }
   }
 };
 
@@ -78,13 +119,44 @@ const goDescription = () => {
       <p class="form-text" @click="goDescription">入力できる文字種一覧はこちら</p>
     </div>
     <form @submit.prevent="handlePost">
+    　<div class="input-sections">
+        <!-- 上・中・下の句の入力ループ -->
+        <div v-for="(phrase, index) in phrases" :key="index" class="phrase-group">
+          <label>{{ ['上', '中', '下'][index] }}の句</label>
+          
+          <!-- テキスト入力 (変更確定時に解析) -->
+          <input 
+            v-model="phrase.text" 
+            type="text" 
+            :placeholder="['五', '七', '五'][index]"
+            @change="analyzeText(index)" 
+            required
+            :maxlength="[10, 15, 10][index]"
+            class="main-input"
+          >
 
-  <div class="senryu-inputs">
-    <input v-model="content1" type="text" placeholder="上の句（五）" required maxlength="10">
-    <input v-model="content2" type="text" placeholder="中の句（七）" required maxlength="15">
-    <input v-model="content3" type="text" placeholder="下の句（五）" required maxlength="10">
-  </div>
-
+          <!-- ▼ ルビ編集エリア (解析結果がある場合のみ表示) ▼ -->
+          <div v-if="phrase.data.length > 0" class="ruby-edit-area">
+            <p class="ruby-label">ルビの調整 (漢字のみ)</p>
+            <div class="ruby-items">
+              <div v-for="(item, i) in phrase.data" :key="i" class="ruby-item">
+                <!-- 単語の表示 -->
+                <span class="word-surface">{{ item.text }}</span>
+                
+                <!-- ルビ入力欄 (ルビがある場合のみ表示) -->
+                <input 
+                  v-if="item.ruby !== null" 
+                  v-model="item.ruby" 
+                  class="ruby-input"
+                >
+                <span v-else class="no-ruby">-</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+　
+　
   <!-- ジャンル選択ボタン -->
   <div class="genre-buttons">
   <button 
@@ -97,6 +169,13 @@ const goDescription = () => {
     {{ genre.name }}
   </button>
 </div>
+
+      <div class="preview-section">
+        <h2>プレビュー</h2>
+        <p class="preview-note">※実際の表示イメージ</p>
+        <!-- isPreview="true" を渡してボタン等を隠す -->
+        <PostCard :post="previewPost" :isPreview="true" />
+      </div>
 
   <!-- 投稿ボタン -->
   <button type="submit" class="submit-btn">投稿</button>
@@ -112,42 +191,100 @@ const goDescription = () => {
 .form-container {
   max-width: 500px;
   margin: 0 auto;
+  padding: 20px;
+  padding-bottom: 100px;
   text-align: center;
 }
 
-.text-wrapper{
+.page-title { 
+  margin-bottom: 10px; 
+  font-size: 1.5em; 
+  font-weight: bold;
+}
+
+.text-wrapper {
   text-align: right;
+  margin-bottom: 15px;
 }
 .form-text {
   display: inline-block;
   color: #3366bb;
   cursor: pointer;
+  font-size: 0.9em;
 }
-.form-text:hover {
-  text-decoration: underline;
-}
+.form-text:hover { text-decoration: underline; }
 
-/* 入力欄を縦に並べるスタイル */
-.senryu-inputs {
-  display: flex;
-  flex-direction: column; /* 縦並びに変更！ */
-  gap: 10px;
+.phrase-group {
   margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  text-align: left;
+}
+.phrase-group label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+}
+.main-input {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.1em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  text-align: center;
 }
 
-.senryu-inputs input {
+/* ルビ編集エリア */
+.ruby-edit-area {
+  margin-top: 12px;
+  background-color: #fff;
   padding: 10px;
-  font-size: 1.1em;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+}
+.ruby-label { font-size: 0.85em; color: #666; margin-bottom: 8px; }
+
+.ruby-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.ruby-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 30px;
+}
+.word-surface {
+  font-size: 0.9em;
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+.ruby-input {
+  width: 60px;
+  font-size: 0.8em;
   text-align: center;
+  padding: 2px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+}
+.no-ruby {
+  font-size: 0.8em;
+  color: #ccc;
+  padding: 2px 0;
 }
 
 .genre-buttons {
   display : grid;
   grid-template-columns : repeat(4,1fr);
   gap : 10px;
-  margin-bottom : 20px;
+  margin-bottom : 30px;
 }
-
 .genre-buttons button {
   padding : 8px;
   font-size : 0.9em;
@@ -166,17 +303,36 @@ const goDescription = () => {
   color: white;
 }
 
+/* プレビューエリア */
+.preview-section {
+  margin-bottom: 30px;
+  border-top: 2px solid #eee;
+  padding-top: 20px;
+}
+.preview-section h2 { font-size: 1.2em; margin-bottom: 5px; color: #555; }
+.preview-note { font-size: 0.8em; color: #888; margin-bottom: 15px; }
+
 .submit-btn {
   width: 100%;
-  padding: 10px;
-  font-size: 1em;
+  padding: 14px;
+  font-size: 1.1em;
   background-color: #007bff;
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
 }
-.submit-btn:hover {
-  background-color: #0056b3;
+.submit-btn:hover { background-color: #0056b3; }
+
+.message-display {
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: #f8d7da;
+  color: #721c24;
+  white-space: pre-wrap;
+  text-align: center;
 }
 </style>
