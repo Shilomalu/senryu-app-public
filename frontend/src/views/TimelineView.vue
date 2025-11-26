@@ -347,11 +347,12 @@ onMounted(async () => {
   writing-mode: vertical-rl; /* 縦書き */
 }
 
-/* アニメーション */
+/* アニメーション
 .fade-slide-enter-from { opacity: 0; transform: translateY(20px); }
 .fade-slide-enter-active { transition: all 0.5s ease; }
 .fade-slide-leave-to { opacity: 0; transform: scale(0.9); }
 .fade-slide-leave-active { transition: all 0.3s ease; }
 .switch-enter-from, .switch-leave-to { opacity: 0; }
 .switch-enter-active, .switch-leave-active { transition: opacity 0.2s ease; }
+ */
 </style>
