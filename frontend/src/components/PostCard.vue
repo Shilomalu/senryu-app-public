@@ -36,23 +36,29 @@
       </div>
     </div>
 
-    <div class="actions" v-if="!isPreview">
-      <LikeButton
-        :postId="post.id"
-        :currentUserId="currentUser?.id || 0"
-        :initialIsLiked="post.isLiked"
-        :initialLikesCount="post.likesCount"
-      />
-      <button class="reply-btn" @click="toggleReplies">
-        返信{{ post.repliesCount || 0 }}
-      </button>
-      <button 
-        v-if="currentUser && post.user_id === currentUser.id"
-        class="delete-btn" 
-        @click="$emit('delete', post.id)"
-      >
-        削除
-      </button>
+    <div class="actions-container" v-if="!isPreview">
+      <!-- 上段：いいねと返信 -->
+      <div class="main-actions">
+        <LikeButton
+            :postId="post.id"
+            :currentUserId="currentUser?.id || 0"
+            :initialIsLiked="post.isLiked"
+            :initialLikesCount="post.likesCount"
+        />
+        <button class="reply-btn" @click="toggleReplies">
+            返信{{ post.repliesCount || 0 }}
+        </button>
+      </div>
+      
+      <!-- 下段：削除ボタン (少し下に配置) -->
+      <div class="delete-action" v-if="currentUser && post.user_id === currentUser.id">
+        <button 
+            class="delete-btn" 
+            @click="$emit('delete', post.id)"
+        >
+            削除
+        </button>
+      </div>
     </div>
 
     <div v-if="!isPreview && showReplies" class="replies">
@@ -229,6 +235,22 @@ const genreClass = (genreId) => {
 ruby { ruby-position: over; display: inline-flex; flex-direction: column; align-items: center; }
 rt { font-size: 0.5em; color: #555; text-align: center; margin-bottom: -0.4em; }
 
+.actions-container {
+  display: flex;
+  flex-direction: column; /* 全体は「縦」に積む (上段と下段) */
+  align-items: flex-end;  /* 全て右寄せにする */
+  gap: 0.5rem;            /* 上段と下段の隙間 */
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* 上段：いいねと返信ボタンを入れる箱 */
+.main-actions {
+  display: flex;          /* ★重要: これで中身を「横」に並べる */
+  align-items: center;    /* 上下の位置を揃える */
+  gap: 1rem;              /* ボタン同士の間隔 */
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;
@@ -239,8 +261,8 @@ rt { font-size: 0.5em; color: #555; text-align: center; margin-bottom: -0.4em; }
 }
 .actions button { height: 35px; line-height: 35px; padding: 0 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s ease; }
 .like-button { height: 35px; }
-.reply-btn { background-color: #007bff; color: #fff; border: none; height: 35px; line-height: 35px; padding: 0 10px; }
-.reply-btn:hover { background-color: #0056b3; }
+.reply-btn { background-color: #007bff; color: #fff; border: none; height: 35px; line-height: 35px; padding: 0 10px; border-radius: 8px;}
+.reply-btn:hover { background-color: #0056b3;}
 .delete-btn { background-color: transparent; color: #dc3545; border: 1px solid #dc3545; padding: 0.4rem 0.8rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
 .delete-btn:hover { background-color: #dc3545; color: white; }
 
