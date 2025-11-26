@@ -16,7 +16,7 @@ const message = ref('');
 const token = ref(localStorage.getItem('token'));
 const messages = ref([]);
 const partnerName = ref("");
-const latestMessage = ref("");
+const latestMessage = ref({});
 
 const props = defineProps({
   partner: {

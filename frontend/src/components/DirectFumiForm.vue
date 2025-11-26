@@ -23,10 +23,12 @@ onMounted(() => {
   isReply77.value = props.latestMessage?.reply_77 ?? false;
 });
 
-watch(() => {
-  // latestMessage が存在するかチェックして reply_77 を取得
-  isReply77.value = props.latestMessage?.reply_77 ?? false;
-});
+watch(
+  () => props.latestMessage?.reply_77,
+  (value) => {
+    isReply77.value = value === undefined ? value : false
+  }
+)
 
 async function handleSubmitMessage(e) {
   e.preventDefault()
