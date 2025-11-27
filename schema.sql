@@ -31,6 +31,7 @@ DROP TABLE IF EXISTS follows;
 DROP TABLE IF EXISTS replies;
 DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS genres;
 DROP TABLE IF EXISTS dictionary;
 DROP TABLE IF EXISTS directmessages;
 
@@ -52,7 +53,7 @@ CREATE TABLE genres (
 );
 
 INSERT INTO genres (name) VALUES
-('春'),('夏'),('秋'),('冬'),('スポーツ'),('食べ物'),('学校'),('旅行');
+('春'),('夏'),('秋'),('冬'),('趣味'),('食べ物'),('学校'),('その他');
 
 -- posts テーブルに genre_id を追加
 ALTER TABLE posts
