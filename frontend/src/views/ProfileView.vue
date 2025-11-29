@@ -191,7 +191,7 @@ const goEdit = () => {
   <div>
     <div v-if="isLoggedIn" class="profile-container">
       <div class="profile-header">
-        <h1>マイプロフィール</h1>
+        <h1>句歴（プロフィール）</h1>
 
         <div class="button-group">
           <button @click="goEdit" class="edit-btn">編集</button>
@@ -210,10 +210,10 @@ const goEdit = () => {
 
         <div class="profile-info">
           <ul>
-            <li><strong>ユーザー名：</strong> {{ username }}</li>
+            <li><strong>俳号：</strong> {{ username }}</li>
           <!--<li><strong>メールアドレス：</strong> {{ email }}</li> -->
             <li class="profile-item">
-              <strong>自己紹介：</strong> 
+              <strong>添え書き：</strong> 
               <span class = "profile-text">{{ profile_text }}</span>
             </li>
           </ul>
@@ -221,7 +221,7 @@ const goEdit = () => {
       </div>
 
       <div class="favorite-item">
-        <strong>お気に入りの一句：</strong>
+        <strong>選り抜きの一句：</strong>
 
         <div v-if="favorite" class="favorite-box">
           <span class="favorite-content">{{ favorite.content }}</span>

@@ -5,7 +5,7 @@
   >
     <div class="card-header">
       <button class="author-btn" @click="goToProfile">
-        👤 {{ post.authorName || post.author }}
+       👤{{ post.authorName || post.author }}
       </button>
 
       <FollowButton
@@ -204,6 +204,16 @@ const genreClass = (genreId) => {
   align-items: center;
   gap: 0.5rem;
 }
+
+.author-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px; /* 角丸四角にする */
+  object-fit: cover;
+  margin-right: 6px;
+  border: 1px solid #ccc; /* 枠 */
+}
+
 
 .poem-wrapper {
   width: 100%;
