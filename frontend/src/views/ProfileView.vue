@@ -3,9 +3,18 @@ import { ref, onMounted } from 'vue';
 import { useRouter, RouterLink } from 'vue-router';
 import axios from 'axios';
 import PostCard from '@/components/PostCard.vue';
+import icon0 from "@/assets/icons/kajinsample0.jpeg"
 import icon1 from "@/assets/icons/kajinsample1.jpeg"
 import icon2 from "@/assets/icons/kajinsample2.jpeg"
-
+import icon3 from "@/assets/icons/kajinsample3.jpeg"
+import icon4 from "@/assets/icons/kajinsample4.jpeg"
+import icon5 from "@/assets/icons/kajinsample5.jpeg"
+import icon6 from "@/assets/icons/kajinsample6.jpeg"
+import icon7 from "@/assets/icons/kajinsample7.jpeg"
+import icon8 from "@/assets/icons/kajinsample8.jpeg"
+import icon9 from "@/assets/icons/kajinsample9.jpeg"
+import icon10 from "@/assets/icons/kajinsample10.jpeg"
+import icon11 from "@/assets/icons/kajinsample11.jpeg"
 
 const router = useRouter();
 
@@ -21,8 +30,18 @@ const posts = ref([]);
 const favorite = ref(null);
 
 const icons = [
-  { id: 0, src: icon1 },
-  { id: 1, src: icon2 }
+  { id: 0, src: icon0 },
+  { id: 1, src: icon1 },
+  { id: 2, src: icon2 },
+  { id: 3, src: icon3 },
+  { id: 4, src: icon4 },
+  { id: 5, src: icon5 },
+  { id: 6, src: icon6 },
+  { id: 7, src: icon7 },
+  { id: 8, src: icon8 },
+  { id: 9, src: icon9 },
+  { id: 10, src: icon10 },
+  { id: 11, src: icon11 }
 ];
 
 const icon = ref(0)
@@ -61,7 +80,7 @@ const loadProfile = async () => {
     username.value = data.username;
     email.value = data.email;
     profile_text.value = data.profile_text;
-    icon.value = data.iconidx ?? 0;
+    icon.value = data.icon_index ?? 0;
 
     // 自分の投稿取得
     const timelineRes = await axios.get(`/api/posts/user/${data.id}`);
@@ -182,9 +201,11 @@ const goEdit = () => {
       </div>
 
       <div class="profile-info-content">
-        <div class="icon-wrapper">
+        <div class="icon-wrapper" @click="openIconModal">
           <img :src="icons[icon].src" class="profile-icon" />
-          <button class="icon-edit-btn" @click="openIconModal">変更</button>
+          <div class="icon-edit-overlay">
+             ✎
+          </div>
         </div>
 
         <div class="profile-info">
@@ -263,7 +284,7 @@ const goEdit = () => {
     <div v-if="showIconModal" class="modal-overlay">
       <div class ="modal icon-modal">
         <h3>アイコンを選択</h3>
-        <button class="close-btn" @click="closeIconModal">×</button>
+        <button class="close-btn" @click="closeIconModal"><h2>×</h2></button>
 
         <div class="icon-list">
           <div
@@ -352,46 +373,72 @@ const goEdit = () => {
   display: flex;
   align-items: flex-start;
   margin-bottom: 2rem;
+  gap: 32px;
 }
 
 .icon-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-right: 30px;
-  flex-shrink: 0;
+  position: relative;
+  width: 150px;
+  height: 150px;
+  cursor: pointer;
+}
+
+.icon-edit-overlay {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  padding: 6px 8px;
+  border-radius: 50%;
+  font-size: 16px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.icon-wrapper:hover .icon-edit-overlay {
+  opacity: 1;
 }
 
 .profile-icon {
+
   width: 150px;
   height: 150px;
-  border-radius: 50%;
   object-fit: cover;
+  border-radius: 16px;
+  border: 3px solid #ccc;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
+
 
 .icon-preview {
   width: 80px;
   height: 80px;
-  border-radius: 50%;
   object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  cursor: pointer;
 }
 
 .icon-list {
   display: flex;
   flex-wrap: wrap; 
-  gap: 15px;
-  justify-content: left; 
+  gap: 5px;
+  justify-content: center; 
   margin-top: 20px;
-  position: relative; 
-  z-index: 1005; 
+  position: relative;  
 }
 
 .icon-item {
   cursor: pointer;
-  padding: 5px;
+  padding: 3px;
   border: 3px solid transparent; 
-  border-radius: 50%;
+  border-radius: 12px;
   transition: all 0.2s ease;
+}
+
+.icon-preview:hover {
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 }
 
 .user-posts {
@@ -493,6 +540,13 @@ const goEdit = () => {
   margin-top: 10px;
 }
 
+.icon-modal {
+  height: 600px;
+  width: 400px;
+  overflow-y: hidden;
+  padding-bottom: 100px;
+}
+
 .close-btn {
   position: absolute;
   top: 8px;
@@ -560,8 +614,7 @@ const goEdit = () => {
 }
 
 .auth-prompt p {
-  margin-bottom: 2rem;
-  
+  margin-bottom: 2rem; 
 }
 
 .button-group {
