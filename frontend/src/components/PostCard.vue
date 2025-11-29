@@ -1,5 +1,8 @@
 <template>
-  <div class="card" :class="{ 'card-expanded': showReplies }">
+  <div 
+    class="card" 
+    :class="[{ 'card-expanded': showReplies }, genreClass(post.genre_id)]"
+  >
     <div class="card-header">
       <button class="author-btn" @click="goToProfile">
         👤 {{ post.authorName || post.author }}
@@ -15,9 +18,7 @@
     <div class="poem-wrapper">
       <div class="poem">
         <template v-if="post.ruby_content && post.ruby_content.length > 0">
-          <!-- 各句 (上・中・下) のループ -->
           <div v-for="(phrase, pIndex) in post.ruby_content" :key="pIndex" class="post-line">
-             <!-- 単語ごとのループ -->
              <span v-for="(word, wIndex) in phrase" :key="wIndex" class="word-unit">
                <ruby v-if="word.ruby">
                  {{ word.text }}<rt>{{ word.ruby }}</rt>
@@ -27,7 +28,6 @@
           </div>
         </template>
 
-        <!-- パターンB: ルビデータがない場合 (旧データ互換) -->
         <template v-else>
           <p v-for="(line, index) in lines" :key="index" class="post-line">
             {{ line }}
@@ -36,7 +36,6 @@
       </div>
     </div>
 
-  <!-- アクションボタンエリア (修正: 2段組みに変更) -->
     <div class="actions-container" v-if="!isPreview">
       <!-- 上段：いいねと返信 -->
       <div class="main-actions">
@@ -61,7 +60,6 @@
         </button>
       </div>
     </div>
-
 
     <div v-if="!isPreview && showReplies" class="replies">
       <div v-if="!replies.length" class="no-replies">返信はありません</div>
@@ -99,21 +97,21 @@ const props = defineProps({
       authorName: 'テストユーザー',
       user_id: 1,
       content: '花散るや　風にまかせて　時は過ぐ',
-      replies: []
+      replies: [],
+      genre_id: 1
     })
   },
   currentUser: {
     type: Object,
     default: null
   },
-    isPreview: {
+  isPreview: {
     type: Boolean,
     default: false
   }
 });
 
 const router = useRouter();
-
 const lines = computed(() => props.post.content.split(' '));
 const showReplies = ref(false);
 const replies = ref([]);
@@ -146,22 +144,34 @@ const handleReplyPosted = () => {
 
 const handleReplyDeleted = (replyId) => {
   replies.value = replies.value.filter(reply => reply.id !== replyId);
-  if (props.post.repliesCount) {
-    props.post.repliesCount--;
-  }
+  if (props.post.repliesCount) props.post.repliesCount--;
 };
 
 const goToProfile = () => {
-  // プレビュー中は遷移させない
   if (!props.isPreview && props.post.user_id) {
       router.push(`/users/${props.post.user_id}`);
+  }
+};
+
+// ジャンルIDごとにクラス名を返す
+const genreClass = (genreId) => {
+  switch (genreId) {
+    case 1: return 'genre-spring';
+    case 2: return 'genre-summer';
+    case 3: return 'genre-autumn';
+    case 4: return 'genre-winter';
+    case 5: return 'genre-sports';
+    case 6: return 'genre-food';
+    case 7: return 'genre-school';
+    case 8: return 'genre-travel';
+    default: return '';
   }
 };
 </script>
 
 <style scoped>
 .card {
-  width: 260px;       /* ← 好きな横幅に調整！ */
+  width: 260px;
   max-width: none; 
   padding: 1rem;
   border: 1px solid #ccc;
@@ -169,16 +179,13 @@ const goToProfile = () => {
   justify-content: flex-start;
   display: flex;
   flex-direction: column;
-  background-color: #fff;
   box-sizing: border-box;
   color: #000;
-  height: 430px;
+  height: 400px;
   transition: height 0.3s ease;
   overflow: hidden;
 }
-.card-expanded {
-  height: 960px;
-}
+.card-expanded { height: 960px; }
 
 .card-header {
   display: flex;
@@ -205,9 +212,9 @@ const goToProfile = () => {
   border-radius: 10px;
   margin-bottom: 0.5rem;
   display: flex;
+  background-color: #fff;
   justify-content: center;
   align-items: center;
-  background-color: #fafafa;
   box-sizing: border-box;
   height: 250px;
 }
@@ -222,122 +229,11 @@ const goToProfile = () => {
   flex-direction: column;
 }
 
-.post-line {
-  margin: 0 0 0.5rem 0;
-  text-align: center;
-  color: #000;
-}
+.post-line { margin: 0 0 0.5rem 0; text-align: center; color: #000; }
+.word-unit { display: inline-block; }
 
-.word-unit {
-  display: inline-block; /* 単語ごとのまとまり */
-}
-
-/* ルビのスタイル */
-ruby {
-  ruby-position: over; /* 縦書きでは右側に表示 */
-  display: inline-flex;
-  flex-direction: column; /* 縦書き用 */
-  align-items: center;
-}
-
-rt {
-  font-size: 0.5em; /* ルビのサイズ */
-  color: #555;
-  text-align: center;
-  margin-bottom: -0.4em; /* 文字との距離調整 */
-}
-
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
-  align-items: center; /* ← ここで高さを揃える */
-}
-
-.actions button {
-  height: 35px;           /* 全ボタン共通の高さ */
-  line-height: 35px;      /* テキストを縦中央に */
-  padding: 0 12px;        /* 横の余白だけ設定 */
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-}
-
-.like-button {
-  height: 35px;           /* LikeButton がカスタムコンポーネントなら高さを統一 */
-}
-.reply-btn {
-  background-color: #007bff;
-  color: #fff;
-  border: none;
-  height: 35px;
-  line-height: 35px;
-  border-radius: 8px;
-  padding: 0 10px;
-}
-
-.reply-btn:hover {
-  background-color: #0056b3;
-}
-
-.delete-btn {
-  background-color: transparent;
-  color: #dc3545;
-  border: 1px solid #dc3545;
-  padding: 0.4rem 0.8rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.delete-btn:hover {
-  background-color: #dc3545;
-  color: white;
-}
-
-.replies {
-  flex-grow: 1;
-  margin-top: 0.5rem;
-  border-top: 1px solid #ccc;
-  padding-top: 0.5rem;
-  /* overflow-y: auto; */
-}
-
-/*
-.reply {
-  margin-bottom: 0.3rem;
-}
-*/
-
-.reply-scroll-container {
-  height: 360px;
-  display: flex;               /* 横並びにする */
-  flex-direction: row-reverse;
-  overflow-x: auto;            /* 横スクロール有効 */
-  scroll-snap-type: x mandatory; /* 横方向スナップ */
-  scroll-behavior: smooth;
-  border-top: 1px solid #eee;
-  border-bottom: 1px solid #eee;
-}
-.reply-scroll-container > .reply {
-  scroll-snap-align: start;    /* スナップ基準は左端 */
-  flex: 0 0 150px;             /* カード幅を固定（例: 300px） */
-  margin-left: 10px;          /* カード間の隙間 */
-}
-.reply-scroll-container::-webkit-scrollbar {
-  display: none;
-}
-.reply-scroll-container {
-  scrollbar-width: none;
-}
-.no-replies {
-  color: #888;
-  font-style: italic;
-  margin-bottom: 0.3rem;
-}
+ruby { ruby-position: over; display: inline-flex; flex-direction: column; align-items: center; }
+rt { font-size: 0.5em; color: #555; text-align: center; margin-bottom: -0.4em; }
 
 .actions-container {
   display: flex;
@@ -354,4 +250,36 @@ rt {
   align-items: center;    /* 上下の位置を揃える */
   gap: 1rem;              /* ボタン同士の間隔 */
 }
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  align-items: center;
+}
+.actions button { height: 35px; line-height: 35px; padding: 0 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s ease; }
+.like-button { height: 35px; }
+.reply-btn { background-color: #007bff; color: #fff; border: none; height: 35px; line-height: 35px; padding: 0 10px; border-radius: 8px;}
+.reply-btn:hover { background-color: #0056b3;}
+.delete-btn { background-color: transparent; color: #dc3545; border: 1px solid #dc3545; padding: 0.4rem 0.8rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+.delete-btn:hover { background-color: #dc3545; color: white; }
+
+.replies { flex-grow: 1; margin-top: 0.5rem; border-top: 1px solid #ccc; padding-top: 0.5rem; }
+.reply-scroll-container { height: 360px; display: flex; flex-direction: row-reverse; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
+.reply-scroll-container > .reply { scroll-snap-align: start; flex: 0 0 150px; margin-left: 10px; }
+.reply-scroll-container::-webkit-scrollbar { display: none; }
+.reply-scroll-container { scrollbar-width: none; }
+.no-replies { color: #888; font-style: italic; margin-bottom: 0.3rem; }
+
+/* ジャンルごとの背景色 */
+.card.genre-spring { background-color: #ffe4e1; }
+.card.genre-summer { background-color: #fffacd; }
+.card.genre-autumn { background-color: #f5deb3; }
+.card.genre-winter { background-color: #e0ffff; }
+.card.genre-sports { background-color: #d0f0c0; }
+.card.genre-food { background-color: #ffebcd; }
+.card.genre-school { background-color: #d8bfd8; }
+.card.genre-travel { background-color: #add8e6; }
 </style>

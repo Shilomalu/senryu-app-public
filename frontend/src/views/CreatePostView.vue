@@ -20,10 +20,10 @@ const genres = [
   { id : 2, name : '＃夏'},
   { id : 3, name : '＃秋'},
   { id : 4, name : '＃冬'},
-  { id : 5, name : '＃スポーツ'},
+  { id : 5, name : '＃趣味'},
   { id : 6, name : '＃食べ物'},
   { id : 7, name : '＃学校'},
-  { id : 8, name : '＃旅行'},
+  { id : 8, name : '＃その他'},
 ];
 
 //しんじにバックエンド用のapiを作成依頼(未完了)
@@ -315,6 +315,10 @@ const goDescription = () => {
   margin-bottom: 30px;
   border-top: 2px solid #eee;
   padding-top: 20px;
+  display: flex;
+  justify-content: center; /* 横中央 */
+  align-items: center;     /* 縦方向も中央寄せ（任意） */
+  flex-direction: column; 
 }
 .preview-section h2 { font-size: 1.2em; margin-bottom: 5px; color: #555; }
 .preview-note { font-size: 0.8em; color: #888; margin-bottom: 15px; }
