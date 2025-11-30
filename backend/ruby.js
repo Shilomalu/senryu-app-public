@@ -17,7 +17,7 @@ const make_ruby = (text) => {
             words_ruby.push({ word: tokens[i].surface_form, ruby: "○○" });
           }
         } else {
-          words_ruby.push({ word: tokens[i].surface_form, ruby: "" });
+          words_ruby.push({ word: tokens[i].surface_form, ruby: null });
         }
       }
     resolve({ text: text, ruby_data: words_ruby });

@@ -241,7 +241,7 @@ app.get("/api/posts/user/:userId", async (req, res) => {
 // 川柳投稿 (ジャンル対応・要認証)
 app.post("/api/posts", authenticateToken, async (req, res) => {
   try {
-    let { content1, content2, content3, genre_id } = req.body;
+    let { content1, content2, content3, ruby, genre_id, } = req.body;
     const userId = req.user.id; // ミドルウェアがセットしたユーザーIDを使用
 
     if (!content1 || !content2 || !content3) {

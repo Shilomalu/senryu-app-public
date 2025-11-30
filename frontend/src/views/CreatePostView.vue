@@ -6,9 +6,9 @@ import PostCard from '../components/PostCard.vue';
 
 //こんな感じでJSONでdataの内容を受け取る予定、例[{word: "古池", ruby: "ふるいけ"}, {word: "や", ruby: null}]
 const phrases = reactive([
-  { text: '', ruby_data: [] },
-  { text: '', ruby_data: [] },
-  { text: '', ruby_data: [] }
+  { word: '', ruby_data: [] },
+  { word: '', ruby_data: [] },
+  { word: '', ruby_data: [] }
 ]);
 
 const selectedGenre = ref(1);
@@ -39,7 +39,7 @@ const analyzeText = async (index) => {
     phrases[index].ruby_data = res.data.ruby_data;
   }catch(err){
     console.error('解析失敗', err);
-    phrases[index].ruby_data = [{ word: text, ruby: "" }];
+    phrases[index].ruby_data = [{ word: text, ruby: null }];
   }
 }
 
@@ -50,7 +50,7 @@ const previewPost = computed(() => {
     if (p.ruby_data && p.ruby_data.length > 0) {
       return p.ruby_data;
     }
-    return p.text ? [{ word: p.text, ruby: "" }] : [];
+    return p.text ? [{ word: p.text, ruby: null }] : [];
   });
 
   return {
