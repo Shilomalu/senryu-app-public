@@ -6,9 +6,9 @@ import PostCard from '../components/PostCard.vue';
 
 //こんな感じでJSONでdataの内容を受け取る予定、例[{word: "古池", ruby: "ふるいけ"}, {word: "や", ruby: null}]
 const phrases = reactive([
-  { word: '', ruby_data: [] },
-  { word: '', ruby_data: [] },
-  { word: '', ruby_data: [] }
+  { text: '', ruby_data: [] },
+  { text: '', ruby_data: [] },
+  { text: '', ruby_data: [] }
 ]);
 
 const selectedGenre = ref(1);
