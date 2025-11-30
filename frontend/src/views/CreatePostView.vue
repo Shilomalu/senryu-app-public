@@ -39,7 +39,7 @@ const analyzeText = async (index) => {
     phrases[index].ruby_data = res.data.ruby_data;
   }catch(err){
     console.error('解析失敗', err);
-    phrases[index].ruby_data = [{ word: text, ruby: null }];
+    phrases[index].ruby_data = [{ word: text, ruby: "" }];
   }
 }
 
@@ -50,7 +50,7 @@ const previewPost = computed(() => {
     if (p.ruby_data && p.ruby_data.length > 0) {
       return p.ruby_data;
     }
-    return p.text ? [{ word: p.text, ruby: null }] : [];
+    return p.text ? [{ word: p.text, ruby: "" }] : [];
   });
 
   return {

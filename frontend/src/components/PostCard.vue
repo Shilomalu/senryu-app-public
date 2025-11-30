@@ -19,12 +19,11 @@
       <div class="poem">
         <template v-if="post.ruby_content && post.ruby_content.length > 0">
           <div v-for="(phrase, pIndex) in post.ruby_content" :key="pIndex" class="post-line">
-             <span v-for="(word, wIndex) in phrase" :key="wIndex" class="word-unit">
-               <ruby v-if="word.ruby">
-                 {{ word.text }}<rt>{{ word.ruby }}</rt>
-               </ruby>
-               <span v-else>{{ word.text }}</span>
-             </span>
+            <span v-for="(rubydata, wIndex) in phrase" :key="wIndex" class="word-unit">
+              <ruby>
+                {{ rubydata.word }}<rt>{{ rubydata.ruby }}</rt>
+              </ruby>
+            </span>
           </div>
         </template>
 

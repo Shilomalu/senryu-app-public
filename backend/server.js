@@ -320,16 +320,13 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
 // ルビ関連
 app.post("/api/ruby", async (req, res) => {
   const { text } = req.body;
-  console.log("server.js", text);
 
   if (!text) {
     return res.status(400).json({ error: "text が空です" });
   }
 
   try {
-    console.log("sever.js: start");
     const result = await make_ruby(text);
-    console.log("server.js: end");
     res.json(result);
   } catch (err) {
     console.error("Ruby API error", err);
