@@ -221,6 +221,7 @@ app.get("/api/posts/user/:userId", async (req, res) => {
          posts.content, 
          posts.user_id, 
          posts.genre_id,
+         posts.ruby_content,
          users.username AS authorName,
          (SELECT COUNT(*) FROM replies WHERE replies.post_id = posts.id) AS repliesCount,
          (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS likesCount
@@ -304,8 +305,8 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
 
     // --- 投稿をDBに保存して投稿IDを取得 ---
     const [postResult] = await pool.execute(
-      "INSERT INTO posts (user_id, content, genre_id) VALUES (?, ?, ?)",
-      [userId, content, genre_id]
+      "INSERT INTO posts (user_id, content, ruby_content,genre_id) VALUES (?, ?, ?, ?)",
+      [userId, content, JSON.stringify(ruby_dataset), genre_id]
     );
 
     const sennryuu_id = postResult.insertId;
@@ -359,6 +360,7 @@ app.get("/api/posts/timeline", async (req, res) => {
                 posts.created_at, 
                 posts.user_id,
                 posts.genre_id,
+                posts.ruby_content,
                 users.username AS authorName,
                 CASE WHEN likes.user_id IS NOT NULL THEN 1 ELSE 0 END AS isLiked,
                 CASE WHEN follows.follower_id IS NOT NULL THEN 1 ELSE 0 END AS isFollowing,
@@ -392,6 +394,7 @@ app.get("/api/posts/likes", authenticateToken, async (req, res) => {
         posts.created_at,
         posts.user_id,
         posts.genre_id,
+        posts.ruby_content,
         users.username AS authorName,
         1 AS isLiked,  -- いいね済み確定
         (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS likesCount,
@@ -633,6 +636,7 @@ app.get("/api/posts/user/:id", async (req, res) => {
         posts.created_at, 
         posts.user_id,
         posts.genre_id,
+        posts.ruby_content,
         users.username AS authorName
       FROM posts 
       JOIN users ON posts.user_id = users.id
