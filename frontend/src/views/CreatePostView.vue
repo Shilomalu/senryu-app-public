@@ -77,7 +77,7 @@ const handlePost = async () => {
     content1: phrases[0].text,
     content2: phrases[1].text,
     content3: phrases[2].text,
-    ruby: phrases.map(p => p.ruby_data),
+    ruby_dataset: phrases.map(p => p.ruby_data),
     genre_id: selectedGenre.value,
   };
 

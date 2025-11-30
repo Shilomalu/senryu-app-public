@@ -241,10 +241,15 @@ app.get("/api/posts/user/:userId", async (req, res) => {
 // 川柳投稿 (ジャンル対応・要認証)
 app.post("/api/posts", authenticateToken, async (req, res) => {
   try {
-    let { content1, content2, content3, ruby, genre_id, } = req.body;
+    let { content1, content2, content3, ruby_dataset, genre_id, } = req.body;
     const userId = req.user.id; // ミドルウェアがセットしたユーザーIDを使用
 
-    if (!content1 || !content2 || !content3) {
+    const contents = [];
+    for (let idx = 0; idx < 3; ++idx) {
+      contents.push(ruby_dataset[idx].map(r => r.word).join(""));
+    }
+
+    if (!contents[0] || !contents[1] || !contents[2]) {
       return res.status(400).json({ error: "すべての句を入力してください。" });
     }
 
@@ -256,9 +261,9 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
     const regex =
       /^[\u3040-\u309F\u30A0-\u30FF\uFF65-\uFF9F\u4E00-\u9FFF。｡、､「｢」｣・･！!？?]+$/;
     if (
-      !regex.test(content1) ||
-      !regex.test(content2) ||
-      !regex.test(content3)
+      !regex.test(contents[0]) ||
+      !regex.test(contents[1]) ||
+      !regex.test(contents[2])
     ) {
       return res
         .status(400)
@@ -275,18 +280,15 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
     const {
       flag: can_kaminoku,
       symbolCount: symbolCount1,
-      words: word1,
-    } = await check575(content1, 5);
+    } = await check575(ruby_dataset[0], 5);
     const {
       flag: can_nakanoku,
       symbolCount: symbolCount2,
-      words: word2,
-    } = await check575(content2, 7);
+    } = await check575(ruby_dataset[1], 7);
     const {
       flag: can_shimonoku,
       symbolCount: symbolCount3,
-      words: word3,
-    } = await check575(content3, 5);
+    } = await check575(ruby_dataset[2], 5);
     if (!can_kaminoku) num += 1;
     if (!can_nakanoku) num += 2;
     if (!can_shimonoku) num += 4;
@@ -309,7 +311,6 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
     const sennryuu_id = postResult.insertId;
     console.log("登録された川柳ID:", sennryuu_id);
 
-    const word_array = [...(word1 || []), ...(word2 || []), ...(word3 || [])];
     res.status(201).json({ message: "投稿成功", sennryuu_id });
   } catch (error) {
     console.error("投稿エラー詳細:", error);

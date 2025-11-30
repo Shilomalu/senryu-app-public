@@ -1,7 +1,3 @@
-const kuromoji = require('kuromoji');
-
-const builder = kuromoji.builder({ dicPath: 'node_modules/kuromoji/dict' });
-
 const { HKtoZK, HGtoZK } = require('./helper_fun.js');
 
 const countMora = (text) => {
@@ -22,43 +18,34 @@ const countSymbol = (text) => {
   return count;
 }
 
-const checkPart = (text) => {
+const checkPart = (data) => {
   return new Promise((resolve, reject) => {
-    builder.build((err, tokenizer) => {
-      if (err) return reject(err);
-      
-      const tokens = tokenizer.tokenize(text);
-
-      let zk = '';
-      let word_id = [];
-      let words = [];
-      for (let i = 0; i < tokens.length; ++i) {
-        if (tokens[i].word_type == 'KNOWN') {
-          zk += HGtoZK(tokens[i].reading);
-          words.push(tokens[i].surface_form);
-        } else {
-          zk += HGtoZK(tokens[i].surface_form);
-        }
+    let zk = '';
+    for (let i = 0; i < data.length; ++i) {
+      if (data[i].ruby != null) {
+        zk += data[i].ruby;
+      } else {
+        zk += HGtoZK(data[i].word);
       }
+    }
 
-      console.log(zk);
+    console.log(zk);
       
-      let moraCount = countMora(zk);
-      let symbolCount = countSymbol(text);
-      moraCount -= symbolCount;
+    let moraCount = countMora(zk);
+    let symbolCount = countSymbol(zk);
+    moraCount -= symbolCount;
 
-      resolve({ moraCount, symbolCount, words });
-    });
+    resolve({ moraCount, symbolCount });
   });
 };
 
 // メインの5-7-5チェック関数
-const check575 = async (content, num) => {
+const check575 = async (ruby_data, num) => {
   console.log('\n--- 5-7-5 Checker Start ---');
   try{
-    const { moraCount, symbolCount, words} = await checkPart(content);
+    const { moraCount, symbolCount } = await checkPart(ruby_data);
     const flag = (moraCount >= num-1 && moraCount <= num+1);
-    return { flag, symbolCount, words };
+    return { flag, symbolCount };
     
   }catch(error){
     console.error('エラー発生！');
