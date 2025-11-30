@@ -3,8 +3,8 @@ const { HKtoZK, HGtoZK } = require('./helper_fun.js');
 const countMora = (text) => {
   let count = 0;
   const smallVowels = ['ャ', 'ュ', 'ョ', 'ァ', 'ィ', 'ゥ', 'ェ', 'ォ'];
-  for (let i = 0; i < text.length; i++) {
-    if (!smallVowels.includes(text[i])) count++;
+  for (const t of text) {
+    if (!smallVowels.includes(t)) count++;
   }
   return count;
 };
@@ -12,8 +12,8 @@ const countMora = (text) => {
 const countSymbol = (text) => {
   let count = 0;
   const symbolmap = ['。', '、', '「', '」', '・', '！', '？'];
-  for (let i = 0; i < text.length; ++i) {
-    if (symbolmap.includes(text[i])) count++;
+  for (const t of text) {
+    if (symbolmap.includes(t)) count++;
   }
   return count;
 }
@@ -21,11 +21,11 @@ const countSymbol = (text) => {
 const checkPart = (data) => {
   return new Promise((resolve, reject) => {
     let zk = '';
-    for (let i = 0; i < data.length; ++i) {
-      if (data[i].ruby != null) {
-        zk += data[i].ruby;
+    for (const datum of data) {
+      if (datum.ruby != null) {
+        zk += datum.ruby;
       } else {
-        zk += HGtoZK(data[i].word);
+        zk += HGtoZK(datum.word);
       }
     }
 
