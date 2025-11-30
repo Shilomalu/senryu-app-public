@@ -241,7 +241,7 @@ const genreClass = (genreId) => {
 .post-line { margin: 0 0 0.5rem 0; text-align: center; color: #000; }
 .word-unit { display: inline-block; }
 
-ruby { ruby-position: over; display: inline-flex; flex-direction: column; align-items: center; }
+ruby { ruby-position: over;  flex-direction: column; align-items: center; }
 rt { font-size: 0.5em; color: #555; text-align: center; margin-bottom: -0.4em; }
 
 .actions-container {
