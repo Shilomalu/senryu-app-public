@@ -57,7 +57,7 @@ const check575 = async (content, num) => {
   console.log('\n--- 5-7-5 Checker Start ---');
   try{
     const { moraCount, symbolCount, words} = await checkPart(content);
-    const flag = (moraCount === num);
+    const flag = (moraCount >= num-1 && moraCount <= num+1);
     return { flag, symbolCount, words };
     
   }catch(error){
