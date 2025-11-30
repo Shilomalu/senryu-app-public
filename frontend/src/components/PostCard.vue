@@ -5,6 +5,14 @@
        👤{{ post.authorName || post.author }}
       </button>
       <FollowButton v-if="currentUser && post.user_id !== currentUser.id" :targetUserId="post.user_id" :currentUserId="currentUser.id" />
+      <button 
+        v-if="currentUser && post.user_id === currentUser.id"
+        class="delete-x-btn" 
+        @click="$emit('delete', post.id)"
+        title="削除"
+      >
+        ×
+      </button>
     </div>
 
     <div class="poem-wrapper">
@@ -29,10 +37,7 @@
             返信{{ post.repliesCount || 0 }}
         </button>
       </div>
-      <div class="delete-action" v-if="currentUser && post.user_id === currentUser.id">
-        <button class="delete-btn" @click="$emit('delete', post.id)">削除</button>
       </div>
-    </div>
 
     <div class="replies-wrapper" :class="{ open: !isPreview && showReplies }">
       <div class="replies-inner">
@@ -236,18 +241,20 @@ rt {
 .reply-btn:hover { 
   background-color: #0056b3;
 }
-.delete-btn {
-  background-color: transparent; 
-  color: #dc3545; 
-  border: 1px solid #dc3545; 
-  padding: 0.4rem 0.8rem; 
-  border-radius: 8px; 
-  cursor: pointer; 
-  transition: all 0.2s; 
+
+.delete-x-btn {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 1.5rem; /* ×を見やすく大きく */
+  cursor: pointer;
+  padding: 0 5px;
+  line-height: 1;
+  margin-left: auto; /* 必要に応じて右端に寄せる */
 }
-.delete-btn:hover { 
-  background-color: #dc3545; 
-  color: white; 
+
+.delete-x-btn:hover {
+  color: #dc3545; /* ホバー時に赤く */
 }
 .reply-scroll-container { 
   height: 360px; 
@@ -261,7 +268,7 @@ rt {
 }
 .reply-scroll-container > .reply {
   scroll-snap-align: start; 
-  flex: 0 0 150px; 
+  flex: 0 0 auto; 
   margin-left: 10px; 
 }
 .reply-scroll-container::-webkit-scrollbar {
