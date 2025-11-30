@@ -102,7 +102,7 @@ app.get("/api/users/me", authenticateToken, async (req, res) => {
   console.log("req.user.id:", id);
   try {
     const [rows] = await pool.execute(
-      "SELECT id, username, email, profile_text, favorite_id FROM users WHERE id = ?",
+      "SELECT id, username, email, profile_text, favorite_id, icon_index FROM users WHERE id = ?",
       [id]
     );
     console.log("DB結果:", rows);
@@ -160,6 +160,30 @@ app.put("/api/users/me", authenticateToken, async (req, res) => {
   }
 });
 
+// アイコン変更
+app.post('/api/users/me/icon', authenticateToken,  async (req, res) => {
+  const userId = req.user.id;
+  const { icon } = req.body;
+
+  if (icon === undefined || icon === null) {
+    return res.status(400).json({ error: "icon を指定してください" });
+  }
+
+  try {
+    const sql = `
+      UPDATE users
+      SET icon_index = ?
+      WHERE id = ?
+    `;
+    await pool.query(sql, [icon, userId]);
+
+    res.json({ message: "アイコンを更新しました", icon });
+  } catch (error) {
+    console.error("Error updating icon:", error);
+    res.status(500).json({ error: "アイコン更新中にエラーが発生しました" });
+  }
+});
+
 /*
 // お気に入りの一句を設定
 app.put('/api/users/me', authenticateToken, async (req, res) => {
@@ -196,6 +220,7 @@ app.get("/api/posts/user/:userId", async (req, res) => {
          posts.id, 
          posts.content, 
          posts.user_id, 
+         posts.genre_id,
          users.username AS authorName,
          (SELECT COUNT(*) FROM replies WHERE replies.post_id = posts.id) AS repliesCount,
          (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS likesCount
@@ -335,6 +360,7 @@ app.get("/api/posts/timeline", async (req, res) => {
                 posts.content, 
                 posts.created_at, 
                 posts.user_id,
+                posts.genre_id,
                 users.username AS authorName,
                 CASE WHEN likes.user_id IS NOT NULL THEN 1 ELSE 0 END AS isLiked,
                 CASE WHEN follows.follower_id IS NOT NULL THEN 1 ELSE 0 END AS isFollowing,
@@ -367,6 +393,7 @@ app.get("/api/posts/likes", authenticateToken, async (req, res) => {
         posts.content,
         posts.created_at,
         posts.user_id,
+        posts.genre_id,
         users.username AS authorName,
         1 AS isLiked,  -- いいね済み確定
         (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS likesCount,
@@ -607,6 +634,7 @@ app.get("/api/posts/user/:id", async (req, res) => {
         posts.content, 
         posts.created_at, 
         posts.user_id,
+        posts.genre_id,
         users.username AS authorName
       FROM posts 
       JOIN users ON posts.user_id = users.id

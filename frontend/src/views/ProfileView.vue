@@ -3,6 +3,18 @@ import { ref, onMounted } from 'vue';
 import { useRouter, RouterLink } from 'vue-router';
 import axios from 'axios';
 import PostCard from '@/components/PostCard.vue';
+import icon0 from "@/assets/icons/kajinsample0.jpeg"
+import icon1 from "@/assets/icons/kajinsample1.jpeg"
+import icon2 from "@/assets/icons/kajinsample2.jpeg"
+import icon3 from "@/assets/icons/kajinsample3.jpeg"
+import icon4 from "@/assets/icons/kajinsample4.jpeg"
+import icon5 from "@/assets/icons/kajinsample5.jpeg"
+import icon6 from "@/assets/icons/kajinsample6.jpeg"
+import icon7 from "@/assets/icons/kajinsample7.jpeg"
+import icon8 from "@/assets/icons/kajinsample8.jpeg"
+import icon9 from "@/assets/icons/kajinsample9.jpeg"
+import icon10 from "@/assets/icons/kajinsample10.jpeg"
+import icon11 from "@/assets/icons/kajinsample11.jpeg"
 
 const router = useRouter();
 
@@ -17,13 +29,36 @@ const profile_text = ref('');
 const posts = ref([]);
 const favorite = ref(null);
 
+const icons = [
+  { id: 0, src: icon0 },
+  { id: 1, src: icon1 },
+  { id: 2, src: icon2 },
+  { id: 3, src: icon3 },
+  { id: 4, src: icon4 },
+  { id: 5, src: icon5 },
+  { id: 6, src: icon6 },
+  { id: 7, src: icon7 },
+  { id: 8, src: icon8 },
+  { id: 9, src: icon9 },
+  { id: 10, src: icon10 },
+  { id: 11, src: icon11 }
+];
+
+const icon = ref(0)
+
 // JWTトークン
 const token = localStorage.getItem('token');
 
 //　お気に入りの一句用
-const showModal = ref(false);
-const openFavoriteModal = () => (showModal.value = true);
-const closeModal = () => (showModal.value = false);
+const showFavModal = ref(false);
+const openFavModal = () => (showFavModal.value = true);
+const closeFavModal = () => (showFavModal.value = false);
+
+
+// アイコン変更用
+const showIconModal = ref(false);
+const openIconModal = () => (showIconModal.value = true);
+const closeIconModal = () => (showIconModal.value = false);
 
 
 // ログイン状態チェックとプロフィール取得
@@ -45,6 +80,7 @@ const loadProfile = async () => {
     username.value = data.username;
     email.value = data.email;
     profile_text.value = data.profile_text;
+    icon.value = data.icon_index ?? 0;
 
     // 自分の投稿取得
     const timelineRes = await axios.get(`/api/posts/user/${data.id}`);
@@ -53,9 +89,7 @@ const loadProfile = async () => {
     // お気に入りの一句があれば取得
     if (data.favorite_id) {
       const favPost = timelineRes.data.find(post => post.id === data.favorite_id);
-      if (favPost) {
-        favorite.value = favPost;
-      }
+      if (favPost) favorite.value = favPost;
     }
 
   } catch (err) {
@@ -74,12 +108,28 @@ const selectFavorite = async (post) => {
       { headers: { Authorization: `Bearer ${token}` } }
     );
     favorite.value = post; // 画面上に反映
-    closeModal();
+    closeFavModal();
   } catch (err) {
     console.error('お気に入り設定エラー:', err);
     alert('お気に入りに設定できませんでした');
   }
 };
+
+// アイコンの変更
+const selectIcon = async (iconId) => {
+  try {
+    await axios.post("/api/users/me/icon",
+      { icon: iconId },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    icon.value = iconId; // 画面反映
+    closeIconModal();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 
 onMounted(() => {
   loadProfile();
@@ -141,32 +191,53 @@ const goEdit = () => {
   <div>
     <div v-if="isLoggedIn" class="profile-container">
       <div class="profile-header">
-        <h1>マイプロフィール</h1>
+        <h1>句歴（プロフィール）</h1>
+
         <div class="button-group">
           <button @click="goEdit" class="edit-btn">編集</button>
           <button @click="logout" class="logout-btn">ログアウト</button>
         </div>
+
       </div>
 
-      <div class="profile-info">
-        <ul>
-          <li><strong>ユーザー名：</strong> {{ username }}</li>
+      <div class="profile-info-content">
+        <div class="icon-wrapper" @click="openIconModal">
+          <img :src="icons[icon].src" class="profile-icon" />
+          <div class="icon-edit-overlay">
+             ✎
+          </div>
+        </div>
+
+        <div class="profile-info">
+          <ul>
+            <li><strong>俳号：</strong> {{ username }}</li>
           <!--<li><strong>メールアドレス：</strong> {{ email }}</li> -->
-          <li><strong>自己紹介：</strong> {{ profile_text }}</li>
-          <li>
-            <strong>お気に入りの一句：</strong>
-            <div v-if="favorite" >
-              {{ favorite.content }}
-              <button @click="openFavoriteModal" class="edit-favorite-btn">変更</button>
-            </div>
-            <div v-else>
-              <button @click="openFavoriteModal" class="add-favorite-btn">お気に入りの一句を追加</button>
-            </div>
-          </li>
-        </ul>
+            <li class="profile-item">
+              <strong>添え書き：</strong> 
+              <span class = "profile-text">{{ profile_text }}</span>
+            </li>
+          </ul>
+        </div>
       </div>
+
+      <div class="favorite-item">
+        <strong>選り抜きの一句：</strong>
+
+        <div v-if="favorite" class="favorite-box">
+          <span class="favorite-content">{{ favorite.content }}</span>
+          <button @click="openFavModal" class="edit-favorite-btn">変更</button>
+        </div>
+
+        <div v-else class="favorite-box">
+          <button @click="openFavModal" class="add-favorite-btn">
+            お気に入りの一句を追加
+          </button>
+        </div>
+      </div>
+
       <section class="user-posts">
-        <h3>過去の投稿</h3>
+        <h2>過去の投稿</h2>
+        <br></br>
 
         <div class="posts-grid">
           <PostCard
@@ -190,11 +261,11 @@ const goEdit = () => {
       </div>
     </div>
 
-    <!-- 過去投稿モーダル -->
-    <div v-if="showModal" class="modal-overlay">
+    <!-- 過去投稿用 -->
+    <div v-if="showFavModal" class="modal-overlay">
       <div class="modal">
-        <h3 style="color: black;">お気に入りに設定する句を選択</h3>
-        <button class="close-btn" @click="closeModal">×</button>
+        <h3>お気に入りに設定する句を選択</h3>
+        <button class="close-btn" @click="closeFavModal">×</button>
         <div class="modal-content">
           <ul>
             <li v-for="post in posts" :key="post.id"  
@@ -208,26 +279,65 @@ const goEdit = () => {
         </div>
       </div>
     </div>
+
+    <!-- アイコン変更用　-->
+    <div v-if="showIconModal" class="modal-overlay">
+      <div class ="modal icon-modal">
+        <h3>アイコンを選択</h3>
+        <button class="close-btn" @click="closeIconModal"><h2>×</h2></button>
+
+        <div class="icon-list">
+          <div
+            v-for="icon in icons"
+            :key="icon.id"
+            class="icon-item"
+            
+        >
+            <img :src="icon.src" 
+            class="icon-preview"
+            @click.stop="selectIcon(icon.id)" 
+            />
+
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 
 <style scoped>
 .profile-container {
-  max-width: 600px;
+  max-width: 800px;
   margin: 2rem auto;
-  padding: 2rem;
+  padding: 4rem;
   border: 1px solid #e0e0e0;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   background-color: #fff;
   text-align: center;
   color: #000;
+  text-align: left;
 }
 
+.profile-item {
+  display: flex;
+  align-items: flex-start;
+}
+
+.profile-item strong {
+  white-space: nowrap;
+  margin-right: 4px;
+}
+
+.profile-text {
+  white-space: pre-line;
+}
+
+
 .profile-info {
-  text-align: left;
-  margin-top: 2rem;
+  margin-top: 0;
+  flex-grow: 1;
 }
 
 .profile-info ul {
@@ -240,8 +350,100 @@ const goEdit = () => {
   font-size: 1.1rem;
 }
 
+.favorite-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+.favorite-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.favorite-content {
+  white-space: pre-line;
+}
+
+.profile-info-content {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  gap: 32px;
+}
+
+.icon-wrapper {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  cursor: pointer;
+}
+
+.icon-edit-overlay {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  padding: 6px 8px;
+  border-radius: 50%;
+  font-size: 16px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.icon-wrapper:hover .icon-edit-overlay {
+  opacity: 1;
+}
+
+.profile-icon {
+
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 3px solid #ccc;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+
+.icon-preview {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.icon-list {
+  display: flex;
+  flex-wrap: wrap; 
+  gap: 5px;
+  justify-content: center; 
+  margin-top: 20px;
+  position: relative;  
+}
+
+.icon-item {
+  cursor: pointer;
+  padding: 3px;
+  border: 3px solid transparent; 
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.icon-preview:hover {
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
 .user-posts {
   margin-top: 3rem;
+  text-align: center;
 }
 
 .posts-grid {
@@ -258,8 +460,8 @@ const goEdit = () => {
 
 .button-container {
   display: flex;
-  justify-content: flex-end; /* 右寄せ */
-  gap: 10px; /* ボタン間のスペース */
+  justify-content: flex-end;
+  gap: 10px;
   margin-top: 2rem;
 }
 
@@ -267,14 +469,13 @@ const goEdit = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .profile-header h1 {
   font-weight: bold;
   font-size: 1.8rem;
-  margin-left: 10px;
-  margin-right: 20px;
+  margin: 0;
 }
 
 .button-group {
@@ -320,6 +521,7 @@ const goEdit = () => {
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  color: #000
 }
 
 .modal {
@@ -338,6 +540,13 @@ const goEdit = () => {
   margin-top: 10px;
 }
 
+.icon-modal {
+  height: 600px;
+  width: 400px;
+  overflow-y: hidden;
+  padding-bottom: 100px;
+}
+
 .close-btn {
   position: absolute;
   top: 8px;
@@ -346,6 +555,7 @@ const goEdit = () => {
   border: none;
   font-size: 1.2rem;
   cursor: pointer;
+  z-index: 1010;
 }
 
 .selectable-post {
@@ -396,8 +606,7 @@ const goEdit = () => {
   padding: 2rem;
   text-align: center;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  
+  border-radius: 8px; 
 }
 
 .auth-prompt h2 {
@@ -405,8 +614,7 @@ const goEdit = () => {
 }
 
 .auth-prompt p {
-  margin-bottom: 2rem;
-  
+  margin-bottom: 2rem; 
 }
 
 .button-group {

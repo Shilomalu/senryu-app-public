@@ -31,6 +31,7 @@ DROP TABLE IF EXISTS follows;
 DROP TABLE IF EXISTS replies;
 DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS genres;
 DROP TABLE IF EXISTS dictionary;
 DROP TABLE IF EXISTS directmessages;
 
@@ -42,6 +43,7 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     profile_text VARCHAR(255) DEFAULT 'よろしくお願いします。' ,
     favorite_id INT NULL,
+    icon_index INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -52,16 +54,17 @@ CREATE TABLE genres (
 );
 
 INSERT INTO genres (name) VALUES
-('春'),('夏'),('秋'),('冬'),('スポーツ'),('食べ物'),('学校'),('旅行');
+('春'),('夏'),('秋'),('冬'),('趣味'),('食べ物'),('学校'),('その他');
 
+-- postsの中に格納しました.
 -- posts テーブルに genre_id を追加
-ALTER TABLE posts
-ADD COLUMN genre_id INT NOT NULL DEFAULT 1;
+-- ALTER TABLE posts
+-- ADD COLUMN genre_id INT NOT NULL DEFAULT 1;
 
 -- 外部キーの設定
-ALTER TABLE posts
-ADD CONSTRAINT fk_posts_genre
-FOREIGN KEY (genre_id) REFERENCES genres(id);
+-- ALTER TABLE posts
+-- ADD CONSTRAINT fk_posts_genre
+-- FOREIGN KEY (genre_id) REFERENCES genres(id);
 
 CREATE TABLE posts (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -71,8 +74,10 @@ CREATE TABLE posts (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     likes_num INT DEFAULT 0,
-    genre_id INT NOT NULL,
-    FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE CASCADE
+    genre_id INT NOT NULL DEFAULT 1,
+
+    CONSTRAINT fk_posts_genre
+        FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE CASCADE
 );
 
 CREATE TABLE likes (

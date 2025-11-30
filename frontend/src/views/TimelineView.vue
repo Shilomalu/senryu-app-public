@@ -8,10 +8,12 @@
           :class="['tab-btn', { active: filter === 'all', jump: jumping === 'all' }]"
           @click="() => handleTabClick('all')"
         >一覧</button>
+
         <button
           :class="['tab-btn', { active: filter === 'likes', jump: jumping === 'likes' }]"
           @click="() => handleTabClick('likes')"
         >いとをかし</button>
+
         <button
           :class="['tab-btn', { active: filter === 'following', jump: jumping === 'following' }]"
           @click="() => handleTabClick('following')"
@@ -22,43 +24,62 @@
     <!-- タイムライン -->
     <div class="timeline-content">
       <transition name="switch" mode="out-in">
+
         <transition-group
           v-if="timeline.length"
           :key="filter"
           name="fade-slide"
           tag="ul"
           class="timeline"
+          id="timeline-scroll-area"
         >
-          <!-- 逆順にして右端が最新 -->
-          <li v-for="post in orderedTimeline" :key="post.id">
-            <PostCard :post="post" :currentUser="currentUser" @delete="handleDelete" />
+
+          <!-- ▼ 左端（最古）に「もっと見る」 -->
+          <li key="load-more" class="more-area-left">
+            <div class="load-more-wrapper">
+              <button 
+                v-if="hasMore"
+                class="load-more-btn"
+                @click="loadMore"
+                :disabled="loadingMore"
+              >
+                {{ loadingMore ? '読み込み中...' : 'もっと見る' }}
+              </button>
+
+              <!-- ▼ 読み切ったらこれを表示 -->
+              <p v-else class="no-more-message">
+                これ以上投稿はありません
+              </p>
+            </div>
           </li>
+
+          <!-- ▼ 投稿一覧 -->
+          <li 
+            v-for="post in orderedTimeline"
+            :key="post.id"
+          >
+            <PostCard
+              :post="post"
+              :currentUser="currentUser"
+              @delete="handleDelete"
+            />
+          </li>
+
         </transition-group>
 
+        <!-- ▼ 投稿ゼロ -->
         <p v-else class="empty-message" :key="filter + '-empty'">
           {{ emptyMessage }}
         </p>
+
       </transition>
-
-      <!-- もっと見る or これ以上投稿はありません -->
-      <div class="load-more-container" v-if="timeline.length">
-        <button 
-          v-if="hasMore" 
-          class="load-more-btn" 
-          @click="loadMore" 
-          :disabled="loadingMore"
-        >
-          {{ loadingMore ? '読み込み中...' : 'もっと見る' }}
-        </button>
-
-        <p v-else class="no-more-message">これ以上投稿はありません</p>
-      </div>
     </div>
   </div>
 </template>
 
+
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { jwtDecode } from 'jwt-decode';
 import PostCard from '../components/PostCard.vue';
 
@@ -71,38 +92,27 @@ const currentUser = ref(token.value ? jwtDecode(token.value) : null);
 const PAGE_SIZE = 10;
 const hasMore = ref(true);
 const loadingMore = ref(false);
-const jumping = ref(''); // タブジャンプアニメ用
+const jumping = ref('');
 
-/**
- * 逆順で右端が最新になる
- */
+// 逆順で右端が最新になるように並べ替え
 const orderedTimeline = computed(() => {
   return [...timeline.value].reverse();
 });
 
-/**
- * タブクリック時
- */
 const handleTabClick = (tabName) => {
   jumping.value = tabName;
   changeFilter(tabName);
   setTimeout(() => jumping.value = '', 1000);
 };
 
-/**
- * フィルター変更
- */
 const changeFilter = (mode) => {
   filter.value = mode;
   timeline.value = [];
   hasMore.value = true;
-  fetchTimeline();
+  fetchTimeline(true);
 };
 
-/**
- * 投稿取得
- */
-const fetchTimeline = async () => {
+const fetchTimeline = async (isInitialLoad = false) => {
   try {
     let endpoint = '/api/posts/timeline';
     if (filter.value === 'likes') endpoint = '/api/posts/likes';
@@ -123,12 +133,23 @@ const fetchTimeline = async () => {
       }))
       .filter(post => !timeline.value.some(p => p.id === post.id));
 
-    timeline.value.push(...newPosts);
+    // 過去のデータほど配列の前に追加（左側に来るように）
+    if (isInitialLoad) {
+         timeline.value = newPosts;
+    } else {
+         timeline.value.push(...newPosts);
+    }
 
     if (!newPosts.length || newPosts.length < PAGE_SIZE) hasMore.value = false;
 
-    // 最新を右端に自動スクロール
-    scrollToLatest();
+    // 初回読み込み時のみ、右端（最新）へ強制スクロール
+    if (isInitialLoad) {
+        await nextTick();
+        // 少し遅延させて確実に描画後にスクロールさせる
+        setTimeout(() => {
+            scrollToLatest();
+        }, 100);
+    }
 
   } catch (err) {
     console.error(err);
@@ -136,19 +157,20 @@ const fetchTimeline = async () => {
   }
 };
 
-/**
- * もっと見る
- */
 const loadMore = async () => {
   if (!hasMore.value || loadingMore.value) return;
   loadingMore.value = true;
+  
+  // 現在のスクロール位置（右端からの距離）を覚えておく
+  // const el = document.getElementById('timeline-scroll-area');
+  // const scrollRight = el.scrollWidth - el.scrollLeft;
+
   await fetchTimeline();
+  
   loadingMore.value = false;
+  // 読み込み後に位置を維持する処理が必要ならここに追加
 };
 
-/**
- * 投稿削除
- */
 const handleDelete = async (postId) => {
   if (!confirm('本当にこの投稿を削除しますか？')) return;
   try {
@@ -173,23 +195,21 @@ const emptyMessage = computed(() => {
 });
 
 /**
- * タイムライン右端にスクロール
+ * 強制的に右端へスクロールさせる関数
  */
 const scrollToLatest = () => {
-  nextTick(() => {
-    const el = document.querySelector(".timeline");
-    if (el) {
-      // 少し遅延を入れると初期レンダリング後に確実にスクロールされる
-      setTimeout(() => {
-        el.scrollLeft = el.scrollWidth;
-      }, 0);
-    }
-  });
+  const el = document.getElementById('timeline-scroll-area');
+  if (el) {
+    // 一時的にスムーズスクロールを無効化して、瞬時に右端へ飛ばす
+    el.style.scrollBehavior = 'auto'; 
+    el.scrollLeft = el.scrollWidth;
+    // 後でスムーズに戻す（任意）
+    // setTimeout(() => { el.style.scrollBehavior = 'smooth'; }, 500);
+  }
 };
 
 onMounted(async () => {
-  await fetchTimeline();
-  scrollToLatest();
+  await fetchTimeline(true);
 });
 </script>
 
@@ -277,8 +297,10 @@ onMounted(async () => {
   width: 100%;
   padding-bottom: 80px;
   box-sizing: border-box;
-  overflow-y: auto;
-  max-height: 100vh;
+  /* 縦スクロールはさせない */
+  overflow-y: hidden; 
+  display: flex; /* 子要素を横に並べる */
+  flex-direction: row;
 }
 
 .timeline {
@@ -287,9 +309,11 @@ onMounted(async () => {
   gap: 1.5rem;
   overflow-x: auto;
   overflow-y: hidden;
+  height: auto;
   scroll-snap-type: x mandatory;
   padding: 1rem;
   scrollbar-width: none;
+  width: 100%;
 }
 .timeline::-webkit-scrollbar {
   display: none;
@@ -298,32 +322,44 @@ onMounted(async () => {
   flex: 0 0 auto;
   width: 80%;
   max-width: 500px;
-  scroll-snap-align: start;
+  scroll-snap-align: center; /* 中央にスナップ */
 }
 
 .empty-message {
   text-align: center;
   margin-top: 2rem;
   color: #888;
+  width: 100%;
 }
 
+/* 「もっと見る」ボタンは左端に置く */
 .load-more-container {
   display: flex;
   justify-content: center;
-  margin: 1rem 0;
-  flex-direction: column;
+  align-items: center;
+  min-width: 100px;
+  margin-right: 1rem;
+  order: -1; /* Flexboxの先頭（左端）に配置 */
+}
+
+.load-more-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center; /* 中央寄せ */
   align-items: center;
 }
 
 .load-more-btn {
+  height: 400px; 
+  line-height: 400px; 
   background: #007bff;
-  color: #fff;
-  border: none;
+  color: white;
   padding: 0.6rem 1.2rem;
-  font-size: 1rem;
   border-radius: 8px;
+  border: none;
+  font-size: 1rem;
   cursor: pointer;
-  transition: all 0.2s;
+  white-space: nowrap;
 }
 .load-more-btn:disabled {
   opacity: 0.6;
@@ -334,37 +370,17 @@ onMounted(async () => {
 }
 
 .no-more-message {
+  color: #555;
+  font-size: 0.9rem;
   text-align: center;
-  color: #888;
-  margin-top: 0.5rem;
-  font-size: 0.95rem;
 }
 
-/* アニメーション */
-.fade-slide-enter-from {
-  opacity: 0;
-  transform: translateY(80px) scale(0.95);
-}
-.fade-slide-enter-active {
-  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.fade-slide-leave-to {
-  opacity: 0;
-  transform: translateX(100px) scale(0.9);
-}
-.fade-slide-leave-active {
-  transition: all 0.4s ease-in;
-  position: relative;
-}
-.fade-slide-move {
-  transition: transform 0.4s ease;
-}
-.switch-enter-from,
-.switch-leave-to {
-  opacity: 0;
-}
-.switch-enter-active,
-.switch-leave-active {
-  transition: opacity 0.25s ease;
-}
+/* アニメーション
+.fade-slide-enter-from { opacity: 0; transform: translateY(20px); }
+.fade-slide-enter-active { transition: all 0.5s ease; }
+.fade-slide-leave-to { opacity: 0; transform: scale(0.9); }
+.fade-slide-leave-active { transition: all 0.3s ease; }
+.switch-enter-from, .switch-leave-to { opacity: 0; }
+.switch-enter-active, .switch-leave-active { transition: opacity 0.2s ease; }
+ */
 </style>
