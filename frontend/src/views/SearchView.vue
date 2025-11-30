@@ -50,8 +50,27 @@ const search_method = async (e) => {
     }
     is_searched.value = true //refをつけたものの値を変えるときは.valueをつけるって
     show_postcard.value = false
-    const search_result = await response.json()
-    results.value = search_result
+    const search_result_raw = await response.json() 
+
+    const processed_results = search_result_raw.map(post => {
+      let parsedRuby = [];
+      try {
+        if (typeof post.ruby_content === 'string') {
+          parsedRuby = JSON.parse(post.ruby_content);
+        } else if (Array.isArray(post.ruby_content)) {
+          parsedRuby = post.ruby_content;
+        }
+      } catch (e) {
+        console.error('JSON parse error', e);
+        parsedRuby = [];
+      }
+      return {
+        ...post,
+        ruby_content: parsedRuby, // 変換したデータを入れる
+      };
+    });
+
+    results.value = processed_results
 
     if (search_result.length === 0) {
       return '該当する川柳がありません'
@@ -141,6 +160,8 @@ const set_genreId=(id)=>{
                   user_id: item.user_id,
                   content: item.content,
                   created_at: item.created_at,
+                  ruby_content: item.ruby_content,
+                  genre_id: item.genre_id,
                 }"
               />
             </div>

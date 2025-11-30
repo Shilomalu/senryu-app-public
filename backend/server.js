@@ -749,7 +749,7 @@ app.get("/api/search", async (req, res) => {
       placeholders += "?";
     }
 
-    const sqlPosts = `SELECT p.id, p.user_id, p.content, p.created_at, u.username
+    const sqlPosts = `SELECT p.id, p.user_id, p.content, p.ruby_content, p.genre_id, p.created_at, u.username
          FROM posts p
          LEFT JOIN users u ON u.id = p.user_id
         WHERE p.id IN (${placeholders})
