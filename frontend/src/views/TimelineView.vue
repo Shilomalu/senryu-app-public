@@ -154,7 +154,7 @@ const fetchTimeline = async (isInitialLoad = false) => {
 
     const newPosts = data
       .map(post => {
-        // --- ルビデータの変換処理 (ここを追加) ---
+        // ルビデータの変換処理 
         let parsedRuby = [];
         try {
             // 文字列ならJSONとして解析して配列に戻す
@@ -169,8 +169,6 @@ const fetchTimeline = async (isInitialLoad = false) => {
             console.error('JSON parse error', e);
             parsedRuby = []; // エラーなら空にしておく
         }
-        // ---------------------------------------
-
         return {
             ...post,
             ruby_content: parsedRuby, // ★変換したデータをセット
