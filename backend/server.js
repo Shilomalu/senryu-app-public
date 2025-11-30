@@ -531,19 +531,16 @@ app.post("/api/posts/:id/reply", authenticateToken, async (req, res) => {
         .json({ error: "入力できない文字が含まれています。" });
     }
 
+    const ruby1 = await make_ruby(content1);
+    const ruby2 = await make_ruby(content2);
+    const ruby3 = await make_ruby(content3);
+
     let num = 0;
-    const { flag: can_kaminoku, symbolCount: symbolCount1 } = await check575(
-      content1,
-      5
-    );
-    const { flag: can_nakanoku, symbolCount: symbolCount2 } = await check575(
-      content2,
-      7
-    );
-    const { flag: can_shimonoku, symbolCount: symbolCount3 } = await check575(
-      content3,
-      5
-    );
+
+    const { flag: can_kaminoku, symbolCount: symbolCount1 } = await check575(ruby1.ruby_data, 5);
+    const { flag: can_nakanoku, symbolCount: symbolCount2 } = await check575(ruby2.ruby_data, 7);
+    const { flag: can_shimonoku, symbolCount: symbolCount3 } = await check575(ruby3.ruby_data, 5);
+
     if (!can_kaminoku) num += 1;
     if (!can_nakanoku) num += 2;
     if (!can_shimonoku) num += 4;

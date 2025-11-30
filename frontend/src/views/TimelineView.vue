@@ -396,10 +396,11 @@ onMounted(async () => {
   flex-direction: row;
   gap: 1.5rem;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: auto;
   scroll-snap-type: x mandatory;
   padding: 0 1rem 1rem 1rem;
   scrollbar-width: none;
+  padding-bottom: 200px;
 }
 .timeline::-webkit-scrollbar { display: none; }
 .timeline li {
