@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import PostCard from '../components/PostCard.vue';
 
-//こんな感じでJSONでdataの内容を受け取る予定、例[{text: "古池", ruby: "ふるいけ"}, {text: "や", ruby: null}]
+//こんな感じでJSONでdataの内容を受け取る予定、例[{word: "古池", ruby: "ふるいけ"}, {word: "や", ruby: null}]
 const phrases = reactive([
   { text: '', ruby_data: [] },
   { text: '', ruby_data: [] },
@@ -28,7 +28,7 @@ const genres = [
 
 //しんじにバックエンド用のapiを作成依頼(未完了)
 const analyzeText = async (index) => {
-  const text = phrases[index].word;
+  const text = phrases[index].text;
   if(!text){
     phrases[index].ruby_data = [];
     return;
@@ -50,7 +50,7 @@ const previewPost = computed(() => {
     if (p.ruby_data && p.ruby_data.length > 0) {
       return p.ruby_data;
     }
-    return p.word ? [{ word: p.word, ruby: null }] : [];
+    return p.text ? [{ word: p.text, ruby: null }] : [];
   });
 
   return {
@@ -127,7 +127,7 @@ const goDescription = () => {
           
           <!-- テキスト入力 (変更確定時に解析) -->
           <input 
-            v-model="phrase.word" 
+            v-model="phrase.text"
             type="text" 
             :placeholder="['五', '七', '五'][index]"
             @change="analyzeText(index)" 
@@ -142,8 +142,13 @@ const goDescription = () => {
             <div class="ruby-items">
               <div v-for="(item, i) in phrase.ruby_data" :key="i" class="ruby-item">
                 <!-- 単語の表示 -->
-                <span class="word-surface">{{ item.text }}</span>
-                
+                <span class="word-surface">{{ item.word }}</span>
+                <span class="word-ruby">
+                  <ruby>
+                    {{ item.word }}
+                    <rt>{{ item.ruby }}</rt>
+                  </ruby>
+                </span>
                 <!-- ルビ入力欄 (ルビがある場合のみ表示) -->
                 <input 
                   v-if="item.ruby !== null" 

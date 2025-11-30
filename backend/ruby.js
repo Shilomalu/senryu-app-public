@@ -10,7 +10,7 @@ const make_ruby = (text) => {
 
       words_ruby = []
       for (let i = 0; i < tokens.length; ++i) {
-        if ((/^[\u4E00-\u9FFF]+$/).test(tokens[i])) {
+        if ((/[\u4E00-\u9FFF]/).test(tokens[i].basic_form)) {
           if (tokens[i].word_type == 'KNOWN') {
             words_ruby.push({ word: tokens[i].basic_form, ruby: tokens[i].reading });
           } else {
