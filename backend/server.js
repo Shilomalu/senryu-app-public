@@ -1235,16 +1235,22 @@ app.post('/api/users/:id/dfumi/sending', authenticateToken, async (req, res) => 
       return res.status(400).json({ error: '入力できない文字が含まれています。' });
     }
 
+    const ruby_dataset = [
+      [{ word: content1, ruby: null }],
+      [{ word: content2, ruby: null }],
+      [{ word: content3, ruby: null }]
+    ];
+
     let num = 0;
-    const { flag: can_kaminoku, symbolCount: symbolCount1, word_id: word_id1, words: word1 } = (reply77Flag) ? await check575(content1, 5) : await check575(content1, 7);
-    const { flag: can_nakanoku, symbolCount: symbolCount2, word_id: word_id2, words: word2 } = await check575(content2, 7);
-    const { flag: can_shimonoku, symbolCount: symbolCount3, word_id: word_id3, words: word3 } = (reply77Flag) ? await check575(content3, 5) : { flag: true, symbolCount: 0, word_id: null, words: null };
+    const { flag: can_kaminoku, symbolCount: symbolCount1, word_id: word_id1, words: word1 } = (reply77Flag) ? await check575(ruby_dataset[0], 5) : await check575(ruby_dataset[0], 7);
+    const { flag: can_nakanoku, symbolCount: symbolCount2, word_id: word_id2, words: word2 } = await check575(ruby_dataset[1], 7);
+    const { flag: can_shimonoku, symbolCount: symbolCount3, word_id: word_id3, words: word3 } = (reply77Flag) ? await check575(ruby_dataset[2], 5) : { flag: true, symbolCount: 0, word_id: null, words: null };
 
     if (!can_kaminoku) num += 1;
     if (!can_nakanoku) num += 2;
     if (!can_shimonoku) num += 4;
 
-    if (num !== 0) return res.status(400).json({ errorCode: num, message: '句の音の数が正しくありません。' });
+    if (num !== 0) return res.status(400).json({ errorCode: num, message: '句の音の数が正しくありません。'+symbolCount1+ symbolCount2 + symbolCount3 });
 
     const symbolCount = symbolCount1 + symbolCount2 + symbolCount3
     if (symbolCount > 4) return res.status(400).json({ error: '記号などが多すぎます。' });
