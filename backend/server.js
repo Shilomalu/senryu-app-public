@@ -6,6 +6,7 @@ const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { check575, checkPart } = require("./senryu-checker.js");
+const { startScheduler } = require('./scheduler');
 const { HKtoZK } = require("./helper_fun.js");
 const { make_ruby } = require('./ruby.js');
 
@@ -29,6 +30,7 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
 });
+startScheduler(pool);
 
 
 // --- 4. 認証ミドルウェア ---
@@ -242,7 +244,7 @@ app.get("/api/posts/user/:userId", async (req, res) => {
 // 川柳投稿 (ジャンル対応・要認証)
 app.post("/api/posts", authenticateToken, async (req, res) => {
   try {
-    let { content1, content2, content3, ruby_dataset, genre_id, } = req.body;
+    let { content1, content2, content3, ruby_dataset, genre_id, weekly_theme_id } = req.body;
     const userId = req.user.id; // ミドルウェアがセットしたユーザーIDを使用
 
     const contents = [];
@@ -305,8 +307,8 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
 
     // --- 投稿をDBに保存して投稿IDを取得 ---
     const [postResult] = await pool.execute(
-      "INSERT INTO posts (user_id, content, ruby_content,genre_id) VALUES (?, ?, ?, ?)",
-      [userId, content, JSON.stringify(ruby_dataset), genre_id]
+      "INSERT INTO posts (user_id, content, ruby_content, genre_id, weekly_theme_id) VALUES (?, ?, ?, ?, ?)",
+      [userId, content, JSON.stringify(ruby_dataset), genre_id, weekly_theme_id || null]
     );
 
     const sennryuu_id = postResult.insertId;
@@ -381,66 +383,178 @@ app.get("/api/posts/timeline", async (req, res) => {
     res.status(500).json({ error: "タイムライン取得エラー" });
   }
 });
-//今日のお題関連
-app.post("/api/posts/theme/today", authenticateToken, async (req, res) =>{
-  const { text } = req.body;
 
-  if (!text) {
-    return res.status(400).json({ error: "text が空です" });
-  }
+// --- ここから追加：お題・ランキング機能API ---
 
+// 1. 現在開催中のお題を取得
+app.get('/api/themes/current', async (req, res) => {
   try {
-    const result = await make_ruby(text);
-    res.json(result);
+    const sql = `
+      SELECT 
+        w.id AS weekly_theme_id,
+        t.theme_name,
+        w.start_date,
+        w.end_date
+      FROM weekly_themes w
+      JOIN topic_master t ON w.topic_id = t.id
+      WHERE CURDATE() BETWEEN w.start_date AND w.end_date
+      LIMIT 1;
+    `;
+    const [rows] = await pool.query(sql);
+    if (rows.length === 0) return res.json(null);
+    res.json(rows[0]);
   } catch (err) {
-    console.error("Ruby API error", err);
-    res.status(500).json({ error: "ルビ解析に失敗しました" });
+    console.error('お題取得エラー:', err);
+    res.status(500).json({ error: 'お題情報の取得に失敗しました' });
   }
-
 });
-//今日のお題関連
-app.get("/api/posts/theme/today", authenticateToken, async (req, res) =>{
+
+app.get('/api/themes/current/posts', async (req, res) => {
   try {
-    // ログインユーザーのIDを取得（オプショナル）
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
-    let userId = null;
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    let currentUserId = 0; // 未ログインまたはトークンなし
 
     if (token) {
       try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        userId = decoded.id;
-      } catch (err) {
-        console.warn("Invalid token in timeline request:", err);
+        currentUserId = decoded.id;
+      } catch (e) {
+        console.warn('Token verify failed:', e.message);
       }
     }
 
-    const sql = `
-            SELECT 
-                posts.id, 
-                posts.content, 
-                posts.created_at, 
-                posts.user_id,
-                posts.genre_id,
-                posts.ruby_content,
-                users.username AS authorName,
-                CASE WHEN likes.user_id IS NOT NULL THEN 1 ELSE 0 END AS isLiked,
-                CASE WHEN follows.follower_id IS NOT NULL THEN 1 ELSE 0 END AS isFollowing,
-                (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS likesCount,
-                (SELECT COUNT(*) FROM replies WHERE replies.post_id = posts.id) AS repliesCount
-            FROM posts 
-            JOIN users ON posts.user_id = users.id
-            LEFT JOIN likes ON likes.post_id = posts.id AND likes.user_id = ?
-            LEFT JOIN follows ON follows.followed_id = posts.user_id AND follows.follower_id = ?
-            ORDER BY posts.created_at DESC 
-            LIMIT 50;
-        `;
+    // 1. まず、今開催中のお題IDを取得
+    const themeSql = `
+      SELECT id FROM weekly_themes 
+      WHERE CURDATE() BETWEEN start_date AND end_date 
+      LIMIT 1
+    `;
+    const [themes] = await pool.query(themeSql);
 
-    const [posts] = await pool.execute(sql, [userId, userId]);
-    res.json(posts);
-  } catch (error) {
-    console.error("タイムライン取得エラー:", error);
-    res.status(500).json({ error: "タイムライン取得エラー" });
+    if (themes.length === 0) {
+      return res.json([]); // お題開催期間外なら空で返す
+    }
+
+    const currentThemeId = themes[0].id;
+
+    // 2. そのお題IDがついている投稿を取得
+    const postsSql = `
+      SELECT 
+        posts.id, 
+        posts.content, 
+        posts.ruby_content,
+        posts.created_at, 
+        posts.user_id,
+        posts.genre_id,
+        users.username AS authorName,
+        (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS likesCount,
+        (SELECT COUNT(*) FROM replies WHERE replies.post_id = posts.id) AS repliesCount,
+        CASE WHEN l.user_id IS NOT NULL THEN 1 ELSE 0 END AS isLiked
+      FROM posts 
+      JOIN users ON posts.user_id = users.id
+      -- ログインユーザーのいいね情報を結合 (req.userがあれば)
+      LEFT JOIN likes l ON l.post_id = posts.id AND l.user_id = ?
+      WHERE posts.weekly_theme_id = ?
+      ORDER BY posts.created_at DESC -- 新しい順
+      LIMIT 50;
+    `;
+
+    // ※認証トークンがない場合も考慮して、user_idは null の可能性あり
+    // 簡易的に user_id = 0 (ゲスト) として処理するか、
+    // 必要なら authenticateToken ミドルウェアを通すか調整します。
+    // 今回はゲストでも見れるように、user_id は null許容で書きます。
+    
+    // トークン解析は省略し、一旦全員「いいね無し」として返す簡易版にします
+    // もし「いいね済み」を反映させたい場合は、TimelineViewからトークンを送る必要があります
+    
+    const [rows] = await pool.query(postsSql, [currentUserId, currentThemeId]);
+    res.json(rows);
+
+  } catch (err) {
+    console.error('今週のお題投稿取得エラー:', err);
+    res.status(500).json({ error: '投稿の取得に失敗しました' });
+  }
+});
+
+// 2. 最新のランキング（先週の結果）を取得
+app.get('/api/themes/ranking/latest', async (req, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    let currentUserId = 0;
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        currentUserId = decoded.id;
+      } catch (e) {}
+    }
+    const latestSql = `SELECT weekly_theme_id FROM ranking_results ORDER BY id DESC LIMIT 1`;
+    const [latestRows] = await pool.query(latestSql);
+
+    if (latestRows.length === 0) return res.json([]);
+
+    const targetThemeId = latestRows[0].weekly_theme_id;
+
+    const rankingSql = `
+      SELECT 
+        r.rank,
+        r.fixed_likes_count AS likesCount,
+        p.id,
+        p.content,
+        p.ruby_content,
+        p.user_id,
+        p.genre_id,
+        u.username AS authorName,
+        (SELECT COUNT(*) FROM likes WHERE post_id = p.id AND user_id = ?) AS isLiked
+      FROM ranking_results r
+      JOIN posts p ON r.post_id = p.id
+      JOIN users u ON p.user_id = u.id
+      WHERE r.weekly_theme_id = ?
+      ORDER BY r.rank ASC
+    `;
+    const [rankingPosts] = await pool.query(rankingSql, [currentUserId, targetThemeId]);
+    res.json(rankingPosts);
+  } catch (err) {
+    console.error('ランキング取得エラー:', err);
+    res.status(500).json({ error: 'ランキングの取得に失敗しました' });
+  }
+});
+
+// 3. ランキング集計・確定API (バッチ処理用)
+app.post('/api/batch/calculate-ranking', async (req, res) => {
+  try {
+    // 集計対象（今日が終わったばかりの回、かつ未集計のもの）を探す
+    // ※デモ動作確認のため「終了日が今日以前」の条件にしています
+    const findTargetSql = `
+      SELECT id FROM weekly_themes 
+      WHERE end_date < CURDATE() 
+      AND id NOT IN (SELECT weekly_theme_id FROM ranking_results)
+      ORDER BY end_date DESC LIMIT 1
+    `;
+    const [targetRows] = await pool.query(findTargetSql);
+
+    if (targetRows.length === 0) {
+      return res.json({ message: '集計対象が見つかりませんでした（集計済みか、期間終了したお題がありません）' });
+    }
+
+    const targetThemeId = targetRows[0].id;
+
+    // トップ10を保存
+    const insertSql = `
+      INSERT INTO ranking_results (weekly_theme_id, post_id, rank, fixed_likes_count)
+      SELECT ?, p.id, ROW_NUMBER() OVER (ORDER BY p.likes_num DESC), p.likes_num
+      FROM posts p
+      WHERE p.weekly_theme_id = ?
+      ORDER BY p.likes_num DESC
+      LIMIT 10;
+    `;
+    await pool.query(insertSql, [targetThemeId, targetThemeId]);
+
+    res.json({ message: `ID:${targetThemeId} のランキングを確定しました！` });
+  } catch (err) {
+    console.error('集計エラー:', err);
+    res.status(500).json({ error: '集計処理に失敗しました' });
   }
 });
 

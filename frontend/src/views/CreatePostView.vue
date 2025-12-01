@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import PostCard from '../components/PostCard.vue';
@@ -11,9 +11,11 @@ const phrases = reactive([
   { text: '', ruby_data: [] }
 ]);
 
+const isJoinTheme = ref(true);
 const selectedGenre = ref(1);
 const message = ref('');
 const router = useRouter();
+const currentTheme = ref(null);
 
 const genres = [
   { id : 1, name : '＃春'},
@@ -25,6 +27,17 @@ const genres = [
   { id : 7, name : '＃学校'},
   { id : 8, name : '＃その他'},
 ];
+
+onMounted(async () => {
+  try {
+    const res = await axios.get('/api/themes/current');
+    if (res.data) {
+      currentTheme.value = res.data; // { weekly_theme_id, theme_name, ... } が入る
+    }
+  } catch (err) {
+    console.error('お題取得エラー:', err);
+  }
+});
 
 //しんじにバックエンド用のapiを作成依頼(未完了)
 const analyzeText = async (index) => {
@@ -79,6 +92,9 @@ const handlePost = async () => {
     content3: phrases[2].text,
     ruby_dataset: phrases.map(p => p.ruby_data),
     genre_id: selectedGenre.value,
+    weekly_theme_id: (currentTheme.value && isJoinTheme.value) 
+                     ? currentTheme.value.weekly_theme_id 
+                     : null,
   };
 
   try {
@@ -116,6 +132,22 @@ const goDescription = () => {
 <template>
   <div class="form-container">
     <h1>川柳を詠む</h1>
+    <div v-if="currentTheme" class="theme-banner">
+      <span class="theme-label">📅 今週のお題開催中！</span>
+      <p class="theme-title">「{{ currentTheme.theme_name }}」</p>
+      <div class="theme-toggle-wrapper">
+        <label class="theme-checkbox-label">
+          <input type="checkbox" v-model="isJoinTheme" class="theme-checkbox">
+          このお題に応募する
+        </label>
+      </div>
+      <p class="theme-desc" v-if="isJoinTheme">
+      　※来週のランキングにノミネートされます
+      </p>
+      <p class="theme-desc" v-else>
+        ※お題には参加せず、通常の投稿として扱われます
+      </p>
+    </div>
     <div class="text-wrapper">
       <p class="form-text" @click="goDescription">初めての方はこちら</p>
     </div>
@@ -351,5 +383,56 @@ const goDescription = () => {
   color: #721c24;
   white-space: pre-wrap;
   text-align: center;
+}
+
+.theme-banner {
+  background-color: #fff3cd; /* 薄い黄色 */
+  border: 2px solid #ffecb5;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+  color: #856404;
+}
+.theme-label {
+  font-weight: bold;
+  font-size: 0.9em;
+  display: block;
+  margin-bottom: 5px;
+  color: #d39e00;
+}
+.theme-title {
+  font-size: 1.4em;
+  font-weight: bold;
+  margin: 0 0 5px 0;
+  color: #333;
+}
+.theme-desc {
+  font-size: 0.85em;
+  margin: 0;
+  opacity: 0.8;
+}
+
+.theme-toggle-wrapper {
+  margin-top: 10px;
+  background-color: rgba(255, 255, 255, 0.6);
+  padding: 8px;
+  border-radius: 5px;
+  display: inline-block;
+}
+
+.theme-checkbox-label {
+  cursor: pointer;
+  font-weight: bold;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.1em;
+}
+
+.theme-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
 }
 </style>

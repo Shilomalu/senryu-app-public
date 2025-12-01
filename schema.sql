@@ -75,8 +75,9 @@ CREATE TABLE posts (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     likes_num INT DEFAULT 0,
     genre_id INT NOT NULL,
-    weekly_theme_id INT NULL;
-    FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE CASCADE
+    weekly_theme_id INT NULL,
+    FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE CASCADE,
+    FOREIGN KEY (weekly_theme_id) REFERENCES weekly_themes(id)ON DELETE SET NULL
 );
 
 CREATE TABLE likes (
@@ -114,7 +115,15 @@ CREATE TABLE topic_master (
 
 INSERT INTO topic_master (theme_name) VALUES 
 ('春'), ('夏'), ('秋'), ('冬'), 
-('猫'), ('推し'), ('卒業'), ('夜食');
+('猫'), ('推し'), ('卒業'), 
+('早起き'), ('忘れ物'), ('二度寝'), ('掃除'), ('ゴミ出し'), ('お風呂'), ('テレビ'), ('コンビニ'),
+('残業'), ('上司'), ('給料日'), ('通勤電車'), ('会議'), ('リモートワーク'), ('有給休暇'), ('挨拶'),
+('ダイエット'), ('筋肉痛'), ('健康診断'), ('白髪'), ('物忘れ'), ('サプリメント'), ('運動'), ('老眼'),
+('夫婦喧嘩'), ('お弁当'), ('反抗期'), ('孫'), ('ペット（犬・猫）'), ('里帰り'), ('ママ友・飲み仲間'), ('初恋'),
+('へそくり'), ('衝動買い'), ('値上げ'), ('特売・セール'), ('宝くじ'), ('お小遣い'), ('ポイントカード'),
+('お正月'), ('桜（花見）'), ('猛暑'), ('ラーメン'), ('ビール'), ('スイーツ'), ('推し活'), 
+('スマホ'), ('SNS'), ('パスワード'), ('AI（人工知能）'), ('Wi-Fi'), 
+('秘密'), ('言い訳'), ('夜食');
 
 CREATE TABLE weekly_themes (
     id INT AUTO_INCREMENT PRIMARY KEY, -- これが「開催ID」になる
@@ -128,7 +137,7 @@ CREATE TABLE IF NOT EXISTS ranking_results (
     id INT AUTO_INCREMENT PRIMARY KEY,
     weekly_theme_id INT NOT NULL,  -- 第○回のランキングか
     post_id INT NOT NULL,          -- ランクインした投稿ID
-    rank INT NOT NULL,             -- 順位 (1, 2, ... 10)
+    `rank` INT NOT NULL,             -- 順位 (1, 2, ... 10)
     fixed_likes_count INT NOT NULL,-- ★確定時のいいね数
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
