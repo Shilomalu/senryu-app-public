@@ -381,6 +381,68 @@ app.get("/api/posts/timeline", async (req, res) => {
     res.status(500).json({ error: "タイムライン取得エラー" });
   }
 });
+//今日のお題関連
+app.post("/api/posts/theme/today", authenticateToken, async (req, res) =>{
+  const { text } = req.body;
+
+  if (!text) {
+    return res.status(400).json({ error: "text が空です" });
+  }
+
+  try {
+    const result = await make_ruby(text);
+    res.json(result);
+  } catch (err) {
+    console.error("Ruby API error", err);
+    res.status(500).json({ error: "ルビ解析に失敗しました" });
+  }
+
+});
+//今日のお題関連
+app.get("/api/posts/theme/today", authenticateToken, async (req, res) =>{
+  try {
+    // ログインユーザーのIDを取得（オプショナル）
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+    let userId = null;
+
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        userId = decoded.id;
+      } catch (err) {
+        console.warn("Invalid token in timeline request:", err);
+      }
+    }
+
+    const sql = `
+            SELECT 
+                posts.id, 
+                posts.content, 
+                posts.created_at, 
+                posts.user_id,
+                posts.genre_id,
+                posts.ruby_content,
+                users.username AS authorName,
+                CASE WHEN likes.user_id IS NOT NULL THEN 1 ELSE 0 END AS isLiked,
+                CASE WHEN follows.follower_id IS NOT NULL THEN 1 ELSE 0 END AS isFollowing,
+                (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS likesCount,
+                (SELECT COUNT(*) FROM replies WHERE replies.post_id = posts.id) AS repliesCount
+            FROM posts 
+            JOIN users ON posts.user_id = users.id
+            LEFT JOIN likes ON likes.post_id = posts.id AND likes.user_id = ?
+            LEFT JOIN follows ON follows.followed_id = posts.user_id AND follows.follower_id = ?
+            ORDER BY posts.created_at DESC 
+            LIMIT 50;
+        `;
+
+    const [posts] = await pool.execute(sql, [userId, userId]);
+    res.json(posts);
+  } catch (error) {
+    console.error("タイムライン取得エラー:", error);
+    res.status(500).json({ error: "タイムライン取得エラー" });
+  }
+});
 
 app.get("/api/posts/likes", authenticateToken, async (req, res) => {
   try {

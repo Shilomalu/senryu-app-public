@@ -144,9 +144,10 @@ const fetchTimeline = async (isInitialLoad = false) => {
     let endpoint = '/api/posts/timeline';
     if (filter.value === 'likes') endpoint = '/api/posts/likes';
     else if (filter.value === 'following') endpoint = '/api/posts/timeline/following';
-    // else if (filter.value === 'ranking') endpoint = '/api/posts/theme/today'; // お題APIができたら追加
+    // else if (filter.value === 'ranking') endpoint = '/api/posts/theme/today';
 
     const res = await fetch(`${endpoint}?offset=${timeline.value.length}&limit=${PAGE_SIZE}`, {
+      method: 'GET',
       headers: { Authorization: `Bearer ${token.value}` },
     });
     const data = await res.json();

@@ -34,6 +34,9 @@ DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS genres;
 DROP TABLE IF EXISTS dictionary;
 DROP TABLE IF EXISTS directmessages;
+DROP TABLE IF EXISTS topic_master;
+DROP TABLE IF EXISTS weekly_themes;
+DROP TABLE IF EXISTS ranking_results;
 
 
 CREATE TABLE users (
@@ -75,6 +78,7 @@ CREATE TABLE posts (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     likes_num INT DEFAULT 0,
     genre_id INT NOT NULL DEFAULT 1,
+    weekly_theme_id INT NULL;
 
     CONSTRAINT fk_posts_genre
         FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE CASCADE
@@ -108,6 +112,34 @@ CREATE TABLE replies (
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 );
 
+CREATE TABLE topic_master (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    theme_name VARCHAR(50) NOT NULL
+);
+
+INSERT INTO topic_master (theme_name) VALUES 
+('春'), ('夏'), ('秋'), ('冬'), 
+('猫'), ('推し'), ('卒業'), ('夜食');
+
+CREATE TABLE weekly_themes (
+    id INT AUTO_INCREMENT PRIMARY KEY, -- これが「開催ID」になる
+    topic_id INT NOT NULL,             -- お題マスタのID
+    start_date DATE NOT NULL,          -- 開始日 (例: 2025-12-01)
+    end_date DATE NOT NULL,            -- 終了日 (例: 2025-12-07)
+    FOREIGN KEY (topic_id) REFERENCES topic_master(id)
+);
+
+CREATE TABLE IF NOT EXISTS ranking_results (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    weekly_theme_id INT NOT NULL,  -- 第○回のランキングか
+    post_id INT NOT NULL,          -- ランクインした投稿ID
+    rank INT NOT NULL,             -- 順位 (1, 2, ... 10)
+    fixed_likes_count INT NOT NULL,-- ★確定時のいいね数
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (weekly_theme_id) REFERENCES weekly_themes(id),
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+);
 
 CREATE TABLE dictionary(
     id INT AUTO_INCREMENT PRIMARY KEY,
