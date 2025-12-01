@@ -37,7 +37,7 @@
             :class="['menu-item', { active: filter === 'ranking' }]" 
             @click="selectFilter('ranking')"
           >
-            📅 今日のお題
+            📅 今週のお題
           </button>
         </div>
       </transition>
@@ -54,7 +54,33 @@
         <span class="filter-badge">{{ currentFilterName }}</span>
       </div>
 
-      <transition name="switch" mode="out-in">
+      <div v-if="filter === 'ranking'" class="special-timeline-container">
+    
+        <section class="ranking-section">
+          <h2 class="section-title">👑 先週のランキング (TOP10)</h2>
+          <ul class="timeline ranking-list">
+            <li v-for="post in rankingList" :key="'rank-' + post.id">
+              <div class="rank-badge">{{ post.rank }}位</div>
+              <PostCard :post="post" :currentUser="currentUser" @delete="handleDelete" />
+            </li>
+          </ul>
+        </section>
+
+        <section class="current-theme-section">
+          <h2 class="section-title">📅 今週のお題 募集中！</h2>
+          <ul class="timeline">
+            <li v-for="post in currentThemePosts" :key="'theme-' + post.id">
+              <PostCard :post="post" :currentUser="currentUser" @delete="handleDelete" />
+            </li>
+            <li v-if="currentThemePosts.length === 0" class="no-post-msg">
+              まだ投稿がありません。一番乗りを目指そう！
+            </li>
+          </ul>
+        </section>
+
+      </div>
+
+      <transition name="switch" mode="out-in" v-else>
         <transition-group
           v-if="timeline.length"
           :key="filter"
@@ -108,6 +134,8 @@ const currentUser = ref(token.value ? jwtDecode(token.value) : null);
 const PAGE_SIZE = 10;
 const hasMore = ref(true);
 const loadingMore = ref(false);
+const rankingList = ref([]);       // 先週のランキング用
+const currentThemePosts = ref([]); // 今週のお題投稿用
 
 // 逆順で右端が最新になるように並べ替え
 const orderedTimeline = computed(() => {
@@ -120,7 +148,7 @@ const currentFilterName = computed(() => {
     case 'all': return '全投稿一覧';
     case 'likes': return 'いとをかし(いいね)した投稿';
     case 'following': return 'フォロー中の投稿';
-    case 'ranking': return '今日のお題';
+    case 'ranking': return '先週のランキング (TOP10)';
     default: return '一覧';
   }
 });
@@ -141,12 +169,32 @@ const selectFilter = (mode) => {
 
 const fetchTimeline = async (isInitialLoad = false) => {
   try {
+    if (filter.value === 'ranking') {
+      const headers = { Authorization: `Bearer ${token.value}` };
+      // 1. 先週のランキングを取得
+      const resRanking = await fetch('/api/themes/ranking/latest');
+      const dataRanking = await resRanking.json();
+      
+      // ルビのパース処理 (共通関数化するとベストですが、一旦ここに書きます)
+      rankingList.value = parsePosts(dataRanking);
+
+      // 2. 今週のお題投稿を取得
+      const resCurrent = await fetch('/api/themes/current/posts');
+      const dataCurrent = await resCurrent.json();
+      
+      // 今週の分は、右が最新になるように逆順にする
+      currentThemePosts.value = parsePosts(dataCurrent).reverse();
+
+      // ローディング終了
+      hasMore.value = false; // ランキング画面では「もっと見る」は一旦無効に
+      return; 
+    }
     let endpoint = '/api/posts/timeline';
     if (filter.value === 'likes') endpoint = '/api/posts/likes';
     else if (filter.value === 'following') endpoint = '/api/posts/timeline/following';
-    // else if (filter.value === 'ranking') endpoint = '/api/posts/theme/today'; // お題APIができたら追加
 
     const res = await fetch(`${endpoint}?offset=${timeline.value.length}&limit=${PAGE_SIZE}`, {
+      method: 'GET',
       headers: { Authorization: `Bearer ${token.value}` },
     });
     const data = await res.json();
@@ -200,6 +248,28 @@ const fetchTimeline = async (isInitialLoad = false) => {
   }
 };
 
+// ★追加: データ変換用のヘルパー関数 (重複コードをまとめる)
+const parsePosts = (data) => {
+  if (!Array.isArray(data)) return [];
+  return data.map(post => {
+    let parsedRuby = [];
+    try {
+        if (typeof post.ruby_content === 'string') {
+            parsedRuby = JSON.parse(post.ruby_content);
+        } else if (Array.isArray(post.ruby_content)) {
+            parsedRuby = post.ruby_content;
+        }
+    } catch (e) { parsedRuby = []; }
+
+    return {
+      ...post,
+      ruby_content: parsedRuby,
+      likesCount: Number(post.likesCount ?? 0),
+      isLiked: Boolean(post.isLiked)
+    };
+  });
+};
+
 const loadMore = async () => {
   if (!hasMore.value || loadingMore.value) return;
   loadingMore.value = true;
@@ -217,6 +287,9 @@ const handleDelete = async (postId) => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
     timeline.value = timeline.value.filter(post => post.id !== postId);
+    rankingList.value = rankingList.value.filter(post => post.id !== postId);
+    currentThemePosts.value = currentThemePosts.value.filter(post => post.id !== postId);
+
     message.value = data.message;
   } catch (err) {
     message.value = err.message;
@@ -396,10 +469,11 @@ onMounted(async () => {
   flex-direction: row;
   gap: 1.5rem;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: auto;
   scroll-snap-type: x mandatory;
   padding: 0 1rem 1rem 1rem;
   scrollbar-width: none;
+  padding-bottom: 200px;
 }
 .timeline::-webkit-scrollbar { display: none; }
 .timeline li {
@@ -417,4 +491,44 @@ onMounted(async () => {
 .no-more-message { color: #555; font-size: 0.9rem; writing-mode: vertical-rl; }
 .fade-slide-enter-from { opacity: 0; transform: translateY(20px); }
 .fade-slide-enter-active { transition: all 0.5s ease; }
+
+.special-timeline-container {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto; /* 全体を縦スクロール可能に */
+  padding-bottom: 20px;
+}
+
+.ranking-section, .current-theme-section {
+  margin-bottom: 30px;
+  border-bottom: 1px dashed #ccc;
+  padding-bottom: 10px;
+}
+
+.section-title {
+  margin-left: 15px;
+  font-size: 1.1rem;
+  color: #555;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.rank-badge {
+  text-align: center;
+  font-weight: bold;
+  color: #fff;
+  background-color: #d4af37; /* 金色っぽい色 */
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-bottom: 5px;
+  display: inline-block;
+}
+.ranking-list li:nth-child(1) .rank-badge { background-color: #ffd700; font-size: 1.2em; } /* 1位 */
+.ranking-list li:nth-child(2) .rank-badge { background-color: #c0c0c0; } /* 2位 */
+.ranking-list li:nth-child(3) .rank-badge { background-color: #cd7f32; } /* 3位 */
+
+.no-post-msg {
+  padding: 20px;
+  color: #888;
+}
 </style>
