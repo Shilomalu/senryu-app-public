@@ -1,7 +1,10 @@
 <script setup>
 import { nextTick, ref } from 'vue'
 import PostCard from '@/components/PostCard.vue'
+import { jwtDecode } from 'jwt-decode';
 
+const token = ref(localStorage.getItem('token'));
+const currentUser = ref(token.value ? jwtDecode(token.value) : null);
 const keyword = ref('')
 const results = ref([])
 const is_searched = ref(false)
@@ -42,7 +45,11 @@ const search_method = async (e) => {
 
   const target_url = `/api/search?${search_value.toString()}`
   try {
-    const response = await fetch(target_url)
+    const response = await fetch(target_url, {
+       headers: { 
+         Authorization: `Bearer ${token.value}` 
+       }
+    });
 
     if (response.ok === false) {
       alert('検索中にエラーが発生しました')
@@ -50,8 +57,31 @@ const search_method = async (e) => {
     }
     is_searched.value = true //refをつけたものの値を変えるときは.valueをつけるって
     show_postcard.value = false
-    const search_result = await response.json()
-    results.value = search_result
+    const search_result_raw = await response.json() 
+
+    const processed_results = search_result_raw.map(post => {
+      let parsedRuby = [];
+      try {
+        if (typeof post.ruby_content === 'string') {
+          parsedRuby = JSON.parse(post.ruby_content);
+        } else if (Array.isArray(post.ruby_content)) {
+          parsedRuby = post.ruby_content;
+        }
+      } catch (e) {
+        console.error('JSON parse error', e);
+        parsedRuby = [];
+      }
+      return {
+        ...post,
+        ruby_content: parsedRuby, // 変換したデータを入れる
+        likesCount: Number(post.likesCount || 0),
+        repliesCount: Number(post.repliesCount || 0),
+        isLiked: Boolean(post.isLiked),
+        isFollowing: Boolean(post.isFollowing)
+      };
+    });
+
+    results.value = processed_results
 
     if (search_result.length === 0) {
       return '該当する川柳がありません'
@@ -141,7 +171,14 @@ const set_genreId=(id)=>{
                   user_id: item.user_id,
                   content: item.content,
                   created_at: item.created_at,
+                  ruby_content: item.ruby_content,
+                  genre_id: item.genre_id,
+                  likesCount: item.likesCount,
+                  repliesCount: item.repliesCount,
+                  isLiked: item.isLiked,
+                  isFollowing: item.isFollowing
                 }"
+                :currentUser="currentUser"
               />
             </div>
           </div>

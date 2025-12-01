@@ -221,6 +221,7 @@ app.get("/api/posts/user/:userId", async (req, res) => {
          posts.content, 
          posts.user_id, 
          posts.genre_id,
+         posts.ruby_content,
          users.username AS authorName,
          (SELECT COUNT(*) FROM replies WHERE replies.post_id = posts.id) AS repliesCount,
          (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS likesCount
@@ -241,10 +242,15 @@ app.get("/api/posts/user/:userId", async (req, res) => {
 // 川柳投稿 (ジャンル対応・要認証)
 app.post("/api/posts", authenticateToken, async (req, res) => {
   try {
-    let { content1, content2, content3, ruby, genre_id, } = req.body;
+    let { content1, content2, content3, ruby_dataset, genre_id, } = req.body;
     const userId = req.user.id; // ミドルウェアがセットしたユーザーIDを使用
 
-    if (!content1 || !content2 || !content3) {
+    const contents = [];
+    for (let idx = 0; idx < 3; ++idx) {
+      contents.push(ruby_dataset[idx].map(r => r.word).join(""));
+    }
+
+    if (!contents[0] || !contents[1] || !contents[2]) {
       return res.status(400).json({ error: "すべての句を入力してください。" });
     }
 
@@ -256,9 +262,9 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
     const regex =
       /^[\u3040-\u309F\u30A0-\u30FF\uFF65-\uFF9F\u4E00-\u9FFF。｡、､「｢」｣・･！!？?]+$/;
     if (
-      !regex.test(content1) ||
-      !regex.test(content2) ||
-      !regex.test(content3)
+      !regex.test(contents[0]) ||
+      !regex.test(contents[1]) ||
+      !regex.test(contents[2])
     ) {
       return res
         .status(400)
@@ -275,18 +281,15 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
     const {
       flag: can_kaminoku,
       symbolCount: symbolCount1,
-      words: word1,
-    } = await check575(content1, 5);
+    } = await check575(ruby_dataset[0], 5);
     const {
       flag: can_nakanoku,
       symbolCount: symbolCount2,
-      words: word2,
-    } = await check575(content2, 7);
+    } = await check575(ruby_dataset[1], 7);
     const {
       flag: can_shimonoku,
       symbolCount: symbolCount3,
-      words: word3,
-    } = await check575(content3, 5);
+    } = await check575(ruby_dataset[2], 5);
     if (!can_kaminoku) num += 1;
     if (!can_nakanoku) num += 2;
     if (!can_shimonoku) num += 4;
@@ -302,14 +305,13 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
 
     // --- 投稿をDBに保存して投稿IDを取得 ---
     const [postResult] = await pool.execute(
-      "INSERT INTO posts (user_id, content, genre_id) VALUES (?, ?, ?)",
-      [userId, content, genre_id]
+      "INSERT INTO posts (user_id, content, ruby_content,genre_id) VALUES (?, ?, ?, ?)",
+      [userId, content, JSON.stringify(ruby_dataset), genre_id]
     );
 
     const sennryuu_id = postResult.insertId;
     console.log("登録された川柳ID:", sennryuu_id);
 
-    const word_array = [...(word1 || []), ...(word2 || []), ...(word3 || [])];
     res.status(201).json({ message: "投稿成功", sennryuu_id });
   } catch (error) {
     console.error("投稿エラー詳細:", error);
@@ -358,6 +360,7 @@ app.get("/api/posts/timeline", async (req, res) => {
                 posts.created_at, 
                 posts.user_id,
                 posts.genre_id,
+                posts.ruby_content,
                 users.username AS authorName,
                 CASE WHEN likes.user_id IS NOT NULL THEN 1 ELSE 0 END AS isLiked,
                 CASE WHEN follows.follower_id IS NOT NULL THEN 1 ELSE 0 END AS isFollowing,
@@ -391,6 +394,7 @@ app.get("/api/posts/likes", authenticateToken, async (req, res) => {
         posts.created_at,
         posts.user_id,
         posts.genre_id,
+        posts.ruby_content,
         users.username AS authorName,
         1 AS isLiked,  -- いいね済み確定
         (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS likesCount,
@@ -527,19 +531,16 @@ app.post("/api/posts/:id/reply", authenticateToken, async (req, res) => {
         .json({ error: "入力できない文字が含まれています。" });
     }
 
+    const ruby1 = await make_ruby(content1);
+    const ruby2 = await make_ruby(content2);
+    const ruby3 = await make_ruby(content3);
+
     let num = 0;
-    const { flag: can_kaminoku, symbolCount: symbolCount1 } = await check575(
-      content1,
-      5
-    );
-    const { flag: can_nakanoku, symbolCount: symbolCount2 } = await check575(
-      content2,
-      7
-    );
-    const { flag: can_shimonoku, symbolCount: symbolCount3 } = await check575(
-      content3,
-      5
-    );
+
+    const { flag: can_kaminoku, symbolCount: symbolCount1 } = await check575(ruby1.ruby_data, 5);
+    const { flag: can_nakanoku, symbolCount: symbolCount2 } = await check575(ruby2.ruby_data, 7);
+    const { flag: can_shimonoku, symbolCount: symbolCount3 } = await check575(ruby3.ruby_data, 5);
+
     if (!can_kaminoku) num += 1;
     if (!can_nakanoku) num += 2;
     if (!can_shimonoku) num += 4;
@@ -632,6 +633,7 @@ app.get("/api/posts/user/:id", async (req, res) => {
         posts.created_at, 
         posts.user_id,
         posts.genre_id,
+        posts.ruby_content,
         users.username AS authorName
       FROM posts 
       JOIN users ON posts.user_id = users.id
@@ -655,6 +657,17 @@ app.get("/api/search", async (req, res) => {
   try {
     const keyword = req.query.input_words;
     const genre = req.query.genre;
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+    let currentUserId = null;
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        currentUserId = decoded.id;
+      } catch (err) {
+        console.warn("Search: Invalid token", err);
+      }
+    }
 
     //単語もジャンルも入力されていなかったらエラー
     if (!keyword && !genre) {
@@ -744,14 +757,27 @@ app.get("/api/search", async (req, res) => {
       placeholders += "?";
     }
 
-    const sqlPosts = `SELECT p.id, p.user_id, p.content, p.created_at, u.username
+    const sqlPosts = `SELECT 
+         p.id, 
+         p.user_id, 
+         p.content, 
+         p.ruby_content, 
+         p.genre_id, 
+         p.created_at, 
+         u.username,
+        (SELECT COUNT(*) FROM likes WHERE post_id = p.id) AS likesCount,
+        (SELECT COUNT(*) FROM replies WHERE post_id = p.id) AS repliesCount,
+        CASE WHEN l.user_id IS NOT NULL THEN 1 ELSE 0 END AS isLiked,
+        CASE WHEN f.follower_id IS NOT NULL THEN 1 ELSE 0 END AS isFollowing
          FROM posts p
          LEFT JOIN users u ON u.id = p.user_id
+        LEFT JOIN likes l ON l.post_id = p.id AND l.user_id = ?
+        LEFT JOIN follows f ON f.followed_id = p.user_id AND f.follower_id = ?
         WHERE p.id IN (${placeholders})
         -- ✅ 並び順を orderedIds の通りに固定
         ORDER BY FIELD(p.id, ${placeholders})`;
 
-    const params = [...ids, ...ids];
+    const params = [currentUserId, currentUserId, ...ids, ...ids];
 
     const [rowsFull] = await pool.execute(sqlPosts, params);
 
