@@ -242,7 +242,7 @@ const genreClass = (genreId) => {
 .word-unit { display: inline-block; }
 
 ruby { ruby-position: over;  flex-direction: column; align-items: center; }
-rt { font-size: 0.5em; color: #555; text-align: center; margin-bottom: -0.4em; }
+rt { font-size: 0.4em; color: #555; text-align: center; margin-bottom: -0.4em; }
 
 .actions-container {
   display: flex;

@@ -26,7 +26,6 @@ const genres = [
   { id : 8, name : '＃その他'},
 ];
 
-//しんじにバックエンド用のapiを作成依頼(未完了)
 const analyzeText = async (index) => {
   const text = phrases[index].text;
   if(!text){
@@ -65,7 +64,6 @@ const previewPost = computed(() => {
   };
 });
 
-//postsを修正すること頼む(未完了)
 const handlePost = async () => {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -108,7 +106,7 @@ const handlePost = async () => {
 
 // 入力可能文字種の詳細へ遷移
 const goDescription = () => {
-  router.push('/post/description');
+  window.open('/post/description');
 };
 
 </script>
@@ -143,12 +141,6 @@ const goDescription = () => {
               <div v-for="(item, i) in phrase.ruby_data" :key="i" class="ruby-item">
                 <!-- 単語の表示 -->
                 <span class="word-surface">{{ item.word }}</span>
-                <span class="word-ruby">
-                  <ruby>
-                    {{ item.word }}
-                    <rt>{{ item.ruby }}</rt>
-                  </ruby>
-                </span>
                 <!-- ルビ入力欄 (ルビがある場合のみ表示) -->
                 <input 
                   v-if="item.ruby !== null" 
@@ -266,7 +258,7 @@ const goDescription = () => {
   min-width: 30px;
 }
 .word-surface {
-  font-size: 0.9em;
+  font-size: 1.0em;
   font-weight: bold;
   margin-bottom: 2px;
 }
