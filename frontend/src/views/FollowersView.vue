@@ -1,6 +1,9 @@
 <template>
   <div class="followers-view">
-    <h1 class="page-title">{{ username }}のフォロワー</h1>
+    <h1 class="page-title">
+      {{ username }}のフォロワー 
+      <span v-if="!loading" class="follower-count">({{ followers.length }}人)</span>
+    </h1>
     
     <div v-if="loading" class="loading-message">読み込み中...</div>
     <div v-else-if="!followers.length" class="empty-message">フォロワーはいません。</div>
@@ -71,6 +74,12 @@ watch(() => route.params.id, (newId) => {
   border-bottom: 2px solid #ccc;
   padding-bottom: 10px;
   margin-bottom: 20px;
+}
+.follower-count {
+  font-size: 0.8em; /* タイトルよりも少し小さく */
+  color: #666;
+  font-weight: normal; /* 太字を解除 */
+  margin-left: 5px;
 }
 .follower-list {
   list-style: none;
