@@ -6,35 +6,31 @@
       <span class="count">{{ followerCount }}</span>
     </button>
 
-    <button class="show-followers-btn" @click="toggleFollowerList" v-if="followerCount > 0">
+    <button class="show-followers-btn" @click="goToFollowersList">
       👁 フォロワーを見る
     </button>
 
-    <div v-if="showFollowerList" class="follower-list">
-      <p v-if="!followers.length" class="empty">まだフォロワーはいません</p>
-      <ul v-else>
-        <li v-for="user in followers" :key="user.id">
-          {{ user.name || user.username || `ユーザー${user.id}` }}
-        </li>
-      </ul>
-    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, defineProps, defineEmits, onMounted, onUnmounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
 
 const props = defineProps({
   targetUserId: { type: Number, required: true },   // フォロー対象
   currentUserId: { type: Number, required: true }   // 現在のログインユーザー
 });
 const emit = defineEmits(['follow-toggled', 'update-followers']);
-
+const router = useRouter();
 const isFollowing = ref(false);
 const followerCount = ref(0);
-const followers = ref([]);
-const showFollowerList = ref(false);
 let socket = null;
+
+// ルーターの'followers'ルートに遷移
+const goToFollowersList = () => {
+  router.push({ name: 'followers', params: { id: props.targetUserId } });
+};
 
 // --- 現在のフォロー状態を取得 ---
 const fetchFollowStatus = async () => {
