@@ -9,12 +9,14 @@
     <div v-else-if="!followers.length" class="empty-message">フォロワーはいません。</div>
     
     <ul v-else class="follower-list">
-      <li v-for="user in followers" :key="user.id" class="follower-item">
-        <RouterLink :to="{ name: 'profile', params: { id: user.id } }">
-          {{ user.username }}
-        </RouterLink>
-      </li>
-    </ul>
+  <li v-for="user in followers" :key="user.id" class="follower-item">
+    <RouterLink 
+      :to="user.id === currentUserId ? '/profile' : `/users/${user.id}`"
+    >
+      {{ user.username }}
+    </RouterLink>
+  </li>
+</ul>
 
     <RouterLink to="/" class="back-link">タイムラインに戻る</RouterLink>
   </div>
@@ -23,11 +25,14 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useRoute, RouterLink } from 'vue-router';
+import { jwtDecode } from 'jwt-decode';
 
 const route = useRoute();
 const followers = ref([]);
 const username = ref('ユーザー'); // プロフィール名
 const loading = ref(true);
+const token = localStorage.getItem('token');
+const currentUserId = ref(token ? jwtDecode(token).id : null);
 
 const fetchFollowers = async (userId) => {
   if (!userId) return;
