@@ -1,10 +1,10 @@
 <template>
   <h2>ふみ for {{ partnerName }}</h2>
-  <div v-if="messages.length">
+  <div v-if="messages.length" class="dm-container">
     <DirectFumiCard v-for="m in messages" :message="m" />
   </div>
   <div v-else>There is no direct message</div>
-  <DirectFumiForm :latestMessage="latestMessage" :partnerId="partnerId" @message-sent="fetchDms"/>
+  <DirectFumiForm :latestMessage="latestMessage" :partnerId="partnerId" @message-sent="fetchDms" class="form-container"/>
 </template>
 
 <script setup>
@@ -172,5 +172,20 @@ onMounted(updateIsRead);
   text-align: center;
   margin-top: 2rem;
   color: #888;
+}
+
+.dm-container { 
+  min-height: 420px; 
+  display: flex; 
+  flex-direction: row-reverse; 
+  overflow-x: auto; 
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth; 
+  border-top: 1px solid #eee; 
+  border-bottom: 1px solid #eee; 
+}
+
+.form-container {
+  margin: auto;
 }
 </style>
