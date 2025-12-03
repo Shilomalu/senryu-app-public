@@ -83,7 +83,7 @@ const search_method = async (e) => {
 
     results.value = processed_results
 
-    if (search_result.length === 0) {
+    if (processed_results.length === 0) {
       return '該当する川柳がありません'
     }
 
@@ -112,7 +112,7 @@ const set_genreId=(id)=>{
 
 <template>
   <div class="search_container">
-    <h1 id="title">検索ページ</h1>
+    <h1 id="title">川柳巡り</h1>
     <form @submit="search_method">
       <h2>検索ワード入力</h2>
 
@@ -189,6 +189,11 @@ const set_genreId=(id)=>{
 </template>
 
 <style scoped>
+
+html{
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
 .search_container {
   width: 80%;
   margin: 50px auto 0;
@@ -199,6 +204,7 @@ const set_genreId=(id)=>{
 }
 
 #title {
+  font-family:Georgia, 'Times New Roman', Times, serif;
   font-size: 3rem;
   font-weight: 600;
   margin-bottom: 30px;
@@ -215,6 +221,18 @@ const set_genreId=(id)=>{
   border-radius: 6px;
   border: 1px solid #007bff;
 }
+
+@media(max-width:500px){
+  #search_input{
+    width: 300px;
+    height: 50px;
+    margin-top: 20px;
+    border-radius: 6px;
+    border: 1px solid #007bff;
+  }
+}
+
+
 #search_button {
   width: 200px;
   height: 50px;
@@ -237,17 +255,20 @@ const set_genreId=(id)=>{
   margin-top: 20px;
   padding: 15px;
   border-bottom: 1px solid #ddd;
+  
 }
 
 .postcard_search {
   width: 450px;
-  margin-bottom: 30px;
+  margin: 0 auto 30px;
   opacity: 0;
 }
 
 @media (max-width: 450px) {
   .postcard_search {
     width: 80%;
+    margin: 0 auto 30px;
+  opacity: 0;
   }
 }
 
@@ -262,15 +283,22 @@ form {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  width: fit-content;
+  width: 100%;
 }
 
 #search_result {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  width: fit-content;
+  align-items: center;
+  width:100%;
 }
+
+.search_results {
+  display: flex;
+  flex-direction: column; 
+  align-items: center;   
+}
+
 
 .fadeUpCard {
   opacity: 0;
