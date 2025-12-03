@@ -1,70 +1,71 @@
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import axios from 'axios';
-import PostCard from '../components/PostCard.vue';
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import axios from 'axios'
+import PostCard from '../components/PostCard.vue'
 
 //こんな感じでJSONでdataの内容を受け取る予定、例[{word: "古池", ruby: "ふるいけ"}, {word: "や", ruby: null}]
 const phrases = reactive([
   { text: '', ruby_data: [] },
   { text: '', ruby_data: [] },
-  { text: '', ruby_data: [] }
-]);
+  { text: '', ruby_data: [] },
+])
 
-const isJoinTheme = ref(true);
-const selectedGenre = ref(1);
-const message = ref('');
-const router = useRouter();
-const currentTheme = ref(null);
+const isJoinTheme = ref(true)
+const selectedGenre = ref(null)
+const message = ref('')
+const router = useRouter()
+const currentTheme = ref(null)
+const show_genres = ref(false)
 
 const genres = [
-  { id : 1, name : '＃春'},
-  { id : 2, name : '＃夏'},
-  { id : 3, name : '＃秋'},
-  { id : 4, name : '＃冬'},
-  { id : 5, name : '＃趣味'},
-  { id : 6, name : '＃食べ物'},
-  { id : 7, name : '＃学校'},
-  { id : 8, name : '＃その他'},
-];
+  { id: 1, name: '＃春' },
+  { id: 2, name: '＃夏' },
+  { id: 3, name: '＃秋' },
+  { id: 4, name: '＃冬' },
+  { id: 5, name: '＃趣味' },
+  { id: 6, name: '＃食べ物' },
+  { id: 7, name: '＃学校' },
+  { id: 8, name: '＃その他' },
+]
 
 onMounted(async () => {
   try {
-    const res = await axios.get('/api/themes/current');
+    const res = await axios.get('/api/themes/current')
     if (res.data) {
-      currentTheme.value = res.data; // { weekly_theme_id, theme_name, ... } が入る
+      currentTheme.value = res.data // { weekly_theme_id, theme_name, ... } が入る
     }
   } catch (err) {
-    console.error('お題取得エラー:', err);
+    console.error('お題取得エラー:', err)
   }
-});
+})
 
 //しんじにバックエンド用のapiを作成依頼(未完了)
 const analyzeText = async (index) => {
-  const text = phrases[index].text;
-  if(!text){
-    phrases[index].ruby_data = [];
-    return;
+  const text = phrases[index].text
+  if (!text) {
+    phrases[index].ruby_data = []
+    return
   }
 
-  try{
-    const res = await axios.post('/api/ruby', { text });
-    phrases[index].ruby_data = res.data.ruby_data;
-  }catch(err){
-    console.error('解析失敗', err);
-    phrases[index].ruby_data = [{ word: text, ruby: null }];
+  try {
+    const res = await axios.post('/api/ruby', { text })
+    phrases[index].ruby_data = res.data.ruby_data
+  } catch (err) {
+    console.error('解析失敗', err)
+    phrases[index].ruby_data = [{ word: text, ruby: null }]
   }
 }
 
 const previewPost = computed(() => {
-  const content = phrases.map(p => p.text).join(' ');
-  
-  const rubyContent = phrases.map(p => {
+  const content = phrases.map((p) => p.text).join(' ')
+
+  const rubyContent = phrases.map((p) => {
     if (p.ruby_data && p.ruby_data.length > 0) {
-      return p.ruby_data;
+      return p.ruby_data
     }
-    return p.text ? [{ word: p.text, ruby: null }] : [];
-  });
+    return p.text ? [{ word: p.text, ruby: null }] : []
+  })
 
   return {
     id: 'preview',
@@ -74,59 +75,81 @@ const previewPost = computed(() => {
     ruby_content: rubyContent, // これで「空っぽ」ではなく「文字データ」が渡る
     repliesCount: 0,
     likesCount: 0,
-    genre_id: selectedGenre.value
-  };
-});
+    genre_id: selectedGenre.value,
+  }
+})
 
 //postsを修正すること頼む(未完了)
 const handlePost = async () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token')
   if (!token) {
-    message.value = 'ログインが必要です。';
-    return;
+    message.value = 'ログインが必要です。'
+    return
   }
 
   const senryudata = {
     content1: phrases[0].text,
     content2: phrases[1].text,
     content3: phrases[2].text,
-    ruby_dataset: phrases.map(p => p.ruby_data),
+    ruby_dataset: phrases.map((p) => p.ruby_data),
     genre_id: selectedGenre.value,
-    weekly_theme_id: (currentTheme.value && isJoinTheme.value) 
-                     ? currentTheme.value.weekly_theme_id 
-                     : null,
-  };
+    weekly_theme_id:
+      currentTheme.value && isJoinTheme.value ? currentTheme.value.weekly_theme_id : null,
+  }
 
   try {
     await axios.post('/api/posts', senryudata, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    
-    message.value = '投稿しました！';
-    setTimeout(() => router.push('/'), 1500);
+      headers: { Authorization: `Bearer ${token}` },
+    })
 
+    message.value = '投稿しました！'
+    setTimeout(() => router.push('/'), 1500)
   } catch (err) {
-    const errorRes = err.response?.data;
-    
+    const errorRes = err.response?.data
+
     if (errorRes?.errorCode) {
-        let errorMessages = [];
-        if (errorRes.errorCode & 1) errorMessages.push('上の句が5音ではありません。');
-        if (errorRes.errorCode & 2) errorMessages.push('中の句が7音ではありません。');
-        if (errorRes.errorCode & 4) errorMessages.push('下の句が5音ではありません。');
-        message.value = errorMessages.join('\n');
+      let errorMessages = []
+      if (errorRes.errorCode & 1) errorMessages.push('上の句が5音ではありません。')
+      if (errorRes.errorCode & 2) errorMessages.push('中の句が7音ではありません。')
+      if (errorRes.errorCode & 4) errorMessages.push('下の句が5音ではありません。')
+      message.value = errorMessages.join('\n')
     } else if (errorRes?.errorCode === -1) {
-        message.value = '記号などが多すぎます。';
+      message.value = '記号などが多すぎます。'
     } else {
-        message.value = errorRes?.error || errorRes?.message || '投稿に失敗しました。';
+      message.value = errorRes?.error || errorRes?.message || '投稿に失敗しました。'
     }
   }
-};
+}
 
 // 入力可能文字種の詳細へ遷移
 const goDescription = () => {
-  router.push('/post/description');
-};
+  router.push('/post/description')
+}
 
+//ジャンルIDを自動推論
+const genre_predict = async () => {
+  console.log('genre_predict')
+  const content1 = phrases[0].text.trim()
+  const content2 = phrases[1].text.trim()
+  const content3 = phrases[2].text.trim()
+
+  if (!content1 || !content2 || !content3) {
+    return
+  }
+
+  try {
+    const res = await axios.post('/api/genre/predict', {
+      content1: content1,
+      content2: content2,
+      content3: content3,
+    });
+
+    const genreId=Number(res.data.genre_id);
+    selectedGenre.value=genreId;
+  } catch(err){
+    console.error("ジャンルの自動推論でエラーが発生しました",err);
+  }
+}
 </script>
 
 <template>
@@ -137,36 +160,35 @@ const goDescription = () => {
       <p class="theme-title">「{{ currentTheme.theme_name }}」</p>
       <div class="theme-toggle-wrapper">
         <label class="theme-checkbox-label">
-          <input type="checkbox" v-model="isJoinTheme" class="theme-checkbox">
+          <input type="checkbox" v-model="isJoinTheme" class="theme-checkbox" />
           このお題に応募する
         </label>
       </div>
-      <p class="theme-desc" v-if="isJoinTheme">
-      　※来週のランキングにノミネートされます
-      </p>
-      <p class="theme-desc" v-else>
-        ※お題には参加せず、通常の投稿として扱われます
-      </p>
+      <p class="theme-desc" v-if="isJoinTheme">　※来週のランキングにノミネートされます</p>
+      <p class="theme-desc" v-else>※お題には参加せず、通常の投稿として扱われます</p>
     </div>
     <div class="text-wrapper">
       <p class="form-text" @click="goDescription">初めての方はこちら</p>
     </div>
-    <form @submit.prevent="handlePost">
+    <form @submit.prevent>
       <div class="input-sections">
         <!-- 上・中・下の句の入力ループ -->
         <div v-for="(phrase, index) in phrases" :key="index" class="phrase-group">
           <label>{{ ['上', '中', '下'][index] }}の句</label>
-          
+
           <!-- テキスト入力 (変更確定時に解析) -->
-          <input 
+          <input
             v-model="phrase.text"
-            type="text" 
+            type="text"
             :placeholder="['五', '七', '五'][index]"
-            @change="analyzeText(index)" 
+            @change="
+              analyzeText(index);
+              genre_predict()
+            "
             required
             :maxlength="[10, 15, 10][index]"
             class="main-input"
-          >
+          />
 
           <!-- ▼ ルビ編集エリア (解析結果がある場合のみ表示) ▼ -->
           <div v-if="phrase.ruby_data.length > 0" class="ruby-edit-area">
@@ -182,11 +204,7 @@ const goDescription = () => {
                   </ruby>
                 </span>
                 <!-- ルビ入力欄 (ルビがある場合のみ表示) -->
-                <input 
-                  v-if="item.ruby !== null" 
-                  v-model="item.ruby" 
-                  class="ruby-input"
-                >
+                <input v-if="item.ruby !== null" v-model="item.ruby" class="ruby-input" />
                 <span v-else class="no-ruby">-</span>
               </div>
             </div>
@@ -194,18 +212,35 @@ const goDescription = () => {
         </div>
       </div>
 
-  <!-- ジャンル選択ボタン -->
-  <div class="genre-buttons">
-  <button 
-    v-for="genre in genres"
-    :key="genre.id"
-    type="button"
-    :class="{ active: selectedGenre === genre.id }"
-    @click="selectedGenre = genre.id"
-  >
-    {{ genre.name }}
-  </button>
-</div>
+      <!--ジャンル手動入力ボタン-->
+      <div class="genre_set_group">
+        <button
+          type="button"
+          id="genre_set_button"
+          @click="
+            show_genres = !show_genres;
+            selectedGenre = null
+          "
+          :class="{ active: show_genres }"
+        >
+          ジャンルを手動入力する
+        </button>
+      </div>
+
+      <!-- ジャンル選択ボタン -->
+      <div v-if="show_genres === true">
+        <div class="genre-buttons">
+          <button
+            v-for="genre in genres"
+            :key="genre.id"
+            type="button"
+            :class="{ active: selectedGenre === genre.id }"
+            @click="selectedGenre = genre.id"
+          >
+            {{ genre.name }}
+          </button>
+        </div>
+      </div>
 
       <div class="preview-section">
         <h2>プレビュー</h2>
@@ -214,11 +249,9 @@ const goDescription = () => {
         <PostCard :post="previewPost" :isPreview="true" />
       </div>
 
-  <!-- 投稿ボタン -->
-  <button type="submit" class="submit-btn">投稿</button>
-
-
-</form>
+      <!-- 投稿ボタン -->
+      <button type="button" class="submit-btn"@click="handlePost">投稿</button>
+    </form>
 
     <p v-if="message">{{ message }}</p>
   </div>
@@ -233,9 +266,9 @@ const goDescription = () => {
   text-align: center;
 }
 
-.page-title { 
-  margin-bottom: 10px; 
-  font-size: 1.5em; 
+.page-title {
+  margin-bottom: 10px;
+  font-size: 1.5em;
   font-weight: bold;
 }
 
@@ -249,7 +282,9 @@ const goDescription = () => {
   cursor: pointer;
   font-size: 0.9em;
 }
-.form-text:hover { text-decoration: underline; }
+.form-text:hover {
+  text-decoration: underline;
+}
 
 .phrase-group {
   margin-bottom: 20px;
@@ -283,7 +318,11 @@ const goDescription = () => {
   border: 1px dashed #ccc;
   border-radius: 4px;
 }
-.ruby-label { font-size: 0.85em; color: #666; margin-bottom: 8px; }
+.ruby-label {
+  font-size: 0.85em;
+  color: #666;
+  margin-bottom: 8px;
+}
 
 .ruby-items {
   display: flex;
@@ -316,21 +355,54 @@ const goDescription = () => {
   padding: 2px 0;
 }
 
-.genre-buttons {
-  display : grid;
-  grid-template-columns : repeat(4,1fr);
-  gap : 10px;
-  margin-bottom : 30px;
+.genre_set_group {
+  text-align: left;
 }
-.genre-buttons button {
-  height: 40px;           /* 全ボタン共通の高さ */
+
+#genre_set_button {
+  height: 40px; /* 全ボタン共通の高さ */
   padding: 0;
   font-size: 0.9em;
   border-radius: 8px;
   border: 1px solid #007bff;
   background-color: white;
   cursor: pointer;
-  transition: 0.4s;               /* ← 回転も滑らかにするため少し長めに */
+  margin-bottom: 50px;
+  transition: 0.2s;
+}
+
+#genre_set_button:hover {
+  background-color: #007bff;
+  color: white;
+  transform: scale(1.1);
+}
+
+#genre_set_button.active {
+  height: 40px; /* 全ボタン共通の高さ */
+  padding: 0;
+  font-size: 0.9em;
+  border-radius: 8px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  margin-bottom: 50px;
+}
+
+.genre-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 30px;
+}
+.genre-buttons button {
+  height: 40px; /* 全ボタン共通の高さ */
+  padding: 0;
+  font-size: 0.9em;
+  border-radius: 8px;
+  border: 1px solid #007bff;
+  background-color: white;
+  cursor: pointer;
+  transition: 0.4s; /* ← 回転も滑らかにするため少し長めに */
   transform-origin: center center; /* 中央を基準に回転・拡大 */
 }
 
@@ -355,11 +427,19 @@ const goDescription = () => {
   padding-top: 20px;
   display: flex;
   justify-content: center; /* 横中央 */
-  align-items: center;     /* 縦方向も中央寄せ（任意） */
-  flex-direction: column; 
+  align-items: center; /* 縦方向も中央寄せ（任意） */
+  flex-direction: column;
 }
-.preview-section h2 { font-size: 1.2em; margin-bottom: 5px; color: #555; }
-.preview-note { font-size: 0.8em; color: #888; margin-bottom: 15px; }
+.preview-section h2 {
+  font-size: 1.2em;
+  margin-bottom: 5px;
+  color: #555;
+}
+.preview-note {
+  font-size: 0.8em;
+  color: #888;
+  margin-bottom: 15px;
+}
 
 .submit-btn {
   width: 100%;
@@ -373,7 +453,9 @@ const goDescription = () => {
   font-weight: bold;
   transition: background-color 0.2s;
 }
-.submit-btn:hover { background-color: #0056b3; }
+.submit-btn:hover {
+  background-color: #0056b3;
+}
 
 .message-display {
   margin-top: 15px;
