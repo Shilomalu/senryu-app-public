@@ -90,6 +90,7 @@ const router = createRouter({
       name: 'followers',
       component: FollowersView
     },
+    
     // 8. 他のユーザーのプロフィールページ（動的ルート）
     // 例: /users/123 のようにアクセスする
     {
