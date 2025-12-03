@@ -1,6 +1,9 @@
 <template>
   <div class="follow-wrapper">
-    <div class="follow-button-fixed-width">
+    <div 
+      class="follow-button-fixed-width"
+      v-if="props.targetUserId !== props.currentUserId"
+    >
       <button 
         class="follow-button" 
         @click="toggleFollow"
