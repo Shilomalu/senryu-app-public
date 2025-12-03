@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import PostCard from '../components/PostCard.vue';
 
+
 //こんな感じでJSONでdataの内容を受け取る予定、例[{word: "古池", ruby: "ふるいけ"}, {word: "や", ruby: null}]
 const phrases = reactive([
   { text: '', ruby_data: [] },
