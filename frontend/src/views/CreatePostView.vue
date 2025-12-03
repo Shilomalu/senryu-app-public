@@ -39,7 +39,17 @@ onMounted(async () => {
   }
 });
 
-//しんじにバックエンド用のapiを作成依頼(未完了)
+onMounted(async () => {
+  try {
+    const res = await axios.get('/api/themes/current');
+    if (res.data) {
+      currentTheme.value = res.data; // { weekly_theme_id, theme_name, ... } が入る
+    }
+  } catch (err) {
+    console.error('お題取得エラー:', err);
+  }
+});
+
 const analyzeText = async (index) => {
   const text = phrases[index].text;
   if(!text){
@@ -78,7 +88,6 @@ const previewPost = computed(() => {
   };
 });
 
-//postsを修正すること頼む(未完了)
 const handlePost = async () => {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -124,7 +133,7 @@ const handlePost = async () => {
 
 // 入力可能文字種の詳細へ遷移
 const goDescription = () => {
-  router.push('/post/description');
+  window.open('/post/description');
 };
 
 </script>
@@ -175,17 +184,12 @@ const goDescription = () => {
               <div v-for="(item, i) in phrase.ruby_data" :key="i" class="ruby-item">
                 <!-- 単語の表示 -->
                 <span class="word-surface">{{ item.word }}</span>
-                <span class="word-ruby">
-                  <ruby>
-                    {{ item.word }}
-                    <rt>{{ item.ruby }}</rt>
-                  </ruby>
-                </span>
                 <!-- ルビ入力欄 (ルビがある場合のみ表示) -->
                 <input 
                   v-if="item.ruby !== null" 
                   v-model="item.ruby" 
                   class="ruby-input"
+                  @input="item.ruby = item.ruby.replace(/[^ァ-ヶー]/g, '')"
                 >
                 <span v-else class="no-ruby">-</span>
               </div>
@@ -298,7 +302,7 @@ const goDescription = () => {
   min-width: 30px;
 }
 .word-surface {
-  font-size: 0.9em;
+  font-size: 1.0em;
   font-weight: bold;
   margin-bottom: 2px;
 }
