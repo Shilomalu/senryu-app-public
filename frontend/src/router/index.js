@@ -88,9 +88,8 @@ const router = createRouter({
     {
       path: '/users/:id', // ← :id はどのユーザーかを示すための変数
       name: 'user-profile',
-      component: ProfileView
+      component: UserProfile
     },
-     { path: '/profile/:id', component: UserProfile },
     // 8. 投稿詳細ページ（動的ルート）
     // 例: /posts/456 のようにアクセスする
     {
