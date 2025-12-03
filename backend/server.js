@@ -56,7 +56,50 @@ const authenticateToken = (req, res, next) => {
 };
 
 
+//機械学習による推論関係
+const { execSync } = require("child_process");
+const path = require("path");
+
+
+function predict_genre_function(text){
+const scriptPath = path.join(__dirname, "..", "ml", "genre_predict.py");
+
+  //genre_predictは推論したジャンルIDを標準出力として返すから、それを文字列で受け取る
+  const stringID=execSync( `python "${scriptPath}" ${JSON.stringify(text)}`,
+    { encoding: "utf-8" } );
+
+    const stringID_trim=stringID.trim();
+    
+    //文字列を整数に変換する
+    const genreID=Number(stringID_trim);
+
+    return genreID;
+}
+
 // --- 5. APIエンドポイント ---
+
+app.post("/api/genre/predict",async(req,res)=>{
+  try {
+     const { content1, content2, content3 } = req.body;
+    console.log(content1);
+
+    // 3つとも必須
+    if (!content1 || !content2 || !content3) {
+      return res.status(400).json({ error: "3つすべての句を入力してください。" });
+    }
+
+    const target_senryu = `${content1} ${content2} ${content3}`;
+
+    const genre_id = predict_genre_function(target_senryu);
+
+    console.log("★予測ジャンルID:", genre_id);
+
+    return res.json({ genre_id });
+  } catch (e) {
+    console.error("ジャンル自動推論APIエラー:", e);
+    return res.status(500).json({ error: "ジャンルの自動推論に失敗しました。" });
+  }
+})
 
 // ユーザー登録
 app.post("/api/users/register", async (req, res) => {
@@ -257,7 +300,20 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
     }
 
     if (!genre_id) {
-      return res.status(400).json({ error: "ジャンルを選択してください。" });
+      //ジャンルIDがNullだった場合は人工知能が頑張ってジャンルを推論する
+      const target_senryu= `${content1} ${content2} ${content3}`;
+
+      try{
+        const predict_genre_id= predict_genre_function(target_senryu);
+        genre_id=predict_genre_id
+        console.log("予測したジャンル：",genre_id);
+      }
+      catch(e){
+        console.error(e);
+          console.error("ジャンルの自動推論に失敗しました",e);
+          genre_id=8;
+        
+      }
     }
 
     // 使用不可の文字チェック
@@ -304,6 +360,8 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
     const symbolCount = symbolCount1 + symbolCount2 + symbolCount3;
     if (symbolCount > 4)
       return res.status(400).json({ error: "記号などが多すぎます。" });
+
+    //ここでもし
 
     // --- 投稿をDBに保存して投稿IDを取得 ---
     const [postResult] = await pool.execute(
