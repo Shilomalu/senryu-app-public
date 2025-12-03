@@ -90,15 +90,15 @@ const router = createRouter({
       name: 'followers',
       component: FollowersView
     },
+    
     // 8. 他のユーザーのプロフィールページ（動的ルート）
     // 例: /users/123 のようにアクセスする
     {
       path: '/users/:id', // ← :id はどのユーザーかを示すための変数
       name: 'user-profile',
-      component: ProfileView
+      component: UserProfile
     },
-     { path: '/profile/:id', component: UserProfile },
-    // 9. 投稿詳細ページ（動的ルート）
+    // 8. 投稿詳細ページ（動的ルート）
     // 例: /posts/456 のようにアクセスする
     {
       path: '/posts/:id', // ← :id はどの投稿かを示すための変数
