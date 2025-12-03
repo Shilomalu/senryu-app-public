@@ -13,6 +13,7 @@ import UserProfile from '../views/UserProfileView.vue';
 import PostDescriptionView from '../views/PostDescriptionView.vue'
 import DirectFumiView from '@/views/DirectFumiView.vue'
 import DirectFumiPage from '@/components/DirectFumiPage.vue'
+import FollowersView from '../views/FollowersView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -83,14 +84,20 @@ const router = createRouter({
       name: 'login',
       component: LoginView
     },
-    // 7. 他のユーザーのプロフィールページ（動的ルート）
+    // 7. フォロワー一覧ページ
+    {
+      path: '/users/:id/followers', // 例: /users/123/followers
+      name: 'followers',
+      component: FollowersView
+    },
+    
+    // 8. 他のユーザーのプロフィールページ（動的ルート）
     // 例: /users/123 のようにアクセスする
     {
       path: '/users/:id', // ← :id はどのユーザーかを示すための変数
       name: 'user-profile',
-      component: ProfileView
+      component: UserProfile
     },
-     { path: '/profile/:id', component: UserProfile },
     // 8. 投稿詳細ページ（動的ルート）
     // 例: /posts/456 のようにアクセスする
     {
@@ -98,7 +105,7 @@ const router = createRouter({
       name: 'post-detail',
       component: PostDetailView
     },
-    // 9. 404 Not Foundページ（キャッチオールルート）
+    // 10. 404 Not Foundページ（キャッチオールルート）
     // どのURLにも一致しなかった場合に表示される
     { 
       path: '/:pathMatch(.*)*', 

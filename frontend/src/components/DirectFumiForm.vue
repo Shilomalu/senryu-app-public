@@ -104,8 +104,7 @@ async function handleSubmitMessage(e) {
   padding: 1rem;
   background-color: #f8f9fa;
   border-radius: 4px;
-  max-width: 60%;
-  margin-left: auto;
+  max-width: 600px;
 }
 
 .message-inputs {

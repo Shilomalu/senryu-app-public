@@ -1,5 +1,5 @@
 <template>
-  <div  :class="[props.message.senderFlag ? 'sentCard' : 'receivedCard', 'dm-card']">
+  <div  :class="[props.message.senderFlag ? 'sentCard' : 'receivedCard', {'longCard': props.message.reply_77}, 'dm-card']">
       <div class="dm-content">
         {{ props.message.content }}
       </div>
@@ -28,22 +28,34 @@ const props = defineProps({
 
 <style scoped>
 .dm-card {
-  max-width: 60%;
+  max-height: 60%;
+  max-width: 80px;
   padding: 10px;
-  margin: 6px 0;
+  margin: 6px;
   border-radius: 10px;
 }
 
 /* 送信メッセージ -> 右寄せ */
 .sentCard {
-  margin-left: auto;      /* これだけで右に寄る */
+  margin-top: auto;      /* これだけで右に寄る */
   background-color: #d1e8ff; /* 任意 */
 }
 
 /* 受信メッセージ -> 左寄せ */
 .receivedCard {
-  margin-right: auto;     /* これだけで左に寄る */
+  margin-bottom: auto;     /* これだけで左に寄る */
   background-color: #f1f1f1; /* 任意 */
+}
+
+.longCard {
+  margin-right: 12px;
+  margin-left: 0;
+}
+
+.dm-content {
+  writing-mode: vertical-rl; /* 縦書き（右→左） */
+  text-orientation: upright; /* 文字の向きを正立に */
+  margin: auto;
 }
 
 .dm-footer {

@@ -8,63 +8,92 @@ const returnPost = () => {
 </script>
 
 <template>
-  <div style="display: flex;
-  justify-content: space-between;">
-  <h1 class="title">入力可能な文字一覧</h1>
-  <button @click="returnPost" class="button1">戻る</button>
-  </div>
+  <details class="accordion">
+  <summary class="accordion_summary">投稿手順</summary>
+  <ol class="items">
+    <li>上の句、中の句、下の句の各欄を思うままに埋める</li>
+    <li>八つあるボタンから、適した一つを選択</li>
+    <li>投稿内容を確認の上、投稿ボタンを押す</li>
+  </ol>
+  </details>
 
-  <h2 class="index">&#x2705;入力可能な文字</h2>
+  <details class="accordion">
+    <summary class="accordion_summary">投稿ルール</summary>
+    <div class="accordion_detail">
+
+      <h3 class="index">&#x2705;入力可能な文字</h3>
+      <ul class="items">
+        <li>ひらがな</li>
+        <li>全角カタカナ</li>
+        <li>漢字</li>
+        <li>一部の記号 :　。、・「」！？</li>
+      </ul>
+      <h3 class="index">&#x1F6AB;入力できない文字</h3>
+      <ul class="items">
+        <li>アルファベットなど</li>
+        <li>半角カタカナ</li>
+        <li>絵文字や顔文字</li>
+      </ul>
+    </div>
+
+    <h3 class="index">⚠️注意点</h3>
+    <ul class="items">
+      <li>
+      五･七･五で投稿<br>
+      <span class="note">字余りと字足らずを考慮し、各行で±1文字の範囲ならOK</span>
+      </li>
+      <li>記号は一句で4文字まで使用可能</li>
+    </ul>
+  </details>
+
+  <details class="accordion">
+  <summary class="accordion_summary">ルビ変更方法</summary>
   <ul class="items">
-    <li>ひらがな</li>
-    <li >全角カタカナ</li>
-    <li >漢字</li>
-    <li >一部の記号:　。「」！？</li>
+    <li></li>
   </ul>
-  <h2 class="index">⚠️表示形式が変更される文字</h2>
-   <ul class="items">
-    <li>半角ｶﾀｶﾅ：全角カタカナとして表示されます</li>
-    
-  </ul>
-  <h2 class="index">&#x1F6AB;入力できない文字</h2>
-   <ul class="items">
-    <li >アルファベットなど</li>
-    <li>絵文字や顔文字</li>
-    
-  </ul>
-  
+  </details>
+
 </template>
 
 
 <style scoped>
-.title{
-  font-weight: 700;
-
-}
 .index{
   transition: 1s;
-  margin-top: 50px;
+  margin-top: 10px;
   border-bottom: #163e69 solid 2px;
 }
 
-
-.button1 {
-  width: 100px;
-  padding: 10px;
-  font-size: 1em;
-  background-color: #007bff;
-  margin-right: 50px;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-.button1:hover {
-  background-color: #0056b3;
+.accordion {
+  margin: 2em 0;
 }
 
+.accordion_summary {
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 40px;
+  position: relative;
+  list-style: none;
+}
 
+.accordion_summary::-webkit-details-marker {
+  display: none;
+}
 
+.accordion_summary::after {
+  content: "+";
+  font-size: 20px;
+  position: absolute;
+}
+
+.accordion[open] .accordion_summary::after {
+  content: "−";
+}
+
+.items li .note {
+  display: block;
+  margin-top: -5px;
+  margin-left: 7.5px;
+  font-size: 0.95em;
+}
 
 </style>

@@ -4,16 +4,24 @@
       <button class="author-btn" @click="goToProfile">
        👤{{ post.authorName || post.author }}
       </button>
-      <FollowButton v-if="currentUser && post.user_id !== currentUser.id" :targetUserId="post.user_id" :currentUserId="currentUser.id" />
-      <button 
-        v-if="currentUser && post.user_id === currentUser.id"
-        class="delete-x-btn" 
-        @click="$emit('delete', post.id)"
-        title="削除"
-      >
-        ×
-      </button>
-    </div>
+
+      <div class="header-actions">
+        <button 
+          v-if="currentUser && post.user_id === currentUser.id"
+          class="delete-x-btn" 
+          @click="$emit('delete', post.id)"
+          title="削除"
+        >
+          ×
+        </button>
+
+        <FollowButton 
+          v-if="currentUser" 
+          :targetUserId="post.user_id" 
+          :currentUserId="currentUser.id" 
+        />
+      </div>
+      </div>
 
     <div class="poem-wrapper">
       <div class="poem">
@@ -241,7 +249,13 @@ rt {
 .reply-btn:hover { 
   background-color: #0056b3;
 }
-
+.header-actions {
+  display: flex;
+  flex-direction: column; /* 要素を縦に並べる */
+  align-items: flex-end; /* 要素を右端に揃える */
+  gap: 4px; /* 要素間の隙間をFollowButton.vueのfollow-wrapperに合わせる */
+  margin-left: auto; /* card-header内で右端に寄せる */
+}
 .delete-x-btn {
   background: none;
   border: none;

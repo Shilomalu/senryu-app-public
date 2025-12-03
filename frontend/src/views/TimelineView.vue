@@ -477,6 +477,7 @@ onMounted(async () => {
 }
 .timeline::-webkit-scrollbar { display: none; }
 .timeline li {
+  list-style: none;
   flex: 0 0 auto;
   width: 80%;
   max-width: 500px;

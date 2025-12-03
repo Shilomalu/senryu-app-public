@@ -19,6 +19,7 @@
     "jsonwebtoken": "^9.0.2",
     "kuromoji": "^0.1.2",
     "mysql2": "^3.15.1",
+    "node-cron": "^4.2.1",
     "python-shell": "^5.0.0"
   },
   "devDependencies": {
