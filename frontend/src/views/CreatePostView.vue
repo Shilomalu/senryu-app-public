@@ -189,6 +189,7 @@ const goDescription = () => {
                   v-if="item.ruby !== null" 
                   v-model="item.ruby" 
                   class="ruby-input"
+                  @input="item.ruby = item.ruby.replace(/[^ァ-ヶー]/g, '')"
                 >
                 <span v-else class="no-ruby">-</span>
               </div>
