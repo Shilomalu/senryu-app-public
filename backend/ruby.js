@@ -10,7 +10,7 @@ const make_ruby = (text) => {
       const tokens = tokenizer.tokenize(text);
 
       words_ruby = []
-      for (let token of tokens) {
+      for (const token of tokens) {
         const surface_form = token.surface_form;
         const reading = token.reading;
         const word_type = token.word_type;
@@ -22,22 +22,22 @@ const make_ruby = (text) => {
             let not_kanji = "";
             let read_l = 0; let read_r = 0;
 
-            for (const s of surface_form) {
-              if ((/[\u4E00-\u9FFF]/).test(s)) {
+            for (const sf of surface_form) {
+              if ((/[\u4E00-\u9FFF]/).test(sf)) {
                 if (kanji == "" && not_kanji != "") {
                   words_ruby.push({ word: not_kanji, ruby: null });
                   not_kanji = "";
                 }
-                kanji += s;
+                kanji += sf;
               } else {
                 if (not_kanji == "" && kanji != "") {
                   read_r = read_l;
-                  while (reading[read_r] != HGtoZK(s) && read_r < reading.length) ++read_r;
+                  while (reading[read_r] != HGtoZK(sf) && read_r < reading.length) ++read_r;
                   words_ruby.push({ word: kanji, ruby: reading.slice(read_l, read_r) });
                   read_l = read_r;
                   kanji = "";
                 }
-                not_kanji += s;
+                not_kanji += sf;
                 ++read_l;
               }
             }

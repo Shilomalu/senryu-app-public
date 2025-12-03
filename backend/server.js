@@ -248,8 +248,8 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
     const userId = req.user.id; // ミドルウェアがセットしたユーザーIDを使用
 
     const contents = [];
-    for (let idx = 0; idx < 3; ++idx) {
-      contents.push(ruby_dataset[idx].map(r => r.word).join(""));
+    for (const ruby_data of ruby_dataset) {
+      contents.push(ruby_data.map(rd => rd.word).join(""));
     }
 
     if (!contents[0] || !contents[1] || !contents[2]) {
