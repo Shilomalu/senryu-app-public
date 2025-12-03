@@ -7,7 +7,6 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { check575, checkPart } = require("./senryu-checker.js");
 const { startScheduler } = require('./scheduler');
-const { HKtoZK } = require("./helper_fun.js");
 const { make_ruby } = require('./ruby.js');
 
 // --- 2. 基本設定 ---
@@ -229,33 +228,6 @@ app.post('/api/users/me/icon', authenticateToken,  async (req, res) => {
   }
 });
 
-/*
-// お気に入りの一句を設定
-app.put('/api/users/me', authenticateToken, async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const { favorite_id } = req.body;
-
-    // favorite_post_id を更新
-    await pool.execute(
-      "UPDATE users SET favorite_id = ? WHERE id = ?",
-      [favorite_id, userId]
-    );
-
-    // 更新後のユーザー情報を返す
-    const [rows] = await pool.execute(
-      "SELECT id, username, email, profile_text, favorite_id FROM users WHERE id = ?",
-      [userId]
-    );
-
-    res.json({ message: 'お気に入りの一句を更新しました', user: rows[0] });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'お気に入り設定に失敗しました' });
-  }
-});
-*/
-
 // 特定ユーザーの投稿一覧取得
 app.get("/api/posts/user/:userId", async (req, res) => {
   try {
@@ -301,38 +273,19 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
 
     if (!genre_id) {
       //ジャンルIDがNullだった場合は人工知能が頑張ってジャンルを推論する
-      const target_senryu= `${content1} ${content2} ${content3}`;
+      const target_senryu = `${content1} ${content2} ${content3}`;
 
-      try{
-        const predict_genre_id= predict_genre_function(target_senryu);
-        genre_id=predict_genre_id
-        console.log("予測したジャンル：",genre_id);
-      }
-      catch(e){
+      try {
+        const predict_genre_id = predict_genre_function(target_senryu);
+        genre_id = predict_genre_id
+        console.log("予測したジャンル：", genre_id);
+      } catch(e) {
         console.error(e);
-          console.error("ジャンルの自動推論に失敗しました",e);
-          genre_id=8;
-        
+        console.error("ジャンルの自動推論に失敗しました", e);
+        genre_id = 8;
       }
     }
 
-    // 使用不可の文字チェック
-    const regex =
-      /^[\u3040-\u309F\u30A0-\u30FF\uFF65-\uFF9F\u4E00-\u9FFF。｡、､「｢」｣・･！!？?]+$/;
-    if (
-      !regex.test(contents[0]) ||
-      !regex.test(contents[1]) ||
-      !regex.test(contents[2])
-    ) {
-      return res
-        .status(400)
-        .json({ error: "入力できない文字が含まれています。" });
-    }
-
-    // 半角→全角変換
-    content1 = HKtoZK(content1);
-    content2 = HKtoZK(content2);
-    content3 = HKtoZK(content3);
     const content = `${content1} ${content2} ${content3}`;
 
     let num = 0;
@@ -348,6 +301,7 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
       flag: can_shimonoku,
       symbolCount: symbolCount3,
     } = await check575(ruby_dataset[2], 5);
+
     if (!can_kaminoku) num += 1;
     if (!can_nakanoku) num += 2;
     if (!can_shimonoku) num += 4;
@@ -360,8 +314,6 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
     const symbolCount = symbolCount1 + symbolCount2 + symbolCount3;
     if (symbolCount > 4)
       return res.status(400).json({ error: "記号などが多すぎます。" });
-
-    //ここでもし
 
     // --- 投稿をDBに保存して投稿IDを取得 ---
     const [postResult] = await pool.execute(

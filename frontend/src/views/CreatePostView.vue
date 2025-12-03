@@ -198,6 +198,8 @@ const genre_predict = async () => {
             required
             :maxlength="[10, 15, 10][index]"
             class="main-input"
+            @input="phrase.text = 
+                    phrase.text.replace(/[^\u3041-\u3096\u30A1-\u30F6\u4E00-\u9FFF々。、「」・！？]/g, '')"
           />
 
           <!-- ▼ ルビ編集エリア (解析結果がある場合のみ表示) ▼ -->
@@ -212,7 +214,7 @@ const genre_predict = async () => {
                   v-if="item.ruby !== null" 
                   v-model="item.ruby" 
                   class="ruby-input"
-                  @input="item.ruby = item.ruby.replace(/[^ァ-ヶー]/g, '')"
+                  @input="item.ruby = item.ruby.replace(/[^\u3041-\u3096]/g, '')"
                 >
                 <span v-else class="no-ruby">-</span>
               </div>
