@@ -101,9 +101,7 @@ watch(() => props.targetUserId, fetchFollowStatus);
     text-align: center;
 }
 
-/* 🚨 修正2: follow-button のデフォルトスタイルを「フォロー中」（枠線/白背景）の状態に設定 */
 .follow-button {
-  /* サイズと幅の固定は維持 */
   padding: 4px 8px; 
   font-size: 0.8rem; 
   border-radius: 4px; 
@@ -126,20 +124,18 @@ watch(() => props.targetUserId, fetchFollowStatus);
   background-color: #f0f0f0; 
 }
 
-/* 🚨 修正3: 「フォロー」（未フォロー）状態の青背景スタイルを定義 */
 .follow-blue {
-    background-color: #007bff; /* 青い背景 */
-    border: 1px solid #007bff; /* 枠線も青に */
-    color: #ffffff;           /* 白い文字 */
+    background-color: #007bff;
+    border: 1px solid #007bff;
+    color: #ffffff;
     font-weight: bold;
 }
 
 .follow-blue:hover {
-    background-color: #0056b3; /* ホバー時の色 */
+    background-color: #0056b3;
     border-color: #0056b3;
 }
 
-/* 🚨 修正4: フォロワーを見るボタン (変更なし) */
 .show-followers-btn {
   background-color: #007bff; 
   color: #ffffff;
@@ -164,7 +160,6 @@ watch(() => props.targetUserId, fetchFollowStatus);
   background-color: #0056b3; 
 }
 
-/* フォロワー数カウンターの調整 (変更なし) */
 .count {
     margin-left: 3px;
     background-color: rgba(255, 255, 255, 0.3); 

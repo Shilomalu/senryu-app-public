@@ -76,9 +76,9 @@ watch(() => route.params.id, (newId) => {
   margin-bottom: 20px;
 }
 .follower-count {
-  font-size: 0.8em; /* タイトルよりも少し小さく */
+  font-size: 0.8em;
   color: #666;
-  font-weight: normal; /* 太字を解除 */
+  font-weight: normal;
   margin-left: 5px;
 }
 .follower-list {
