@@ -134,7 +134,7 @@ onMounted(() => {
 
 /* --- ロゴサイズ調整 --- */
 .splash-logo {
-  width: 250px; /* 大きめ */
+  width: 500px; /* 大きめ */
   border-radius: 50%;
 }
 
