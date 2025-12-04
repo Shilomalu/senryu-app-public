@@ -140,3 +140,14 @@ vite.config.ts.timestamp-*
 
 # Backend
 backend/.env
+
+# --- 追加のおすすめ設定 ---
+
+# Vercelのローカル設定（vercel devコマンドなどを使った時に生成される）
+.vercel
+
+# Macの自動生成ファイル
+.DS_Store
+
+# Windowsの自動生成ファイル
+Thumbs.db
