@@ -18,6 +18,7 @@ const message = ref('')
 const router = useRouter()
 const currentTheme = ref(null)
 const show_genres = ref(false)
+let genreAbortController = null
 
 const genres = [
   { id: 1, name: '＃春' },
@@ -147,17 +148,28 @@ const genre_predict = async () => {
     return
   }
 
+  if (genreAbortController) {
+    genreAbortController.abort();
+  }
+  genreAbortController = new AbortController();
+
   try {
     const res = await axios.post('/api/genre/predict', {
       content1: content1,
       content2: content2,
       content3: content3,
+    },{
+      signal: genreAbortController.signal
     });
 
     const genreId=Number(res.data.genre_id);
     selectedGenre.value=genreId;
   } catch(err){
-    console.error("ジャンルの自動推論でエラーが発生しました",err);
+    if (axios.isCancel(err)) {
+      console.log('古いジャンル推論をキャンセルしました（正常）');
+    } else {
+      console.error("ジャンルの自動推論でエラーが発生しました",err);
+    }
   }
 }
 </script>
