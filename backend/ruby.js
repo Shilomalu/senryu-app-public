@@ -12,11 +12,12 @@ const make_ruby = (text) => {
       words_ruby = []
       for (const token of tokens) {
         const surface_form = token.surface_form;
-        const reading = ZKtoHG(token.reading);
+        const reading = token.reading;
         const word_type = token.word_type;
 
         if ((/[\u4E00-\u9FFF々]/).test(surface_form)) {
-          if (word_type == 'KNOWN') {
+          if (word_type === 'KNOWN') {
+            HG_reading = ZKtoHG(reading);
             let kanji = ""; let not_kanji = "";
             let read_l = 0; let read_r = 0;
 
@@ -30,8 +31,8 @@ const make_ruby = (text) => {
               } else {
                 if (not_kanji == "" && kanji != "") {
                   read_r = read_l;
-                  while (reading[read_r] != sf && read_r < reading.length) ++read_r;
-                  words_ruby.push({ word: kanji, ruby: reading.slice(read_l, read_r) });
+                  while (HG_reading[read_r] != sf && read_r < HG_reading.length) ++read_r;
+                  words_ruby.push({ word: kanji, ruby: HG_reading.slice(read_l, read_r) });
                   read_l = read_r;
                   kanji = "";
                 }
@@ -40,7 +41,7 @@ const make_ruby = (text) => {
               }
             }
             if (kanji != "") {
-              words_ruby.push({ word: kanji, ruby: reading.slice(read_l) });
+              words_ruby.push({ word: kanji, ruby: HG_reading.slice(read_l) });
             } else {
               words_ruby.push({ word: not_kanji, ruby: null });
             }
