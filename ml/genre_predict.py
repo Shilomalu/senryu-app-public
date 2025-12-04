@@ -36,13 +36,11 @@ def predict_genre(text: str) -> int:
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("8")  # デフォルト「その他」にしておくなど
+        print("8")  
         sys.exit(0)
 
-    # Node から渡されたテキスト
     text = sys.argv[1]
 
     genre_id = predict_genre(text)
 
-    # ★ここがNode側に返す値。余計な文字出さない！
     print(genre_id)

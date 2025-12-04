@@ -145,7 +145,7 @@ const set_genreId=(id)=>{
       <button type="submit" id="search_button">検索</button>
 
       <div id="search_result">
-        <div ref="scroll_target" style="width: 100%">
+        <div ref="scroll_target" class="search_result_inner">
           <div v-if="is_searched === false">
             <h2 style="margin-top: 40px">検索結果</h2>
           </div>
@@ -189,13 +189,15 @@ const set_genreId=(id)=>{
 </template>
 
 <style scoped>
-
-html{
+html {
   overflow-y: scroll;
   scrollbar-gutter: stable;
 }
+
+
 .search_container {
-  width: 80%;
+  width: 100%;
+  max-width: 600px;
   margin: 50px auto 0;
   display: flex;
   flex-direction: column;
@@ -203,36 +205,34 @@ html{
   align-items: center;
 }
 
+
 #title {
-  font-family:Georgia, 'Times New Roman', Times, serif;
+  font-family: Georgia, 'Times New Roman', Times, serif;
   font-size: 3rem;
   font-weight: 600;
   margin-bottom: 30px;
   align-self: center;
 }
+
 .search_container h2 {
-  text-align: left;
+  text-align: center;
   width: 100%;
 }
+
 #search_input {
-  width: 500px;
+  width: 100%;
+  max-width: 400px;
   height: 50px;
   margin-top: 20px;
   border-radius: 6px;
   border: 1px solid #007bff;
 }
 
-@media(max-width:500px){
-  #search_input{
-    width: 300px;
-    height: 50px;
-    margin-top: 20px;
-    border-radius: 6px;
-    border: 1px solid #007bff;
+@media (max-width: 500px) {
+  #search_input {
+    max-width: 300px;
   }
 }
-
-
 #search_button {
   width: 200px;
   height: 50px;
@@ -245,30 +245,33 @@ html{
   transition: 0.2s;
   align-self: center;
 }
+
 #search_button:hover {
   cursor: pointer;
   transform: translateY(-5px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
   opacity: 0.8;
 }
+
 .result-item {
   margin-top: 20px;
   padding: 15px;
   border-bottom: 1px solid #ddd;
-  
 }
 
+
 .postcard_search {
-  width: 450px;
+  display: flex;
+  justify-content:center;
+  width: 100%;
+  max-width: 500px;
   margin: 0 auto 30px;
   opacity: 0;
 }
 
 @media (max-width: 450px) {
   .postcard_search {
-    width: 80%;
-    margin: 0 auto 30px;
-  opacity: 0;
+    max-width: 100%;
   }
 }
 
@@ -279,26 +282,35 @@ html{
   align-items: center;
 }
 
+
 form {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   width: 100%;
+}
+
+.search_result_inner {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  text-align: center;
 }
 
 #search_result {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width:100%;
+  width: 100%;
 }
+
 
 .search_results {
   display: flex;
-  flex-direction: column; 
-  align-items: center;   
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
-
 
 .fadeUpCard {
   opacity: 0;
@@ -313,6 +325,7 @@ form {
   }
 }
 
+
 #genre_button {
   width: 200px;
   height: 40px;
@@ -323,7 +336,7 @@ form {
   background-color: white;
   cursor: pointer;
   transition: 0.2s;
-  align-self: flex-start;
+  align-self: center;
 }
 
 #genre_button.active {
@@ -334,12 +347,12 @@ form {
 #genre_button:hover {
   transform: scale(1.1);
 }
-
 .genre_section {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   margin: 15px 0 20px;
+  width: 100%;
 }
 
 .genre_section button {
@@ -375,3 +388,4 @@ form {
   color: white;
 }
 </style>
+
