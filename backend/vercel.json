@@ -8,10 +8,7 @@
   ],
   "functions": {
     "server.js": {
-      "includeFiles": [
-        "model_data.json",
-        "dict/**"
-      ]
+      "includeFiles": "{model_data.json,dict/**}"
     }
   }
 }
