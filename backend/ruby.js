@@ -1,10 +1,28 @@
 const kuromoji = require('kuromoji');
-const path = require('path'); // ★追加: パス操作用
+const path = require('path');
+const fs = require('fs');
 const { ZKtoHG } = require("./helper_fun.js");
 
-// ★修正: Vercelでも辞書を見つけられるように「絶対パス」を作る
-const dicPath = path.join(process.cwd(), 'node_modules', 'kuromoji', 'dict');
-const builder = kuromoji.builder({ dicPath: dicPath });
+// ★ Vercelでもローカルでも確実に辞書を見つける魔法のロジック
+const getDictPath = () => {
+    const candidates = [
+        path.join(process.cwd(), 'dict'),            // Vercel本番 (server.jsと同じ階層)
+        path.join(process.cwd(), 'backend', 'dict'), // ローカル開発
+        path.join(__dirname, 'dict')                 // バックアップ
+    ];
+    
+    for (const p of candidates) {
+        if (fs.existsSync(p)) {
+            console.log("Ruby用辞書発見:", p);
+            return p;
+        }
+    }
+    console.error("【Ruby用辞書エラー】辞書が見つかりません:", candidates);
+    return path.join(process.cwd(), 'dict');
+};
+
+// 修正: getDictPath() を使ってビルダーを作る
+const builder = kuromoji.builder({ dicPath: getDictPath() });
 
 const make_ruby = (text) => {
   return new Promise((resolve, reject) => {
@@ -12,8 +30,8 @@ const make_ruby = (text) => {
       if (err) return reject(err);
 
       const tokens = tokenizer.tokenize(text);
+      let words_ruby = []; // varやconst指定が抜けていたのでletを追加
 
-      words_ruby = []
       for (const token of tokens) {
         const surface_form = token.surface_form;
         const reading = token.reading;
@@ -21,7 +39,7 @@ const make_ruby = (text) => {
 
         if ((/[\u4E00-\u9FFF々]/).test(surface_form)) {
           if (word_type === 'KNOWN') {
-            HG_reading = ZKtoHG(reading);
+            const HG_reading = ZKtoHG(reading);
             let kanji = ""; let not_kanji = "";
             let read_l = 0; let read_r = 0;
 
@@ -58,8 +76,8 @@ const make_ruby = (text) => {
           words_ruby.push({ word: surface_form, ruby: null });
         }
       }
-      console.log(words_ruby);
-    resolve({ text: text, ruby_data: words_ruby });
+      // console.log(words_ruby);
+      resolve({ text: text, ruby_data: words_ruby });
     });
   });
 };

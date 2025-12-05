@@ -10,7 +10,7 @@
     "server.js": {
       "includeFiles": [
         "model_data.json",
-        "node_modules/kuromoji/dict/**"
+        "dict/**"
       ]
     }
   }
