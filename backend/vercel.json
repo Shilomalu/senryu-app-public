@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/server.js"
+    }
+  ],
+  "functions": {
+    "server.js": {
+      "includeFiles": [
+        "model_data.json",
+        "node_modules/kuromoji/dict/**"
+      ]
+    }
+  }
+}

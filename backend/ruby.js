@@ -1,6 +1,10 @@
 const kuromoji = require('kuromoji');
-const builder = kuromoji.builder({ dicPath: 'node_modules/kuromoji/dict' });
+const path = require('path'); // ★追加: パス操作用
 const { ZKtoHG } = require("./helper_fun.js");
+
+// ★修正: Vercelでも辞書を見つけられるように「絶対パス」を作る
+const dicPath = path.join(process.cwd(), 'node_modules', 'kuromoji', 'dict');
+const builder = kuromoji.builder({ dicPath: dicPath });
 
 const make_ruby = (text) => {
   return new Promise((resolve, reject) => {
