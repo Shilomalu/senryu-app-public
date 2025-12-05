@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const kuromoji = require('kuromoji');
 
+
 // 1. モデルデータを見つける魔法のロジック
 const getModelPath = () => {
     const candidates = [

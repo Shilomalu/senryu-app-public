@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const { ZKtoHG } = require("./helper_fun.js");
 
+
 // ★ Vercelでもローカルでも確実に辞書を見つける魔法のロジック
 const getDictPath = () => {
     const candidates = [
