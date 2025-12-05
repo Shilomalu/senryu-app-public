@@ -1,4 +1,11 @@
-const cron = require('node-cron');
+// scheduler.js
+// Supabase接続用にクライアントを作成する必要があるため、envから読み込む
+require("dotenv").config();
+const { createClient } = require("@supabase/supabase-js");
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // 日付計算用のヘルパー関数
 const addDays = (date, days) => {
@@ -22,41 +29,51 @@ const shuffleArray = (array) => {
 };
 
 // ★メイン処理: スケジュールを確認して、足りなければ補充する
-const ensureSchedule = async (pool) => {
-  console.log('⏰ スケジュール自動チェックを開始します...');
+// ※ pool引数は不要になりました
+const ensureSchedule = async () => {
+  console.log('⏰ スケジュール自動チェック中...');
 
   try {
-    // 1. 現在登録されている「一番未来の終了日」を取得
-    const [rows] = await pool.query("SELECT MAX(end_date) as last_date FROM weekly_themes");
-    let lastDateStr = rows[0].last_date;
+    // 1. 現在登録されている「一番未来の終了日」を取得 (Supabase版)
+    const { data: lastData, error: lastError } = await supabase
+        .from('weekly_themes')
+        .select('end_date')
+        .order('end_date', { ascending: false })
+        .limit(1);
+
+    if (lastError) throw lastError;
+
     let nextStartDate;
 
-    if (lastDateStr) {
+    if (lastData && lastData.length > 0) {
       // データがある場合: 最後の日の「翌日」からスタート
-      const lastDate = new Date(lastDateStr);
+      const lastDate = new Date(lastData[0].end_date);
       nextStartDate = addDays(lastDate, 1);
     } else {
       // データが空っぽの場合: 「今日」からスタート
       nextStartDate = new Date();
     }
 
-    // 2. 未来のストックが十分か確認 (例: 30日先まで埋まっているか？)
-    const limitDate = addDays(new Date(), 30); // 30日後の日付
+    // 2. 未来のストックが十分か確認 (30日先まであるか)
+    const limitDate = addDays(new Date(), 30);
     
-    // 次に作るべき開始日が、30日後よりも未来なら、まだ作らなくていい
     if (nextStartDate > limitDate) {
-      console.log('✅ スケジュールは十分に残っています。補充は不要です。');
-      return;
+      // console.log('✅ スケジュールは十分です');
+      return; 
     }
 
-    console.log('⚠️ スケジュールが少なくなっています。補充を開始します...');
+    console.log('⚠️ スケジュール不足を検知。補充を開始します...');
 
     // 3. お題ネタを取得してシャッフル
-    const [topics] = await pool.query("SELECT id FROM topic_master");
-    if (topics.length === 0) {
-      console.error('❌ お題マスタが空です！補充できません。');
+    const { data: topics, error: topicError } = await supabase
+        .from('topic_master')
+        .select('id');
+    
+    if (topicError || !topics || topics.length === 0) {
+      console.error('❌ お題マスタが空です！');
       return;
     }
+
     let topicIds = shuffleArray(topics.map(t => t.id));
 
     // 4. 10週間分くらい追加で作成する
@@ -66,40 +83,33 @@ const ensureSchedule = async (pool) => {
     let currentStart = nextStartDate;
 
     for (let i = 0; i < WEEKS_TO_ADD; i++) {
-      // お題を選ぶ (順番に使う)
       const topicId = topicIds[i % topicIds.length];
       
       const startStr = formatDate(currentStart);
-      const endStr = formatDate(addDays(currentStart, 6)); // 6日後まで (合計7日間)
+      const endStr = formatDate(addDays(currentStart, 6)); // 7日間
 
-      newSchedules.push([topicId, startStr, endStr]);
+      // Supabaseのinsertはオブジェクトの配列を受け取る
+      newSchedules.push({
+          topic_id: topicId, 
+          start_date: startStr, 
+          end_date: endStr
+      });
 
-      // 次の開始日は、今の終了日の翌日
       currentStart = addDays(currentStart, 7);
     }
 
-    // 5. DBに保存 (INSERT)
-    await pool.query(
-      "INSERT INTO weekly_themes (topic_id, start_date, end_date) VALUES ?",
-      [newSchedules]
-    );
+    // 5. DBに保存
+    const { error: insertError } = await supabase
+        .from('weekly_themes')
+        .insert(newSchedules);
 
-    console.log(`✨ 新たに ${WEEKS_TO_ADD}週間分のスケジュールを補充しました！`);
+    if (insertError) throw insertError;
+
+    console.log(`✨ ${WEEKS_TO_ADD}週間分のスケジュールを補充しました！`);
 
   } catch (err) {
-    console.error('❌ スケジュール自動生成エラー:', err);
+    console.error('❌ スケジュール生成エラー:', err);
   }
 };
 
-// サーバー起動時に呼び出される設定関数
-const startScheduler = (pool) => {
-  // 1. サーバー起動時にまず1回チェックする
-  ensureSchedule(pool);
-
-  // 2. 毎日 夜中の0時に定期チェックする
-  cron.schedule('0 0 * * *', () => {
-    ensureSchedule(pool);
-  });
-};
-
-module.exports = { startScheduler };
+module.exports = { ensureSchedule };

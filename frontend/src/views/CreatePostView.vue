@@ -42,17 +42,6 @@ onMounted(async () => {
   }
 })
 
-onMounted(async () => {
-  try {
-    const res = await axios.get('/api/themes/current');
-    if (res.data) {
-      currentTheme.value = res.data; // { weekly_theme_id, theme_name, ... } が入る
-    }
-  } catch (err) {
-    console.error('お題取得エラー:', err);
-  }
-});
-
 const analyzeText = async (index) => {
   const text = phrases[index].text
   if (!text) {
