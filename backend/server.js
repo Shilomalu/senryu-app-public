@@ -341,9 +341,9 @@ app.post("/api/posts", authenticateToken, async (req, res) => {
         .from('posts')
         .insert([{ 
             user_id: userId, 
-            content, 
-            ruby_content: JSON.stringify(ruby_dataset), // JSON型として保存
-            genre_id, 
+            content: content, 
+            ruby_content: ruby_dataset, 
+            genre_id: genre_id, 
             weekly_theme_id: weekly_theme_id || null 
         }])
         .select();
