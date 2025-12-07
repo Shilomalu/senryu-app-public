@@ -172,14 +172,14 @@ const fetchTimeline = async (isInitialLoad = false) => {
     if (filter.value === 'ranking') {
       const headers = { Authorization: `Bearer ${token.value}` };
       // 1. 先週のランキングを取得
-      const resRanking = await fetch('/api/themes/ranking/latest');
+      const resRanking = await fetch('/api/themes/ranking/latest', { headers });
       const dataRanking = await resRanking.json();
       
       // ルビのパース処理 (共通関数化するとベストですが、一旦ここに書きます)
       rankingList.value = parsePosts(dataRanking);
 
       // 2. 今週のお題投稿を取得
-      const resCurrent = await fetch('/api/themes/current/posts');
+      const resCurrent = await fetch('/api/themes/current/posts', { headers });
       const dataCurrent = await resCurrent.json();
       
       // 今週の分は、右が最新になるように逆順にする
