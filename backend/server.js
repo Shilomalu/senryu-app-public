@@ -258,7 +258,17 @@ app.post('/api/users/me/icon', authenticateToken,  async (req, res) => {
 app.get("/api/posts/user/:userId", async (req, res) => {
   try {
     const userId = req.params.userId;
-    // Supabaseのリレーション機能で一括取得
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+    let currentUserId = null;
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        currentUserId = decoded.id;
+      } catch (err) {
+        console.warn("Invalid token:", err);
+      }
+    }
     const { data, error } = await supabase
         .from('posts')
         .select(`
@@ -271,8 +281,7 @@ app.get("/api/posts/user/:userId", async (req, res) => {
         .order('created_at', { ascending: false });
 
     if (error) throw error;
-    // 整形して返す
-    res.json(data.map(p => formatPost(p)));
+    res.json(data.map(p => formatPost(p, currentUserId)));
   } catch (err) {
     console.error("特定ユーザー投稿取得エラー:", err);
     res.status(500).json({ message: "投稿の取得に失敗しました" });
