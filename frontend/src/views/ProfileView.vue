@@ -83,8 +83,16 @@ const loadProfile = async () => {
     icon.value = data.icon_index ?? 0;
 
     // 自分の投稿取得
-    const timelineRes = await axios.get(`/api/posts/user/${data.id}`);
-    posts.value = timelineRes.data;
+    const timelineRes = await axios.get(`/api/posts/user/${data.id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    posts.value = timelineRes.data.map(post => ({
+       ...post,
+       // MySQLから返ってくる 1/0 を Boolean に変換しておくと PostCard が扱いやすい
+       isLiked: Boolean(post.isLiked), 
+       likesCount: Number(post.likesCount)
+    }));
 
     // お気に入りの一句があれば取得
     if (data.favorite_id) {
@@ -130,6 +138,29 @@ const selectIcon = async (iconId) => {
   }
 }
 
+// 投稿削除機能
+const handleDelete = async (postId) => {
+  if (!confirm('本当にこの投稿を削除しますか？')) return;
+
+  try {
+    await axios.delete(`/api/posts/${postId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    // 成功したら画面のリストからも削除して、見た目を更新する
+    posts.value = posts.value.filter(post => post.id !== postId);
+    
+    // もし削除した投稿がお気に入り（選り抜きの一句）だった場合、表示を消す
+    if (favorite.value && favorite.value.id === postId) {
+      favorite.value = null;
+    }
+
+    alert('削除しました');
+  } catch (err) {
+    console.error('削除エラー:', err);
+    alert('削除に失敗しました');
+  }
+};
 
 onMounted(() => {
   loadProfile();
@@ -245,6 +276,7 @@ const goEdit = () => {
             :key="post.id"
             :post="post"
             :current-user="{ id: userId }"
+            @delete="handleDelete"
           />
         </div>
 
