@@ -559,7 +559,7 @@ app.get('/api/themes/ranking/latest', async (req, res) => {
 
     const rankingPosts = data.map(r => {
         if (!r.posts) return null;
-
+        const realTimeLikesCount = r.posts.likes ? r.posts.likes.length : 0;
         return {
             rank: r.rank,
             id: r.posts.id,
