@@ -134,6 +134,7 @@ const fetchTimeline = async (isInitialLoad = false) => {
 const parsePosts = (data) => {
   if (!Array.isArray(data)) return [];
   return data.map(post => {
+    console.log(`ID:${post.id} のいいねデータ確認:`, post.likesCount, post.fixed_likes_count);
     let parsedRuby = [];
     try {
         if (typeof post.ruby_content === 'string') {
