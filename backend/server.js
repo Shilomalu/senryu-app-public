@@ -569,8 +569,7 @@ app.get('/api/themes/ranking/latest', async (req, res) => {
             genre_id: r.posts.genre_id,
             created_at: r.posts.created_at,
             authorName: r.posts.users ? r.posts.users.username : "不明",
-            likesCount: r.fixed_likes_count,       
-            fixed_likes_count: r.fixed_likes_count, 
+            likesCount: realTimeLikesCount,
             likedUserIds: r.posts.likes ? r.posts.likes.map(l => l.user_id) : [],
             isLiked: r.posts.likes && r.posts.likes.some(l => l.user_id === currentUserId) ? 1 : 0,
             repliesCount: r.posts.replies ? r.posts.replies.length : 0
