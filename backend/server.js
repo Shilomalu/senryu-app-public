@@ -795,6 +795,25 @@ app.post("/api/posts/:id/reply", authenticateToken, async (req, res) => {
         .insert([{ user_id: userId, post_id: postId, content }]);
     
     if (error) throw error;
+    const { data: postData } = await supabase.from('posts').select('user_id').eq('id', postId).single();
+    
+    if (postData) {
+      const postOwnerId = postData.user_id;
+      // 自分の投稿へのリプライでなければ通知
+      if (postOwnerId !== userId) {
+        // 2. 送信者の名前を取得
+        const { data: senderData } = await supabase.from('users').select('username').eq('id', userId).single();
+        const senderName = senderData ? senderData.username : `ユーザー${userId}`;
+
+        // 3. 通知を追加
+        await supabase.from('notifications').insert([{
+          user_id: postOwnerId, // 通知を受け取る人
+          type: 'reply',
+          from_user_id: userId, // 送った人
+          message: `${senderName}さんがあなたの投稿に返句しました`
+        }]);
+      }
+    }
     res.status(201).json({ message: "リプライを投稿しました" });
   } catch (err) {
     console.error("リプライ投稿エラー:", err);
@@ -989,6 +1008,25 @@ app.post("/api/posts/:postId/like", authenticateToken, async (req, res) => {
     const { error } = await supabase.from('likes').insert([{ post_id: postId, user_id: userId }]);
     // 既にいいね済み(unique violation)の場合はエラー無視して成功とする
     if(error && error.code !== '23505') throw error;
+    const { data: postRows } = await supabase.from('posts').select('user_id').eq('id', postId).single();
+    
+    if (postRows) {
+      const postOwnerId = postRows.user_id;
+      // 自分の投稿には通知しない
+      if (postOwnerId !== userId) {
+        // いいねしたユーザー名を取得
+        const { data: userRows } = await supabase.from('users').select('username').eq('id', userId).single();
+        const username = userRows ? userRows.username : `ユーザー${userId}`;
+
+        // 通知送信 (重複通知を防ぐために insert エラーは無視するか、ロジックで制御してもよいですが、ここではシンプルにinsert)
+        await supabase.from('notifications').insert([{
+           user_id: postOwnerId,
+           type: 'like',
+           from_user_id: userId,
+           message: `${username}さんがあなたの投稿にいとをかし🌸しました`
+        }]);
+      }
+    }
     res.json({ success: true });
   } catch (error) {
     console.error("いとをかし追加エラー:", error);
@@ -1058,6 +1096,16 @@ app.post('/api/users/:id/follow', authenticateToken, async (req, res) => {
 
     const { error } = await supabase.from('follows').insert([{ follower_id: followerId, followed_id: followedId }]);
     if (error && error.code === '23505') return res.status(400).json({ message: 'すでにフォローしています。' });
+    const { data: followerUser } = await supabase.from('users').select('username').eq('id', followerId).single();
+    const username = followerUser ? followerUser.username : `ユーザー${followerId}`;
+
+    // 通知追加
+    await supabase.from('notifications').insert([{
+      user_id: followedId, // フォローされた人
+      type: 'follow',
+      from_user_id: followerId, // フォローした人
+      message: `${username}さんがあなたをフォローしました`
+    }]);
 
     res.status(200).json({ message: 'フォローしました。' });
   } catch (error) {
@@ -1266,6 +1314,15 @@ app.post('/api/users/:id/dfumi/sending', authenticateToken, async (req, res) => 
         .insert([{ sender_id: userId, receiver_id: partnerId, content, reply_77: reply77Flag }]);
 
     if (error) throw error;
+    const { data: sender } = await supabase.from('users').select('username').eq('id', userId).single();
+    const senderName = sender ? sender.username : `ユーザー${userId}`;
+
+    await supabase.from('notifications').insert([{
+        user_id: partnerId, // 受信者
+        type: 'fumi',
+        from_user_id: userId, // 送信者
+        message: `${senderName}さんからふみが届きました`
+    }]);
     res.status(201).json({ message: 'ふみを送信しました' });
 
   } catch (error) {
