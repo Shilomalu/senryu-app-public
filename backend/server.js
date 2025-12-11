@@ -524,7 +524,16 @@ app.get('/api/themes/ranking/latest', async (req, res) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
     let currentUserId = 0;
-    if (token) { try { currentUserId = jwt.verify(token, JWT_SECRET).id; } catch (e) {} }
+    
+    // ★ログイン中のユーザーIDを取得（これがないと「自分がいいねしたか」判定できません）
+    if (token) { 
+        try { 
+            const decoded = jwt.verify(token, JWT_SECRET);
+            currentUserId = decoded.id; 
+        } catch (e) {
+            console.warn('Token verify failed:', e.message);
+        } 
+    }
 
     const { data: latestRows } = await supabase
         .from('ranking_results')
@@ -535,13 +544,16 @@ app.get('/api/themes/ranking/latest', async (req, res) => {
     if (!latestRows || latestRows.length === 0) return res.json([]);
     const targetThemeId = latestRows[0].weekly_theme_id;
 
+    // ★修正ポイント1: selectの中に replies(id) と likes(user_id) を追加しました
     const { data, error } = await supabase
         .from('ranking_results')
         .select(`
             rank, fixed_likes_count,
             posts (
-                id, content, ruby_content, user_id, genre_id,
-                users (username)
+                id, content, ruby_content, user_id, genre_id, created_at,
+                users (username),
+                replies (id),
+                likes (user_id)
             )
         `)
         .eq('weekly_theme_id', targetThemeId)
@@ -549,22 +561,31 @@ app.get('/api/themes/ranking/latest', async (req, res) => {
 
     if (error) throw error;
 
-    // 整形 (MySQLのSQL結果に合わせる)
-    const rankingPosts = data.map(r => ({
-        rank: r.rank,
-        likesCount: r.fixed_likes_count,
-        id: r.posts.id,
-        content: r.posts.content,
-        ruby_content: r.posts.ruby_content,
-        user_id: r.posts.user_id,
-        genre_id: r.posts.genre_id,
-        authorName: r.posts.users ? r.posts.users.username : "不明",
-        // ランキングでのいいね状態取得は負荷が高いので一旦0、または別途取得
-        isLiked: 0 
-    }));
-    
-    // もしランキングでも「自分がいいねしたか」を出したい場合は、別途likesテーブルを引く必要がありますが
-    // ここでは機能維持のため、一旦0で返します（元のコードもSQL一発で取っていますが、Supabaseだと結合が深くなるため）
+    // ★修正ポイント2: データを整形する時に、カウントとフラグを計算します
+    const rankingPosts = data.map(r => {
+        // 投稿自体が削除されている場合のガード
+        if (!r.posts) return null;
+
+        return {
+            rank: r.rank,
+            // ランキングなので「集計時のいいね数」を表示するのが基本ですが、
+            // ハートの色を付けるために isLiked を計算します。
+            likesCount: r.fixed_likes_count, 
+            id: r.posts.id,
+            content: r.posts.content,
+            ruby_content: r.posts.ruby_content,
+            user_id: r.posts.user_id,
+            genre_id: r.posts.genre_id,
+            created_at: r.posts.created_at, // 日付も追加
+            authorName: r.posts.users ? r.posts.users.username : "不明",
+            
+            // ★ここが重要: 自分がいいねしているか判定
+            isLiked: r.posts.likes && r.posts.likes.some(l => l.user_id === currentUserId) ? 1 : 0,
+            
+            // ★ここが重要: 返信数をカウント
+            repliesCount: r.posts.replies ? r.posts.replies.length : 0
+        };
+    }).filter(p => p !== null); // null(削除済み)を除外
     
     res.json(rankingPosts);
   } catch (err) {
