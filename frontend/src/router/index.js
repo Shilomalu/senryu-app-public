@@ -13,6 +13,7 @@ import UserProfile from '../views/UserProfileView.vue';
 import PostDescriptionView from '../views/PostDescriptionView.vue'
 import DirectFumiView from '@/views/DirectFumiView.vue'
 import DirectFumiPage from '@/components/DirectFumiPage.vue'
+import Notification from '@/components/Notification.vue'
 import FollowersView from '../views/FollowersView.vue'
 
 const router = createRouter({
@@ -69,6 +70,14 @@ const router = createRouter({
       component: DirectFumiPage,
       props: true, // URL パラメータを props として渡す
     },
+
+    // 通知ページ
+    {
+      path: '/notifications',
+      name: 'notifications',
+      component: Notification,   
+     },
+
 
     // --- 以下はタブバー以外の場所から遷移するページ ---
 

@@ -111,21 +111,21 @@ const set_genreId=(id)=>{
 </script>
 
 <template>
-  <div class="search_container">
+  <div class="form-container">
     <h1 id="title">川柳巡り</h1>
     <form @submit="search_method">
-      <h2>検索ワード入力</h2>
+      <h2>検索言葉入力</h2>
 
-      <input id="search_input" placeholder="検索ワードを入力してください" v-model="keyword" />
+      <input id="search_input" placeholder="検索言葉を入力してください" v-model="keyword" />
       <br />
 
       <button
         type="button"
         id="genre_button"
         @click="show_genres = !show_genres"
-        :class="{ active: show_genres }"
+        :class="['dark-btn', { active: show_genres }]"
       >
-        <div v-if="show_genres == false">ジャンルで検索する</div>
+        <div v-if="show_genres == false">種別で検索する</div>
         <div v-else>閉じる</div>
       </button>
 
@@ -134,7 +134,7 @@ const set_genreId=(id)=>{
           v-for="(genre, index) in genres"
           :key="genre.id"
           type="button"
-          :class="{ active: selectedGenre=== Number(genre.id) }"
+          :class="['dark-btn', { active: selectedGenre=== Number(genre.id) }]"
           @click="set_genreId(genre.id)" 
           :style="{ animationDelay: index * 0.08 + 's' }"
         >
@@ -142,7 +142,7 @@ const set_genreId=(id)=>{
         </button>
       </div>
 
-      <button type="submit" id="search_button">検索</button>
+      <button type="submit" id="search_button" class="darker-btn">検索</button>
 
       <div id="search_result">
         <div ref="scroll_target" class="search_result_inner">
@@ -176,7 +176,8 @@ const set_genreId=(id)=>{
                   likesCount: item.likesCount,
                   repliesCount: item.repliesCount,
                   isLiked: item.isLiked,
-                  isFollowing: item.isFollowing
+                  isFollowing: item.isFollowing,
+                  icon_index: item.icon_index
                 }"
                 :currentUser="currentUser"
               />
@@ -195,7 +196,7 @@ html {
 }
 
 
-.search_container {
+.form-container {
   width: 100%;
   max-width: 600px;
   margin: 50px auto 0;
@@ -225,7 +226,6 @@ html {
   height: 50px;
   margin-top: 20px;
   border-radius: 6px;
-  border: 1px solid #007bff;
 }
 
 @media (max-width: 500px) {
@@ -236,21 +236,9 @@ html {
 #search_button {
   width: 200px;
   height: 50px;
-  border: none;
   border-radius: 5px;
-  background-color: rgb(80, 80, 129);
-  color: white;
   margin-top: 10px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-  transition: 0.2s;
   align-self: center;
-}
-
-#search_button:hover {
-  cursor: pointer;
-  transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
-  opacity: 0.8;
 }
 
 .result-item {
@@ -332,20 +320,6 @@ form {
   margin-top: -10px;
   margin-bottom: 30px;
   border-radius: 6px;
-  border: 1px solid #007bff;
-  background-color: white;
-  cursor: pointer;
-  transition: 0.2s;
-  align-self: center;
-}
-
-#genre_button.active {
-  background-color: #007bff;
-  color: white;
-}
-
-#genre_button:hover {
-  transform: scale(1.1);
 }
 .genre_section {
   display: grid;
@@ -359,10 +333,6 @@ form {
   padding: 8px;
   font-size: 0.9em;
   border-radius: 6px;
-  border: 1px solid #007bff;
-  background-color: white;
-  cursor: pointer;
-  transition: 0.2s;
   opacity: 0;
   animation: fadeup 0.3s forwards ease-out;
 }
@@ -376,16 +346,6 @@ form {
     opacity: 1;
     transform: scale(1) translateY(0);
   }
-}
-
-.genre_section button.active {
-  background-color: #007bff;
-  color: white;
-}
-
-.genre_section button:hover {
-  background-color: #0056b3;
-  color: white;
 }
 </style>
 

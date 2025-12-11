@@ -77,18 +77,18 @@ async function handleSubmitMessage(e) {
 <template>
   <form @submit="handleSubmitMessage" class="message-form">
   <div class="message-inputs" v-if="!isReply77">
-      <input v-model="content1" type="text" placeholder="初句（五）" maxlength="10">
-      <input v-model="content2" type="text" placeholder="二句（七）" maxlength="15">
-      <input v-model="content3" type="text" placeholder="三句（五）" maxlength="10">
+      <input v-model="content1" type="text" placeholder="初句（五）" maxlength="10" @input="content1 = content1.replace(/[^\u3041-\u3096\u30A1-\u30F6\u4E00-\u9FFFーー～々。、「」・！？]/g, '')">
+      <input v-model="content2" type="text" placeholder="二句（七）" maxlength="15" @input="content2 = content2.replace(/[^\u3041-\u3096\u30A1-\u30F6\u4E00-\u9FFFーー～々。、「」・！？]/g, '')">
+      <input v-model="content3" type="text" placeholder="三句（五）" maxlength="10" @input="content3 = content3.replace(/[^\u3041-\u3096\u30A1-\u30F6\u4E00-\u9FFFーー～々。、「」・！？]/g, '')">
     </div>
     <div class="message-inputs" v-else>
-      <input v-model="content1" type="text" placeholder="四句（七）" maxlength="15">
-      <input v-model="content2" type="text" placeholder="五句（七）" maxlength="15">
+      <input v-model="content1" type="text" placeholder="四句（七）" maxlength="15" @input="content1 = content1.replace(/[^\u3041-\u3096\u30A1-\u30F6\u4E00-\u9FFFーー～々。、「」・！？]/g, '')">
+      <input v-model="content2" type="text" placeholder="五句（七）" maxlength="15" @input="content2 = content2.replace(/[^\u3041-\u3096\u30A1-\u30F6\u4E00-\u9FFFーー～々。、「」・！？]/g, '')">
     </div>
     <div class="button-container">
       <button 
         type="submit" 
-        class="submit-button" 
+        class="submit-button common-btn" 
         :disabled="isSubmitting || (!content1.trim() && !content2.trim() && !content3.trim() && isReply77) || (!content1.trim() && !content2.trim() && !isReply77)"
       >
         {{ isSubmitting ? '送信中...' : '送信' }}
@@ -131,19 +131,11 @@ async function handleSubmitMessage(e) {
 .submit-button {
   padding: 0.375rem 1rem;
   font-size: 1rem;
-  color: white;
-  background-color: #007bff;
-  border: none;
   border-radius: 4px;
-  cursor: pointer;
 }
 
 .submit-button:disabled {
   background-color: #6c757d;
   cursor: not-allowed;
-}
-
-.submit-button:not(:disabled):hover {
-  background-color: #0056b3;
 }
 </style>

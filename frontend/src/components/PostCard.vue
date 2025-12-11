@@ -2,7 +2,8 @@
   <div class="card" :class="genreClass(post.genre_id)">
     <div class="card-header">
       <button class="author-btn" @click="goToProfile">
-       👤{{ post.authorName || post.author }}
+        <!--{{ post.authorName || post.author }}-->
+        <img :src="icons[post.icon_index]?.src|| icons[0].src" class="profile-icon" />
       </button>
 
       <div class="header-actions">
@@ -11,9 +12,7 @@
           class="delete-x-btn" 
           @click="$emit('delete', post.id)"
           title="削除"
-        >
-          ×
-        </button>
+        >×</button>
 
         <FollowButton 
           v-if="currentUser" 
@@ -26,10 +25,14 @@
     <div class="poem-wrapper">
       <div class="poem">
         <template v-if="post.ruby_content && post.ruby_content.length > 0">
+          <br></br>
           <div v-for="(phrase, pIndex) in post.ruby_content" :key="pIndex" class="post-line">
             <span v-for="(ruby_data, wIndex) in phrase" :key="wIndex" class="word-unit">
               <ruby>{{ ruby_data.word }}<rt>{{ ruby_data.ruby }}</rt></ruby>
             </span>
+          </div>
+           <div class="author" @click="goToProfile">
+            {{ post.authorName || post.author }}
           </div>
         </template>
         <template v-else>
@@ -41,15 +44,15 @@
     <div class="actions-container" v-if="!isPreview">
       <div class="main-actions">
         <LikeButton :postId="post.id" :currentUserId="currentUser?.id || 0" :initialIsLiked="post.isLiked" :initialLikesCount="post.likesCount" />
-        <button class="reply-btn" @click="toggleReplies">
-            返信{{ post.repliesCount || 0 }}
+        <button class="reply-btn common-btn" @click="toggleReplies">
+            返句{{ post.repliesCount || 0 }}
         </button>
       </div>
       </div>
 
     <div class="replies-wrapper" :class="{ open: !isPreview && showReplies }">
       <div class="replies-inner">
-        <div v-if="!replies.length" class="no-replies">返信はありません</div>
+        <div v-if="!replies.length" class="no-replies">返句はありません</div>
         <div v-else class="reply-scroll-container">
           <div v-for="reply in replies" :key="reply.id" class="reply">
             <ReplyCard :reply="reply" :current-user="currentUser" @reply-deleted="handleReplyDeleted" />
@@ -69,6 +72,34 @@ import LikeButton from './LikeButton.vue';
 import FollowButton from './FollowButton.vue';
 import ReplyForm from './ReplyForm.vue';
 import ReplyCard from './ReplyCard.vue';
+
+import icon0 from "@/assets/icons/kajinsample0.jpeg"
+import icon1 from "@/assets/icons/kajinsample1.jpeg"
+import icon2 from "@/assets/icons/kajinsample2.jpeg"
+import icon3 from "@/assets/icons/kajinsample3.jpeg"
+import icon4 from "@/assets/icons/kajinsample4.jpeg"
+import icon5 from "@/assets/icons/kajinsample5.jpeg"
+import icon6 from "@/assets/icons/kajinsample6.jpeg"
+import icon7 from "@/assets/icons/kajinsample7.jpeg"
+import icon8 from "@/assets/icons/kajinsample8.jpeg"
+import icon9 from "@/assets/icons/kajinsample9.jpeg"
+import icon10 from "@/assets/icons/kajinsample10.jpeg"
+import icon11 from "@/assets/icons/kajinsample11.jpeg"
+
+const icons = [
+  { id: 0, src: icon0 },
+  { id: 1, src: icon1 },
+  { id: 2, src: icon2 },
+  { id: 3, src: icon3 },
+  { id: 4, src: icon4 },
+  { id: 5, src: icon5 },
+  { id: 6, src: icon6 },
+  { id: 7, src: icon7 },
+  { id: 8, src: icon8 },
+  { id: 9, src: icon9 },
+  { id: 10, src: icon10 },
+  { id: 11, src: icon11 }
+];
 
 const props = defineProps({
   post: { type: Object, required: true, default: () => ({}) },
@@ -97,12 +128,12 @@ const fetchReplies = async () => {
   isLoadingReplies.value = true;
   try {
     const res = await fetch(`/api/posts/${props.post.id}`);
-    if (!res.ok) throw new Error('返信の取得に失敗しました');
+    if (!res.ok) throw new Error('返句の取得に失敗しました');
     const data = await res.json();
     replies.value = data.replies || [];
     replyCount.value = replies.value.length;
   } catch (error) {
-    console.error('返信取得エラー:', error);
+    console.error('返句取得エラー:', error);
   } finally {
     isLoadingReplies.value = false;
   }
@@ -238,16 +269,9 @@ rt {
   gap: 1rem; 
 }
 .reply-btn {
-  background-color: #007bff; 
-  color: #fff; 
-  border: none; 
   height: 35px; 
   line-height: 35px; 
-  padding: 0 10px; 
-  border-radius: 8px;
-}
-.reply-btn:hover { 
-  background-color: #0056b3;
+  padding: 0 10px;
 }
 .header-actions {
   display: flex;
@@ -260,9 +284,9 @@ rt {
   background: none;
   border: none;
   color: #999;
-  font-size: 1.5rem; /* ×を見やすく大きく */
+  font-size: 2rem; /* ×を見やすく大きく */
   cursor: pointer;
-  padding: 0 5px;
+  padding-right: 10px;
   line-height: 1;
   margin-left: auto; /* 必要に応じて右端に寄せる */
 }
@@ -292,7 +316,7 @@ rt {
   scrollbar-width: none; 
 }
 .no-replies { 
-  color: #888; 
+  color: #888;
   font-style: italic; 
   margin-bottom: 0.3rem; 
 }
@@ -306,4 +330,18 @@ rt {
 .card.genre-food { background-color: #ffebcd; }
 .card.genre-school { background-color: #d8bfd8; }
 .card.genre-travel { background-color: #add8e6; }
+
+.profile-icon {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.author {
+  padding-top: 100px;
+  cursor: pointer;
+  color: #888; 
+}
 </style>

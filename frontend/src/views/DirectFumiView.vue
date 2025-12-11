@@ -40,53 +40,46 @@ onMounted(() => {
 
 <!-- フォロー中のユーザ一覧からdirectfumi.vueにとべるように -->
 <template>
-  <div class="dfumi-wrapper">
-    <h1>ダイレクトふみ</h1>
-    <h2>フォロー中</h2>
+  <div class="form-container">
+    <h1>ふみ</h1>
+    <h2>文友</h2>
     <div>
       <ul>
         <li v-for="p in partners1" :key="p.id" :class="{ 'partner-item': true, 'new-msg': !p.is_read && p.sender_id == p.id}">
           <router-link :to="{ name: 'DirectFumi', params: { partnerId: p.id } }" class="partner-link">
             <span class="partner-name">{{ p.username }}</span>
-            <span v-if="!p.is_read && p.sender_id == p.id" class="new-msg-notice">新規メッセージあり</span>
+            <span v-if="!p.is_read && p.sender_id == p.id" class="new-msg-notice">新規ふみあり</span>
             <span class="latest-msg">
               {{ p.content || '' }} 
               <small v-if="p.latest_dm">({{ formatDate(p.latest_dm) }})</small>
             </span>
           </router-link>
         </li>
-        <li v-if="partners1.length == 0">ダイレクトふみはありません</li>
+        <li v-if="partners1.length == 0">ふみはありません</li>
       </ul>
     </div>
-    <h2>未フォロー</h2>
+    <h2>未文友</h2>
     <div>
       <ul>
         <li v-for="p in partners2" :key="p.id" :class="{ 'partner-item': true, 'new-msg': !p.is_read && p.sender_id == p.id}">
           <router-link :to="{ name: 'DirectFumi', params: { partnerId: p.id } }" class="partner-link">
             <span class="partner-name">{{ p.username }}</span>
-            <span v-if="!p.is_read && p.sender_id == p.id" class="new-msg-notice">新規メッセージあり</span>
+            <span v-if="!p.is_read && p.sender_id == p.id" class="new-msg-notice">新規ふみあり</span>
             <span class="latest-msg">
               {{ p.content || '' }} 
               <small v-if="p.latest_dm">({{ formatDate(p.latest_dm) }})</small>
             </span>
           </router-link>
         </li>
-        <li v-if="partners2.length == 0">ダイレクトふみはありません</li>
+        <li v-if="partners2.length == 0">ふみはありません</li>
       </ul>
     </div>
   </div>
 </template>
 
 <style scoped>
-.dfumi-wrapper {
-  max-width: 800px;
-  margin: 2rem auto;
-  padding: 2rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  background-color: #fff;
-  color: #000;
+.form-container {
+  text-align: left;
 }
 
 .partner-item {

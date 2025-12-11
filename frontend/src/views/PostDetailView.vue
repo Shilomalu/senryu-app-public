@@ -72,7 +72,7 @@ onMounted(() => {
       />
       
       <div v-if="post" class="replies-section">
-        <h2>返信</h2>
+        <h2>返句</h2>
         
         <ReplyForm 
           :post-id="post.id" 
@@ -89,7 +89,7 @@ onMounted(() => {
         </div>
         
         <div v-else class="no-replies">
-          まだ返信はありません
+          まだ返句はありません
         </div>
       </div>
     </div>

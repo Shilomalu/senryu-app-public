@@ -13,6 +13,7 @@ a,
   color: hsla(160, 100%, 37%, 1);
   transition: 0.4s;
   padding: 3px;
+  font-weight: bold;
 }
 
 @media (hover: hover) {
@@ -20,6 +21,141 @@ a,
     background-color: hsla(160, 100%, 37%, 0.2);
   }
 }
+
+button {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+button:focus-visible {
+  outline: 2px solid #4a90e2;
+  outline-offset: 2px;
+}
+
+input {
+  border: 1px solid #1F6F78;
+}
+
+/* 共通化したスタイル*/
+/* 他で書くべきなのは，大きさ，余白関係，translate */
+
+.common-btn {
+  padding: 10px 20px;
+  background-color: #6c8a4a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0px 4px 0px #3d502d;
+  transition: all 0.2s ease;
+}
+
+/* クリック時 (座布団が沈む効果) */
+.common-btn:active {
+    background-color: #536b3d;
+    box-shadow: 0 2px 0 0 #3d502d; /* 影を小さくして沈ませる */
+    transform: translateY(2px); /* ボタン全体を下に動かす */
+}
+
+.common-btn:hover {
+    background-color: #81a864; /* ホバーで少し明るく */
+}
+
+.alert-btn {
+  padding: 10px 20px;
+  background-color: #e98d46;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0px 4px 0px #b87512;
+  transition: all 0.2s ease;
+}
+
+.alert-btn:active {
+    background-color: #bc7d1d;
+    box-shadow: 0 2px 0 0 #b87512; /* 影を小さくして沈ませる */
+    transform: translateY(2px); /* ボタン全体を下に動かす */
+}
+
+.alert-btn:hover {
+    background-color: #d49130; /* ホバーで少し明るく */
+}
+
+.dark-btn {
+  padding: 10px 20px;
+  background-color: white;
+  color: black;
+  border: 1px solid #1F6F78;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: normal;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.dark-btn:active {
+  transform: translateY(2px); 
+  background-color: #1F6F78; /* ホバーで少し明るく *//* ボタン全体を下に動かす */
+  color: white;
+  font-weight: bold;
+}
+
+.dark-btn.active {
+  transform: none;
+}
+
+.dark-btn:hover {
+  background-color: #1F6F78; /* ホバーで少し明るく */
+  color: white;
+  font-weight: bold;
+  transform: scale(1.1);
+}
+
+.darker-btn {
+  padding: 10px 20px;
+  background-color: #1F6F78;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.darker-btn:active {
+    transform: translateY(2px); /* ボタン全体を下に動かす */
+}
+
+.darker-btn.active {
+  transform: none;
+}
+
+.darker-btn:hover {
+  background-color: #2f8b95; /* ホバーで少し明るく */
+  transform: scale(1.1);
+}
+
+/* form-containerをもっと使おう */
+/* 見出しを太字に　など */
+/* a要素などは，上で文字の色が決まっている */
 
 /* ============================================= */
 /* レスポンシブ対応スタイル             */
@@ -45,6 +181,13 @@ header nav a {
 .form-container {
   width: 90%; /* 画面幅の90%を使う */
   margin: 0 auto;
+  padding: 4rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  background-color: #fff;
+  text-align: center;
+  color: #000;
 }
 
 
@@ -69,6 +212,6 @@ header nav a {
 
   /* フォームの最大幅を設定 */
   .form-container {
-    max-width: 400px;
+    max-width: 800px;
   }
 }

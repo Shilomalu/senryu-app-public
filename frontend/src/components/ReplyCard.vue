@@ -40,7 +40,7 @@ function formatDate(dateString) {
 }
 
 async function handleDelete() {
-  if (!confirm('この返信を削除してもよろしいですか？')) return
+  if (!confirm('この返句を削除してもよろしいですか？')) return
 
   try {
     const token = localStorage.getItem('token')
@@ -52,13 +52,13 @@ async function handleDelete() {
     })
 
     if (!response.ok) {
-      throw new Error('返信の削除に失敗しました')
+      throw new Error('返句の削除に失敗しました')
     }
 
     emit('reply-deleted', props.reply.id)
   } catch (error) {
-    console.error('返信削除エラー:', error)
-    alert('返信の削除に失敗しました')
+    console.error('返句削除エラー:', error)
+    alert('返句の削除に失敗しました')
   }
 }
 </script>

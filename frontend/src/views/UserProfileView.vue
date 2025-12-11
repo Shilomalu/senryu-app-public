@@ -51,7 +51,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="user-profile">
+  <div class="form-container">
     <div v-if="isLoading" class="loading">読み込み中...</div>
 
     <div v-else-if="!userExists" class="not-found">
@@ -60,13 +60,12 @@ onMounted(() => {
     </div>
 
     <div v-else class="profile-container">
-      <h1>{{ username }} さんのプロフィール</h1>
+      <h1>{{ username }} さんの句歴</h1>
 
       <div class="profile-info">
         <ul>
-          <li><strong>ユーザー名：</strong> {{ username }}</li>
-          <li><strong>メールアドレス：</strong> {{ email }}</li>
-          <li><strong>自己紹介：</strong> {{ profile_text || '（未入力）' }}</li>
+          <li><strong>俳号：</strong> {{ username }}</li>
+          <li><strong>添え書き：</strong> {{ profile_text }}</li>
         </ul>
       </div>
 
@@ -82,15 +81,9 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.user-profile {
+.form-container {
   max-width: 600px;
-  margin: 2rem auto;
-  padding: 2rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  background-color: #fff;
-  color: #000;
+  text-align: left;
 }
 
 .loading, .not-found {

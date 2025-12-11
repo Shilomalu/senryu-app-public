@@ -76,6 +76,8 @@ const loadProfile = async () => {
       headers: { Authorization: `Bearer ${token}` }
     });
 
+    console.log("me の結果:", data); 
+
     userId.value = data.id
     username.value = data.username;
     email.value = data.email;
@@ -102,7 +104,7 @@ const loadProfile = async () => {
 
   } catch (err) {
     console.error(err);
-    alert('プロフィールの取得に失敗しました');
+    alert('句歴の取得に失敗しました');
     isLoggedIn.value = false;
   }
 };
@@ -184,16 +186,16 @@ const goEdit = () => {
   <div>
     <div v-if="isLoggedIn" class="profile-container">
       <div class="profile-header">
-        <h1>マイプロフィール</h1>
+        <h1>自分の句歴</h1>
         <div class="button-group">
           <button @click="goEdit" class="edit-btn">編集</button>
-          <button @click="logout" class="logout-btn">ログアウト</button>
+          <button @click="logout" class="logout-btn">退出</button>
         </div>
       </div>
       
       <div class="profile-info">
         <ul>
-          <li><strong>ユーザー名：</strong> {{ username }}</li>
+          <li><strong>俳号：</strong> {{ username }}</li>
           <li><strong>メールアドレス：</strong> {{ email }}</li>
           <li><strong>自己紹介：</strong> {{ profile_text }}</li>
           <li>
@@ -207,11 +209,11 @@ const goEdit = () => {
     </div>
 
     <div v-else class="auth-prompt">
-      <h2>ログインが必要です</h2>
-      <p>プロフィールを閲覧・編集するには、ログインまたは新規登録をしてください。</p>
+      <h2>席入り（ログイン）が必要です</h2>
+      <p>句歴を閲覧・編集するには、席入りまたは入門（新規登録）をしてください。</p>
       <div class="button-group">
-        <RouterLink to="/login" class="button">ログイン画面へ</RouterLink>
-        <RouterLink to="/register" class="button">新規登録画面へ</RouterLink>
+        <RouterLink to="/login" class="button">席入り画面へ</RouterLink>
+        <RouterLink to="/register" class="button">入門画面へ</RouterLink>
       </div>
     </div>
   </div>
@@ -220,56 +222,56 @@ const goEdit = () => {
 
 <template>
   <div>
-    <div v-if="isLoggedIn" class="profile-container">
+    <div v-if="isLoggedIn" class="form-container">
       <div class="profile-header">
-        <h1>句歴（プロフィール）</h1>
+        <h1>句歴</h1>
 
         <div class="button-group">
-          <button @click="goEdit" class="edit-btn">編集</button>
-          <button @click="logout" class="logout-btn">ログアウト</button>
+          <button @click="goEdit" class="edit-btn common-btn">編集</button>
+          <button @click="logout" class="logout-btn alert-btn">退出</button>
         </div>
 
       </div>
 
-      <div class="profile-info-content">
-        <div class="icon-wrapper" @click="openIconModal">
-          <img :src="icons[icon].src" class="profile-icon" />
-          <div class="icon-edit-overlay">
-             ✎
-          </div>
-        </div>
 
-        <div class="profile-info">
-          <ul>
-            <li><strong>俳号：</strong> {{ username }}</li>
+      <div class="icon-wrapper" @click="openIconModal">
+        <img :src="icons[icon].src" class="profile-icon" />
+        <div class="icon-edit-overlay">
+           ✎
+        </div>
+      </div>
+
+      <br></br>
+
+      <div class="profile-info">
+        <ul>
+          <li><strong>俳号：</strong> {{ username }}</li>
           <!--<li><strong>メールアドレス：</strong> {{ email }}</li> -->
-            <li class="profile-item">
-              <strong>添え書き：</strong> 
-              <span class = "profile-text">{{ profile_text }}</span>
-            </li>
-          </ul>
-        </div>
+          <li><strong>添え書き：</strong>{{ profile_text }}</li>
+        </ul>
       </div>
-
+    
       <div class="favorite-item">
-        <strong>選り抜きの一句：</strong>
-
-        <div v-if="favorite" class="favorite-box">
-          <span class="favorite-content">{{ favorite.content }}</span>
-          <button @click="openFavModal" class="edit-favorite-btn">変更</button>
+        <div v-if="favorite">
+          <div class="favorite-true">
+            代表作
+            <button @click="openFavModal" class="edit-favorite-btn common-btn">変更</button>
+          </div>
+          <PostCard :post="favorite" />
         </div>
 
         <div v-else class="favorite-box">
-          <button @click="openFavModal" class="add-favorite-btn">
-            お気に入りの一句を追加
+          <button @click="openFavModal" class="add-favorite-btn common-btn">
+            代表作を追加
           </button>
         </div>
       </div>
 
-      <section class="user-posts">
-        <h2>過去の投稿</h2>
-        <br></br>
+      <br></br>
+      <h3 style="text-align: center;">過去の投稿一覧</h3>
 
+
+      <section class="user-posts">
         <div class="posts-grid">
           <PostCard
             v-for="post in posts"
@@ -285,51 +287,54 @@ const goEdit = () => {
     </div>
 
     <div v-else class="auth-prompt">
-      <h2>ログインが必要です</h2>
-      <p>プロフィールを閲覧・編集するには、ログインまたは新規登録をしてください。</p>
+      <h2>席入り（ログイン）が必要です</h2>
+      <p>プロフィールを閲覧・編集するには、席入りまたは入門をしてください。</p>
       <div class="button-group">
-        <RouterLink to="/login" class="button">ログイン画面へ</RouterLink>
-        <RouterLink to="/register" class="button">新規登録画面へ</RouterLink>
+        <RouterLink to="/login" class="button common-btn">席入り画面へ</RouterLink>
+        <RouterLink to="/register" class="button common-btn">入門画面へ</RouterLink>
       </div>
     </div>
 
     <!-- 過去投稿用 -->
     <div v-if="showFavModal" class="modal-overlay">
       <div class="modal">
-        <h3>お気に入りに設定する句を選択</h3>
+        <h3>代表作に設定する句を選択</h3>
         <button class="close-btn" @click="closeFavModal">×</button>
         <div class="modal-content">
-          <ul>
+          <ul v-if="posts.length">
             <li v-for="post in posts" :key="post.id"  
             @click="selectFavorite(post)" 
             class="selectable-post"
             style="color: black;">
               {{ post.content }}
             </li>
-
           </ul>
+          <div v-else>
+            投稿がまだありません
+          </div>
         </div>
       </div>
     </div>
 
     <!-- アイコン変更用　-->
     <div v-if="showIconModal" class="modal-overlay">
-      <div class ="modal icon-modal">
-        <h3>アイコンを選択</h3>
+      <div class="modal icon-modal">
+        <h3 style="padding-left:20px; padding-top:10px;">姿を選択</h3>
         <button class="close-btn" @click="closeIconModal"><h2>×</h2></button>
 
         <div class="icon-list">
           <div
-            v-for="icon in icons"
-            :key="icon.id"
+            v-for="iconItem in icons"
+            :key="iconItem.id"
             class="icon-item"
-            
-        >
-            <img :src="icon.src" 
-            class="icon-preview"
-            @click.stop="selectIcon(icon.id)" 
+            :class="{ 'locked-icon': iconItem.id >= 9 && posts.length < 5 }"
+          >
+            <img 
+              :src="iconItem.src" 
+              class="icon-preview"
+              :style="{ opacity: (iconItem.id >= 9 && posts.length < 5) ? 0.1: 1, cursor: (iconItem.id >= 9 && posts.length < 5) ? 'not-allowed' : 'pointer' }"
+              @click.stop="(iconItem.id >= 9 && posts.length < 5) ? null : selectIcon(iconItem.id)"
             />
-
           </div>
         </div>
       </div>
@@ -339,17 +344,11 @@ const goEdit = () => {
 
 
 <style scoped>
-.profile-container {
-  max-width: 800px;
-  margin: 2rem auto;
-  padding: 4rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  background-color: #fff;
-  text-align: center;
-  color: #000;
-  text-align: left;
+.form-container {
+  width: 400px;
+  max-width: 100%;
+  margin: 0 auto;
+  flex-shrink: 0;
 }
 
 .profile-item {
@@ -368,6 +367,7 @@ const goEdit = () => {
 
 
 .profile-info {
+  text-align: left;
   margin-top: 0;
   flex-grow: 1;
 }
@@ -379,26 +379,7 @@ const goEdit = () => {
 
 .profile-info li {
   margin-bottom: 1rem;
-  font-size: 1.1rem;
-}
-
-.favorite-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 2rem;
-  margin-bottom: 2rem;
-  font-size: 1.1rem;
-}
-
-.favorite-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.favorite-content {
-  white-space: pre-line;
+  font-size: 1rem;
 }
 
 .profile-info-content {
@@ -433,7 +414,6 @@ const goEdit = () => {
 }
 
 .profile-icon {
-
   width: 150px;
   height: 150px;
   object-fit: cover;
@@ -474,20 +454,46 @@ const goEdit = () => {
 }
 
 .user-posts {
-  margin-top: 3rem;
-  text-align: center;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding-top: 2rem;
+}
+
+.user-posts::-webkit-scrollbar {
+  display: none;
 }
 
 .posts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+}
+
+.posts-grid li {
+  list-style: none;
+  flex: 0 0 250px;
+  width: 80%;
+  max-width: 100%;
+  scroll-snap-align: start;
+}
+
+.favorite-true {
+  text-align: center;
+  font-size: 1.2rem;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 .no-posts {
   text-align: center;
   color: #666;
   margin-top: 1rem;
+  margin-left: 3.5rem;
 }
 
 .button-container {
@@ -516,29 +522,9 @@ const goEdit = () => {
 }
 
 .button-group button {
-  padding: 8px 18px;
-  border: none;
+  padding: 8px 10px;
   border-radius: 6px;
-  color: #fff;
   font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.edit-btn {
-  background-color: #007bff;
-}
-
-.edit-btn:hover {
-  background-color: #0056b3;
-}
-
-.logout-btn {
-  background-color: #dc3545;
-}
-
-.logout-btn:hover {
-  background-color: #a71d2a;
 }
 
 /* モーダル用 */
@@ -562,7 +548,7 @@ const goEdit = () => {
   border-radius: 10px;
   max-height: 80%;
   overflow-y: auto;
-  width: 400px;
+  width: 380px;
   position: relative;
 }
 
@@ -573,19 +559,18 @@ const goEdit = () => {
 }
 
 .icon-modal {
-  height: 600px;
-  width: 400px;
+  height: 500px;
+  width: 330px;
   overflow-y: hidden;
-  padding-bottom: 100px;
 }
 
 .close-btn {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  right: 40px;
   background: transparent;
   border: none;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   cursor: pointer;
   z-index: 1010;
 }
@@ -601,39 +586,23 @@ const goEdit = () => {
 }
 
 .add-favorite-btn {
-  margin-left: 10px;
+  margin: 0 auto;
   padding: 4px 10px;
   font-size: 0.9rem;
-  background-color: #007bff;
-  border: none;
   border-radius: 4px;
-  cursor: pointer;
-  color: #ffffff;
-}
-
-.add-favorite-btn:hover {
-  background-color: #0056b3;
 }
 
 .edit-favorite-btn {
   margin-left: 10px;
   padding: 4px 10px;
   font-size: 0.9rem;
-  background-color: #007bff;
-  border: none;
   border-radius: 4px;
-  cursor: pointer;
-  color: #ffffff;
-}
-
-.edit-favorite-btn:hover {
-  background-color: #0056b3;
 }
 
 
 /* ログインを促す画面用のスタイル */
 .auth-prompt {
-  max-width: 500px;
+  max-width: 100%;
   margin: 4rem auto;
   padding: 2rem;
   text-align: center;
@@ -658,11 +627,7 @@ const goEdit = () => {
 .button {
   display: inline-block;
   padding: 12px 24px;
-  background-color: #007bff;
-  color: white;
-  text-decoration: none;
   border-radius: 5px;
-  font-weight: bold;
 }
 
 

@@ -1,12 +1,12 @@
 <template>
-  <div class="followers-view">
+  <div class="form-container">
     <h1 class="page-title">
-      {{ username }}のフォロワー 
+      {{ username }}の文友 
       <span v-if="!loading" class="follower-count">({{ followers.length }}人)</span>
     </h1>
     
     <div v-if="loading" class="loading-message">読み込み中...</div>
-    <div v-else-if="!followers.length" class="empty-message">フォロワーはいません。</div>
+    <div v-else-if="!followers.length" class="empty-message">文友はいません。</div>
     
     <ul v-else class="follower-list">
   <li v-for="user in followers" :key="user.id" class="follower-item">
@@ -18,7 +18,7 @@
   </li>
 </ul>
 
-    <RouterLink to="/" class="back-link">タイムラインに戻る</RouterLink>
+    <RouterLink to="/" class="back-link">句会に戻る</RouterLink>
   </div>
 </template>
 
@@ -70,10 +70,9 @@ watch(() => route.params.id, (newId) => {
 </script>
 
 <style scoped>
-.followers-view {
+.form-container {
   padding: 20px;
   max-width: 600px;
-  margin: 0 auto;
 }
 .page-title {
   border-bottom: 2px solid #ccc;
@@ -94,11 +93,7 @@ watch(() => route.params.id, (newId) => {
   padding: 10px 0;
   border-bottom: 1px dashed #eee;
 }
-.follower-item a {
-  text-decoration: none;
-  color: #007bff;
-  font-weight: bold;
-}
+
 .empty-message, .loading-message {
   text-align: center;
   color: #888;

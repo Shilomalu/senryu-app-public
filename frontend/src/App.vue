@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { RouterView, RouterLink } from 'vue-router';
 import { jwtDecode } from 'jwt-decode';
 
@@ -7,6 +7,33 @@ import { jwtDecode } from 'jwt-decode';
 const showSplash = ref(true);
 const fadingOut = ref(false);
 
+const notifications = ref([]); // 通知一覧
+
+// tokenをリアクティブ化
+const token = ref(localStorage.getItem("token"));
+
+// tokenが変わったらlocalStorageに反映
+watch(token, (val) => {
+  if (val) localStorage.setItem("token", val);
+  else localStorage.removeItem("token");
+});
+
+// 通知を削除する関数
+const removeNotification = (id) => {
+  notifications.value = notifications.value.filter(n => n.id !== id)
+
+  // 必要ならサーバー側も削除
+  fetch(`/api/notifications/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token.value}`
+    }
+  }).catch(err => console.error("通知削除エラー:", err))
+}
+
+
+// アプリケーションがマウント（準備完了）された時に実行する処理
+  // もしトークンが存在すれば、有効かどうかをチェック
 onMounted(() => {
   // 2秒表示
   setTimeout(() => {
@@ -19,27 +46,52 @@ onMounted(() => {
   }, 2000);
 
   // --- トークンチェック ---
-  const token = localStorage.getItem('token');
-  if (token) {
+  if (token.value) {
     try {
-      const decoded = jwtDecode(token);
+      const decoded = jwtDecode(token.value);
       const currentTime = Date.now() / 1000;
 
       if (decoded.exp < currentTime) {
         console.log('トークンの有効期限切れ。削除します。');
-        localStorage.removeItem('token');
+        token.value = null;
       }
 
     } catch (error) {
       console.error('無効なトークン形式。削除します。', error);
-      localStorage.removeItem('token');
+      token.value = null;
     }
   }
+
+  // マウント時に通知を取得
+  fetchNotifications();
+  // トークンが存在しなければ、元々ログアウト状態なので何もしない
 });
+
+// API から通知を取得して notifications に格納
+const fetchNotifications = async () => {
+  if (!token.value) return;
+
+  try {
+    const res = await fetch("/api/notifications", {
+      headers: {
+        Authorization: `Bearer ${token.value}`
+      }
+    });
+
+    if (!res.ok) throw new Error("通知取得に失敗");
+
+    notifications.value = await res.json();
+
+  } catch (err) {
+    console.error("通知取得エラー:", err);
+  }
+};
 </script>
 
 <template>
-  <!-- 🔥 スプラッシュ画面 -->
+ <div id = "app">
+
+ <!-- 🔥 スプラッシュ画面 -->
   <div
     v-if="showSplash"
     :class="['splash', fadingOut ? 'fade-out' : 'fade-in']"
@@ -50,26 +102,36 @@ onMounted(() => {
   <!-- 🔥 アプリ本体 -->
   <div v-else>
     <main class="content">
-      <RouterView />
+       <RouterView :notifications="notifications" @remove="removeNotification" />
     </main>
 
-    <footer class="tab-bar">
-      <RouterLink to="/" class="tab-link">
-        <span>ホーム</span>
-      </RouterLink>
-      <RouterLink to="/search" class="tab-link">
-        <span>検索</span>
-      </RouterLink>
-      <RouterLink to="/post" class="tab-link">
-        <span>投稿</span>
-      </RouterLink>
-      <RouterLink to="/profile" class="tab-link">
-        <span>プロフィール</span>
-      </RouterLink>
-      <RouterLink to="/dfumi" class="tab-link">
-        <span>ダイレクトふみ</span>
-      </RouterLink>
-    </footer>
+  
+
+
+  <footer class="tab-bar">
+    <RouterLink to="/" class="tab-link">
+      <span>句会</span>
+    </RouterLink>
+    <RouterLink to="/search" class="tab-link">
+      <span>検索</span>
+    </RouterLink>
+    <RouterLink to="/post" class="tab-link">
+      <span>投稿</span>
+    </RouterLink>
+    <RouterLink to="/profile" class="tab-link">
+      <span>句歴</span>
+    </RouterLink>
+    <RouterLink to="/dfumi" class="tab-link">
+      <span>ふみ</span>
+    </RouterLink>
+    <RouterLink to="/notifications" class="tab-link">
+      <span>お知らせ</span>
+    </RouterLink>
+  </footer>
+  </div>
+  
+  
+    
   </div>
 </template>
 
@@ -170,9 +232,10 @@ onMounted(() => {
   box-sizing: border-box;
 }
 .router-link-active {
-  color: #007bff;
-  border-bottom: 5px solid #007bff;
-  background-color: hwb(210 75% 0%);
+  color: #6c8a4a;
+  border-bottom: 5px solid #6c8a4a;
+  background-color: hwb(124 83% 0%);
   font-size: 1.1rem;
 }
+
 </style>

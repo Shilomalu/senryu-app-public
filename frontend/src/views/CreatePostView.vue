@@ -19,6 +19,9 @@ const router = useRouter()
 const currentTheme = ref(null)
 const show_genres = ref(false)
 let genreAbortController = null
+const show = ref(false);
+const page = ref(1);
+const totalPages = 4;
 
 const genres = [
   { id: 1, name: '＃春' },
@@ -41,6 +44,34 @@ onMounted(async () => {
     console.error('お題取得エラー:', err)
   }
 })
+
+onMounted(async () => {
+  try {
+    const res = await axios.get('/api/themes/current');
+    if (res.data) {
+      currentTheme.value = res.data; // { weekly_theme_id, theme_name, ... } が入る
+    }
+  } catch (err) {
+    console.error('お題取得エラー:', err);
+  }
+});
+
+const open = async () => {
+  show.value = true;
+  page.value = 1;
+};
+
+const close = () => {
+  show.value = false;
+};
+
+const next = () => {
+  if (page.value < totalPages) page.value++;
+};
+
+const prev = () => {
+  if (page.value > 1) page.value--;
+};
 
 const analyzeText = async (index) => {
   const text = phrases[index].text
@@ -83,7 +114,7 @@ const previewPost = computed(() => {
 const handlePost = async () => {
   const token = localStorage.getItem('token')
   if (!token) {
-    message.value = 'ログインが必要です。'
+    message.value = '席入り（ログイン）が必要です。'
     return
   }
 
@@ -120,11 +151,6 @@ const handlePost = async () => {
     }
   }
 }
-
-// 入力可能文字種の詳細へ遷移
-const goDescription = () => {
-  window.open('/post/description');
-};
 
 //ジャンルIDを自動推論
 const genre_predict = async () => {
@@ -164,6 +190,78 @@ const genre_predict = async () => {
 </script>
 
 <template>
+  <button class="help-btn" @click="open">？</button>
+  <div v-if="show" class="modal-overlay" @click="close">
+    <div class="modal-box" @click.stop>
+      <div class="modal-content">
+        <button class="close-btn" @click="close"><span class="underline-gray">-閉じる</span></button>
+        <div v-if="page === 1">
+          <h3 class="section-title">＜投稿手順＞</h3>
+          <br>
+          <ol type="1">
+            <li>今週のお題に投稿するかを選択(詳しくは今週のお題についてを参照)</li>
+            <li>上の句・中の句・下の句 にそれぞれ入力してください</li>
+            <li><span class="underline">下見</span>(プレビュー)を確認し、よろしければ<span class="underline">投稿</span>ボタンを押してください</li>
+            <li>漢字のルビが間違っている場合は<span class="underline">ルビの調整</span>からルビを変更し、<span class="underline">投稿</span>ボタンを押してください</li>
+          </ol>
+        </div>
+        <div v-if="page === 2">
+          <h3 class="section-title">＜文字数のカウントについて＞</h3>
+          <br>
+          <ol>
+            <li>当アプリでは <strong>モーラ(拍)</strong> という単位で音を数えます</li>
+            <li>句読点・記号類は <strong>0 モーラ</strong> としてカウントします</li>
+          </ol>
+          <br>
+          <h4 class="example-title">【例】</h4>
+          <ul class="example-list">
+            <li>
+              <strong>「楽器」 → 3 モーラ</strong><br>
+              　が (1) ＋ っ (1) ＋ き (1) → 3 モーラ
+            </li>
+            <li>
+              <strong>「しょっぱい」 → 4 モーラ</strong><br>
+              　しょ (1) ＋ っ (1) ＋ ぱ (1) ＋ い (1) → 4 モーラ
+            </li>
+            <li>
+              <strong>「ヤッター！」 → 4 モーラ</strong><br>
+              　ヤ (1) ＋ ッ (1) ＋ ター (2) ＋ ！ (0) → 4 モーラ
+            </li>
+          </ul>
+        </div>
+        <div v-if="page === 3">
+          <h3 class="section-title">＜投稿に関する注意点＞</h3>
+          <br>
+          <ol>
+            <li>入力できる文字は ひらがな・カタカナ・漢字 と 句読点・記号類 ( 。、「」・！？ ) です</li>
+            <li>句読点・記号類は一句の中で４文字まで使用できます</li>
+            <li>字余り・字足らずを考慮して、それぞれのモーラ数が五・七・五に対して-1から+1文字までの間なら、投稿することができます</li>
+            <li>あなたの川柳をAIが自動で種別(ジャンル)分け、色付けしてくれます</li>
+            <li><span class="underline">種別を手動入力する</span>からひとつ、ジャンルを選ぶこともできます</li>
+          </ol>
+        </div>
+        <div v-if="page === 4">
+          <h3 class="section-title">＜今週のお題について＞</h3>
+          <br>
+          <ol>
+            <li>毎週お題が1つ選ばれて、お題に沿った投稿をする・見ることができます</li>
+            <li>投稿時に<span class="underline">このお題に応募する</span>から、参加するかどうかを選択できます</li>
+            <li><span class="underline">句会</span>の<span class="underline">今週のお題</span>から、先週の位(ランキング)と今週の投稿を見ることができます</li>
+            <li>ランキングは<span class="underline">いとをかし</span>(いいね)の数で決まります</li>
+          </ol>
+          <br>
+          <p style="text-align: center"><font size="+1">早速投稿してみましょう！</font></p>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="nav-btn" @click="prev" :disabled="page === 1">◂戻る</button>
+        <button v-if="page < 4" class="nav-btn" @click="next" :disabled="page === 4">次へ▸</button>
+        <button v-else class="nav-btn" @click="close">投稿を始める</button>
+      </div>
+    </div>
+  </div>
+
   <div class="form-container">
     <h1>川柳を詠む</h1>
     <div v-if="currentTheme" class="theme-banner">
@@ -175,11 +273,8 @@ const genre_predict = async () => {
           このお題に応募する
         </label>
       </div>
-      <p class="theme-desc" v-if="isJoinTheme">　※来週のランキングにノミネートされます</p>
+      <p class="theme-desc" v-if="isJoinTheme">　※来週の位（ランキング）に名乗りを上げられます</p>
       <p class="theme-desc" v-else>※お題には参加せず、通常の投稿として扱われます</p>
-    </div>
-    <div class="text-wrapper">
-      <p class="form-text" @click="goDescription">初めての方はこちら</p>
     </div>
     <form @submit.prevent>
       <div class="input-sections">
@@ -200,7 +295,7 @@ const genre_predict = async () => {
             :maxlength="[10, 15, 10][index]"
             class="main-input"
             @input="phrase.text = 
-                    phrase.text.replace(/[^\u3041-\u3096\u30A1-\u30F6\u4E00-\u9FFF々。、「」・！？]/g, '')"
+                    phrase.text.replace(/[^\u3041-\u3096\u30A1-\u30F6\u4E00-\u9FFFーー～々。、「」・！？]/g, '')"
           />
 
           <!-- ▼ ルビ編集エリア (解析結果がある場合のみ表示) ▼ -->
@@ -215,7 +310,7 @@ const genre_predict = async () => {
                   v-if="item.ruby !== null" 
                   v-model="item.ruby" 
                   class="ruby-input"
-                  @input="item.ruby = item.ruby.replace(/[^\u3041-\u3096]/g, '')"
+                  @input="item.ruby = item.ruby.replace(/[^\u3041-\u3096ーー]/g, '')"
                 >
                 <span v-else class="no-ruby">-</span>
               </div>
@@ -224,7 +319,7 @@ const genre_predict = async () => {
         </div>
       </div>
 
-      <!--ジャンル手動入力ボタン-->
+      <!--種別手動入力ボタン-->
       <div class="genre_set_group">
         <button
           type="button"
@@ -233,20 +328,20 @@ const genre_predict = async () => {
             show_genres = !show_genres;
             selectedGenre = null
           "
-          :class="{ active: show_genres }"
+          :class="[{ active: show_genres }, 'dark-btn']"
         >
-          ジャンルを手動入力する
+          種別を手動入力する
         </button>
       </div>
 
-      <!-- ジャンル選択ボタン -->
+      <!-- 種別選択ボタン -->
       <div v-if="show_genres === true">
         <div class="genre-buttons">
           <button
             v-for="genre in genres"
             :key="genre.id"
             type="button"
-            :class="{ active: selectedGenre === genre.id }"
+            :class="[{ active: selectedGenre === genre.id }, common-btn]"
             @click="selectedGenre = genre.id"
           >
             {{ genre.name }}
@@ -255,14 +350,14 @@ const genre_predict = async () => {
       </div>
 
       <div class="preview-section">
-        <h2>プレビュー</h2>
+        <h2>下見</h2>
         <p class="preview-note">※実際の表示イメージ</p>
         <!-- isPreview="true" を渡してボタン等を隠す -->
         <PostCard :post="previewPost" :isPreview="true" />
       </div>
 
       <!-- 投稿ボタン -->
-      <button type="button" class="submit-btn"@click="handlePost">投稿</button>
+      <button type="button" class="submit-btn common-btn"@click="handlePost">投稿</button>
     </form>
 
     <p v-if="message">{{ message }}</p>
@@ -290,7 +385,6 @@ const genre_predict = async () => {
 }
 .form-text {
   display: inline-block;
-  color: #3366bb;
   cursor: pointer;
   font-size: 0.9em;
 }
@@ -375,29 +469,8 @@ const genre_predict = async () => {
   height: 40px; /* 全ボタン共通の高さ */
   padding: 0;
   font-size: 0.9em;
-  border-radius: 8px;
-  border: 1px solid #007bff;
-  background-color: white;
-  cursor: pointer;
   margin-bottom: 50px;
   transition: 0.2s;
-}
-
-#genre_set_button:hover {
-  background-color: #007bff;
-  color: white;
-  transform: scale(1.1);
-}
-
-#genre_set_button.active {
-  height: 40px; /* 全ボタン共通の高さ */
-  padding: 0;
-  font-size: 0.9em;
-  border-radius: 8px;
-  background-color: #007bff;
-  color: white;
-  cursor: pointer;
-  margin-bottom: 50px;
 }
 
 .genre-buttons {
@@ -411,27 +484,26 @@ const genre_predict = async () => {
   padding: 0;
   font-size: 0.9em;
   border-radius: 8px;
-  border: 1px solid #007bff;
+  border: 1px solid #1F6F78;
   background-color: white;
   cursor: pointer;
   transition: 0.4s; /* ← 回転も滑らかにするため少し長めに */
   transform-origin: center center; /* 中央を基準に回転・拡大 */
 }
 
+.genre-buttons button:active {
+  transform: none;
+}
+
 .genre-buttons button.active {
-  background-color: #007bff;
-  color: white;
   font-size: 1.1em;
 
   /* 🔥 1回転+拡大 */
   transform: rotate(360deg) scale(1.1);
-}
-
-.genre-buttons button:hover {
-  background-color: #007bff;
+  background-color: #1F6F78;
   color: white;
+  font-weight: bold;
 }
-
 /* プレビューエリア */
 .preview-section {
   margin-bottom: 30px;
@@ -457,18 +529,9 @@ const genre_predict = async () => {
   width: 100%;
   padding: 14px;
   font-size: 1.1em;
-  background-color: #007bff;
-  color: white;
-  border: none;
   border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
   transition: background-color 0.2s;
 }
-.submit-btn:hover {
-  background-color: #0056b3;
-}
-
 .message-display {
   margin-top: 15px;
   padding: 10px;
@@ -528,5 +591,98 @@ const genre_predict = async () => {
   width: 18px;
   height: 18px;
   cursor: pointer;
+  accent-color: #6c8a4a;
+}
+
+/* 右上に？ボタン */
+.help-btn {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  font-weight: 700;
+  font-size: 22px;
+  justify-content: center;
+  background-color: #5c7b45;
+  color: white;
+  z-index: 2000;
+}
+
+.close-btn {
+  position: absolute;
+  top: 20px;
+  right: 18px;
+  border: none;
+  justify-content: center;
+}
+
+/* モーダル背景 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 3000;
+}
+
+/* モーダル本体 */
+.modal-box {
+  position: relative;
+  width: 85%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.2);
+  animation: fadein 0.2s;
+}
+
+/* テキスト領域 */
+.modal-content {
+  min-height: 140px;
+  margin-bottom: 20px;
+}
+
+/* フッター */
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* 戻る / 次へ ボタン */
+.nav-btn {
+  padding: 2px 10px;
+  border: none;
+  border-radius: 8px;
+  background: #eee;
+  font-size: 16px;
+}
+
+.nav-btn:disabled {
+  opacity: 0.4;
+}
+
+/* アニメーション */
+@keyframes fadein {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.underline {
+  text-decoration: underline;
+  text-decoration-color: #aaa;
+}
+
+.underline-gray {
+  text-decoration: underline;
+  text-decoration-color: #ddd;
 }
 </style>

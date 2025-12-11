@@ -22,7 +22,7 @@ const handleRegister = async () => {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || '登録に失敗しました。');
-    message.value = '登録に成功しました！ログインページに移動します。';
+    message.value = '登録に成功しました！席入り画面に移動します。';
     setTimeout(() => router.push('/login'), 2000);
   } catch (err) {
     throw err;
@@ -47,7 +47,7 @@ const handleRegisterWithErrorCheck = async () => {
 <template>
   <div class="form-container">
     <h1>入門</h1>     <form @submit.prevent="handleRegisterWithErrorCheck">       <div>
-        <label for="username">ユーザー名</label>         <input type="text" id="username" v-model="username" required />
+        <label for="username">俳号</label>         <input type="text" id="username" v-model="username" required :maxlength="7" @input="username = username.replace(/[^\u3041-\u3096\u30A1-\u30F6\u4E00-\u9FFFーー々・]/g, '')"/>
       </div>
       <div>
         <label for="email">メールアドレス</label>         <input type="email" id="email" v-model="email" required />
@@ -74,10 +74,6 @@ const handleRegisterWithErrorCheck = async () => {
     max-width: 400px; 
     margin: 60px auto; 
     padding: 40px 30px; 
-    background-color: #ffffff;
-    border: 1px solid #dcdcdc;
-    border-radius: 10px; 
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); 
 }
 
 h1 { 

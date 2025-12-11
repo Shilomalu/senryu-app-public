@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import analyzeText from '../views/CreatePostView.vue'
 
 const props = defineProps({
   postId: {
@@ -44,7 +45,7 @@ async function handleSubmit(e) {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}))
-      const msg = data.error || '返信の投稿に失敗しました'
+      const msg = data.error || '返句の投稿に失敗しました'
       throw new Error(msg)
     }
 
@@ -54,8 +55,8 @@ async function handleSubmit(e) {
     content3.value = ''
     emit('reply-posted')
   } catch (error) {
-    console.error('返信投稿エラー:', error)
-    alert(error.message || '返信の投稿に失敗しました')
+    console.error('返句投稿エラー:', error)
+    alert(error.message || '返句の投稿に失敗しました')
   } finally {
     isSubmitting.value = false
   }
@@ -65,9 +66,9 @@ async function handleSubmit(e) {
 <template>
   <form @submit="handleSubmit" class="reply-form">
     <div class="reply-inputs">
-      <input v-model="content1" type="text" placeholder="上の句（五）" maxlength="10">
-      <input v-model="content2" type="text" placeholder="中の句（七）" maxlength="15">
-      <input v-model="content3" type="text" placeholder="下の句（五）" maxlength="10">
+      <input v-model="content1" type="text" placeholder="上の句（五）" maxlength="10" @input="content1 = content1.replace(/[^\u3041-\u3096\u30A1-\u30F6\u4E00-\u9FFFーー～々。、「」・！？]/g, '')">
+      <input v-model="content2" type="text" placeholder="中の句（七）" maxlength="15" @input="content2 = content2.replace(/[^\u3041-\u3096\u30A1-\u30F6\u4E00-\u9FFFーー～々。、「」・！？]/g, '')">
+      <input v-model="content3" type="text" placeholder="下の句（五）" maxlength="10" @input="content3 = content3.replace(/[^\u3041-\u3096\u30A1-\u30F6\u4E00-\u9FFFーー～々。、「」・！？]/g, '')">
     </div>
     <div class="button-container">
       <button 
@@ -75,7 +76,7 @@ async function handleSubmit(e) {
         class="submit-button" 
         :disabled="isSubmitting || (!content1.trim() && !content2.trim() && !content3.trim())"
       >
-        {{ isSubmitting ? '送信中...' : '返信' }}
+        {{ isSubmitting ? '送信中...' : '返句' }}
       </button>
     </div>
   </form>

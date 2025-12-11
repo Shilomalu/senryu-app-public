@@ -76,10 +76,6 @@ const handleLoginWithErrorCheck = async () => {
     max-width: 400px; 
     margin: 60px auto; /* 上下の余白を増やして中央に配置 */
     padding: 40px 30px;  /* パディングを増やしてゆったりと */
-    background-color: #ffffff; /* 白い紙のような背景 */
-    border: 1px solid #dcdcdc;
-    border-radius: 10px; 
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* 影を加えて立体感を出す */
 }
 
 h1 { 

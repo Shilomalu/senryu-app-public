@@ -5,7 +5,7 @@
       </div>
     <div class="dm-footer">
       <small class="timestamp">{{ formatDate(props.message.created_at) }}</small>
-      <small class="isread" v-if="!props.message.is_read && props.message.senderFlag">未読</small>
+      <div class="isread-wrapper"><small class="isread" v-if="!props.message.is_read && props.message.senderFlag">未読</small></div>
     </div>
   </div>
 </template>
@@ -62,6 +62,11 @@ const props = defineProps({
   width: 100%;
   display: flex;
   justify-content: space-between; /* 左に名前、右に最新メッセージ */
+  display: block; /* small要素をブロックレベルに変更 */
+}
+
+.isread-wrapper {
+  text-align: center;
 }
 
 .isread {

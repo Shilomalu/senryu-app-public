@@ -8,13 +8,13 @@
         class="follow-button" 
         @click="toggleFollow"
         :class="{ 'follow-blue': !isFollowing }"  >
-        <span v-if="isFollowing">フォロー中</span>
-        <span v-else>フォロー</span>
+        <span v-if="isFollowing">文友</span>
+        <span v-else>文友になる</span>
       </button>
     </div>
 
-    <button class="show-followers-btn" @click="goToFollowersList">
-      フォロワー
+    <button class="show-followers-btn common-btn" @click="goToFollowersList">
+      文友
       <span class="count">{{ followerCount }}</span>
     </button>
 
@@ -48,7 +48,7 @@ const fetchFollowStatus = async () => {
     isFollowing.value = data.following;
     followerCount.value = data.count;
   } catch (err) {
-    console.error('フォロー状態取得失敗:', err);
+    console.error('文友状態取得失敗:', err);
   }
 };
 
@@ -140,27 +140,15 @@ watch(() => props.targetUserId, fetchFollowStatus);
 }
 
 .show-followers-btn {
-  background-color: #007bff; 
-  color: #ffffff;
-  border: none;
   padding: 4px 8px;
   font-size: 0.8rem;
   border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s ease;
   white-space: nowrap;
-  
   width: 110px; 
   box-sizing: border-box;
-  
   display: flex; 
   align-items: center; 
   justify-content: center; 
-}
-
-.show-followers-btn:hover {
-  background-color: #0056b3; 
 }
 
 .count {

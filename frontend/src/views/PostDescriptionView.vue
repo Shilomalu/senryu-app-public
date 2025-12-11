@@ -8,6 +8,7 @@ const returnPost = () => {
 </script>
 
 <template>
+  <div class="form-container">
   <details class="accordion">
   <summary class="accordion_summary">投稿手順</summary>
   <ol class="items">
@@ -52,11 +53,15 @@ const returnPost = () => {
     <li></li>
   </ul>
   </details>
-
+  </div>
 </template>
 
 
 <style scoped>
+.form-container {
+  text-align: left;
+}
+
 .index{
   transition: 1s;
   margin-top: 10px;

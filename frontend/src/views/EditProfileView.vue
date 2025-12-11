@@ -9,20 +9,21 @@ const username = ref('');
 const email = ref('');
 const profile_text = ref('');
 
-const token = localStorage.getItem('token');
+const token = ref(localStorage.getItem('token'));
 
 // 初期値を API から取得
 const loadProfile = async () => {
   try {
     const res = await axios.get('/api/users/me', {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token.value}` }
     });
     username.value = res.data.username;
     email.value = res.data.email; 
     profile_text.value = res.data.profile_text;
   } catch (err) {
     console.error(err);
-    alert('プロフィール取得に失敗しました');
+    alert('句歴取得に失敗しました');
+    router.push('/login')
   }
 };
 
@@ -35,9 +36,9 @@ const saveProfile = async () => {
       username: username.value,
       profile_text: profile_text.value,
     }, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token.value}` }
     });
-    alert('プロフィールを更新しました');
+    alert('句歴を更新しました');
     router.push('/profile');
   } catch (err) {
     console.error(err);
@@ -52,31 +53,26 @@ const cancel = () => {
 </script>
 
 <template>
-  <div class="profile-edit-container">
-    <h2>プロフィール編集</h2>
+  <div class="form-container">
+    <h2>句歴編集</h2>
     <div class="form-group">
-      <label>ユーザー名</label>
-      <input v-model="username" type="text" />
+      <label>俳号</label>
+      <input v-model="username" type="text" :required :maxlength="7" @input="username = username.replace(/[^\u3041-\u3096\u30A1-\u30F6\u4E00-\u9FFFーー々・]/g, '')">
     </div>
     <div class="form-group">
       <label>自己紹介</label>
       <textarea v-model="profile_text" rows="4" class="profile-textarea"></textarea>
     </div>
     <div class="button-group">
-      <button @click="saveProfile" class="save-btn">保存</button>
-      <button @click="cancel" class="cancel-btn">キャンセル</button>
+      <button @click="saveProfile" class="save-btn common-btn">保存</button>
+      <button @click="cancel" class="cancel-btn">取り消し</button>
     </div>
   </div>
 </template>
 
 <style scoped>
-.profile-edit-container {
+.form-container {
   max-width: 500px;
-  margin: 2rem auto;
-  padding: 1.5rem;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 h2 {
@@ -121,12 +117,12 @@ input, textarea {
 }
 
 .save-btn {
-  background-color: #007bff;
-  color: #fff;
+  /* background-color: #007bff;
+  color: #fff; */
   padding: 0.5rem 1.2rem;
-  border: none;
+  /* border: none; */
   border-radius: 4px;
-  cursor: pointer;
+  /* cursor: pointer; */
 }
 
 .cancel-btn {
