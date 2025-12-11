@@ -594,7 +594,7 @@ app.get('/api/batch/calculate-ranking', async (req, res) => {
   }
 
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().split('T')[0];
     
     // 集計済みのIDを取得
     const { data: existings } = await supabase.from('ranking_results').select('weekly_theme_id');
