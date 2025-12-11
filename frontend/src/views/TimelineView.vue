@@ -146,8 +146,10 @@ const parsePosts = (data) => {
     return {
       ...post,
       ruby_content: parsedRuby,
-      likesCount: Number(post.likesCount ?? 0),
+      likesCount: Number(post.likesCount ?? post.fixed_likes_count ?? 0),
+      likedUserIds: post.likedUserIds || [],
       isLiked: Boolean(post.isLiked),
+      repliesCount: Number(post.repliesCount ?? 0),
     };
   });
 };
