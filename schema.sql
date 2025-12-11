@@ -133,10 +133,10 @@ INSERT INTO genres (id, name) VALUES
 (2, '夏'),
 (3, '秋'),
 (4, '冬'),
-(5, 'スポーツ'),
+(5, '趣味'),
 (6, '食べ物'),
 (7, '学校'),
-(8, '旅行');
+(8, 'その他');
 
 -- シーケンスを調整（ID指定でINSERTしたため、次の自動採番がずれないようにする）
 SELECT setval('genres_id_seq', (SELECT MAX(id) FROM genres));
