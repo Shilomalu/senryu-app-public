@@ -574,44 +574,53 @@ app.get('/api/themes/ranking/latest', async (req, res) => {
 });
 
 // 3. ランキング集計・確定API (バッチ処理用)
-app.post('/api/batch/calculate-ranking', async (req, res) => {
+// 3. ランキング集計・確定API (Supabase版)
+// ★重要: Vercel Cron用に 'post' ではなく 'get' にします
+app.get('/api/batch/calculate-ranking', async (req, res) => {
+  
+  // セキュリティチェック (Vercel Cronからのアクセスか確認)
+  const authHeader = req.headers['authorization'];
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   try {
     const today = new Date().toISOString().split('T')[0];
     
-    // 集計対象（今日が終わったばかりの回、かつ未集計のもの）
-    // SupabaseではNOT INサブクエリが難しいので、まずは集計済みIDを取得
+    // 集計済みのIDを取得
     const { data: existings } = await supabase.from('ranking_results').select('weekly_theme_id');
     const existingIds = existings.map(e => e.weekly_theme_id);
 
+    // 集計対象のお題を検索
     let query = supabase
         .from('weekly_themes')
         .select('id')
-        .lt('end_date', today)
+        .lt('end_date', today) // 終了日が今日より前
         .order('end_date', { ascending: false })
         .limit(1);
     
+    // ★修正: 配列をそのまま渡すのが正しい書き方です
     if (existingIds.length > 0) {
-        query = query.not('id', 'in', `(${existingIds.join(',')})`);
+        query = query.not('id', 'in', existingIds);
     }
 
     const { data: targetRows } = await query;
 
     if (!targetRows || targetRows.length === 0) {
-      return res.json({ message: '集計対象が見つかりませんでした' });
+      return res.json({ message: '集計対象が見つかりませんでした（すべて集計済みか、終了したお題がありません）' });
     }
 
     const targetThemeId = targetRows[0].id;
 
-    // 該当テーマの投稿をいいね順に取得
+    // 該当テーマの投稿をいいね順に取得 (TOP10)
     const { data: posts } = await supabase
         .from('posts')
-        .select('id, likes_num') // likes_numカラムがある前提（またはlikesテーブルカウント）
-        // 元のSQLでは `posts.likes_num` を使っているので、postsテーブルに `likes_num` カラムがある必要があります。
-        // なければ `likes` テーブルをカウントする必要がありますが、ここではカラムがあると仮定します。
+        .select('id, likes_num') 
         .eq('weekly_theme_id', targetThemeId)
         .order('likes_num', { ascending: false })
         .limit(10);
 
+    // 保存処理
     if (posts && posts.length > 0) {
         const results = posts.map((p, index) => ({
             weekly_theme_id: targetThemeId,
@@ -619,10 +628,13 @@ app.post('/api/batch/calculate-ranking', async (req, res) => {
             rank: index + 1,
             fixed_likes_count: p.likes_num || 0
         }));
-        await supabase.from('ranking_results').insert(results);
+        
+        const { error } = await supabase.from('ranking_results').insert(results);
+        if (error) throw error;
     }
 
-    res.json({ message: `ID:${targetThemeId} のランキングを確定しました！` });
+    res.json({ message: `お題ID:${targetThemeId} のランキングを確定しました！` });
+
   } catch (err) {
     console.error('集計エラー:', err);
     res.status(500).json({ error: '集計処理に失敗しました' });

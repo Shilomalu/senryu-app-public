@@ -10,5 +10,11 @@
     "server.js": {
       "includeFiles": "{model_data.json,dict/**}"
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/batch/calculate-ranking",
+      "schedule": "0 15 * * *"
+    }
+  ]
 }
