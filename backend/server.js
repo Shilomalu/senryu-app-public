@@ -1085,7 +1085,7 @@ app.get('/api/users/:id/followers/status', async (req, res) => {
 
     // フォロワー一覧
     const { data: followers } = await supabase.from('follows')
-        .select('users (id, username)').eq('followed_id', targetUserId).order('created_at', { ascending: false });
+        .select('users!follows_follower_id_fkey (id, username)').eq('followed_id', targetUserId).order('created_at', { ascending: false });
 
     res.json({
       following: isFollowing && isFollowing.length > 0,
@@ -1102,7 +1102,7 @@ app.get('/api/users/:id/followers', async (req, res) => {
   try {
     const targetUserId = req.params.id;
     const { data } = await supabase.from('follows')
-        .select('users (id, username)').eq('followed_id', targetUserId).order('created_at', { ascending: false });
+        .select('users!follows_follower_id_fkey (id, username)').eq('followed_id', targetUserId).order('created_at', { ascending: false });
     res.json(data ? data.map(f => f.users) : []);
   } catch (error) {
     res.status(500).json({ error: 'フォロワー一覧の取得に失敗しました' });
