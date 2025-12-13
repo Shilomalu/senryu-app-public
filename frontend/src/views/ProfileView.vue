@@ -236,18 +236,17 @@ const goEdit = () => {
 
       <div class="icon-wrapper" @click="openIconModal">
         <img :src="icons[icon].src" class="profile-icon" />
-        <div class="icon-edit-overlay">
-           ✎
-        </div>
+        <h3 style="color: #888;">現在の姿</h3>
       </div>
 
+      <br></br>
       <br></br>
 
       <div class="profile-info">
         <ul>
-          <li><strong>俳号：</strong> {{ username }}</li>
+          <li style="font-size: 1.2rem;"><strong>俳号：</strong> {{ username }}</li>
           <!--<li><strong>メールアドレス：</strong> {{ email }}</li> -->
-          <li><strong>添え書き：</strong>{{ profile_text }}</li>
+          <li style="font-size: 1.2rem;"><strong>添え書き：</strong>{{ profile_text }}</li>
         </ul>
       </div>
     
@@ -268,27 +267,29 @@ const goEdit = () => {
       </div>
 
       <br></br>
-      <h3 style="text-align: center;">過去の投稿一覧</h3>
+      <h3 style="text-align: center; font-size: 1.2rem;">過去の投稿一覧</h3>
 
 
       <section class="user-posts">
-        <div class="posts-grid">
-          <PostCard
-            v-for="post in posts"
-            :key="post.id"
-            :post="post"
-            :current-user="{ id: userId }"
-            @delete="handleDelete"
-          />
-        </div>
+        <ul class="posts-grid">
+          <li v-for="post in posts" :key="post.id">
+            <PostCard
+              :post="post"
+              :current-user="{ id: userId }"
+              @delete="handleDelete"
+            />
+          </li>
+        </ul>
 
-        <div v-if="!posts.length" class="no-posts">投稿がまだありません</div>
+        <div v-if="!posts.length" class="no-posts">
+          投稿がまだありません
+        </div>
       </section>
     </div>
 
     <div v-else class="auth-prompt">
-      <h2>席入り（ログイン）が必要です</h2>
-      <p>プロフィールを閲覧・編集するには、席入りまたは入門をしてください。</p>
+      <h2 style="color: black;">席入り（ログイン）が必要です</h2>
+      <p style="color: black;">句歴（プロフィール）を閲覧・編集するには<br></br>席入りまたは入門をしてください。</p>
       <div class="button-group">
         <RouterLink to="/login" class="button common-btn">席入り画面へ</RouterLink>
         <RouterLink to="/register" class="button common-btn">入門画面へ</RouterLink>
@@ -345,11 +346,12 @@ const goEdit = () => {
 
 <style scoped>
 .form-container {
-  width: 400px;
-  max-width: 100%;
+  width: 100%;
   margin: 0 auto;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  color: #000;
 }
+
 
 .profile-item {
   display: flex;
@@ -390,10 +392,10 @@ const goEdit = () => {
 }
 
 .icon-wrapper {
-  position: relative;
   width: 150px;
   height: 150px;
   cursor: pointer;
+  margin: 0 auto;
 }
 
 .icon-edit-overlay {
@@ -454,14 +456,17 @@ const goEdit = () => {
 }
 
 .user-posts {
+  width: 100%;
   flex-grow: 1;
   display: flex;
   flex-direction: row;
+  gap: 1.5rem;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: auto;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
-  padding-top: 2rem;
+  padding-top: 20px;
+  padding-bottom: 60px;
 }
 
 .user-posts::-webkit-scrollbar {
@@ -471,16 +476,27 @@ const goEdit = () => {
 .posts-grid {
   display: flex;
   flex-direction: row;
-  gap: 1rem;
+  gap: 1.5rem;
+  padding: 0;
+  margin: 0;
 }
 
 .posts-grid li {
   list-style: none;
-  flex: 0 0 250px;
-  width: 80%;
-  max-width: 100%;
-  scroll-snap-align: start;
+  flex: 0 0 80vw;
+  width: 100%;
+  max-width: 400px;
+  scroll-snap-align: center;
+  height: auto;
 }
+
+.no-posts {
+  width: 100%;
+  text-align: center;
+  padding: 20px;
+  color: #888;
+}
+
 
 .favorite-true {
   text-align: center;

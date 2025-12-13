@@ -4,13 +4,14 @@ import TimelineView from '../views/TimelineView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import LoginView from '../views/LoginView.vue'
 import CreatePostView from '../views/CreatePostView.vue'
+import CopyCreatePostView from '../views/CopyCreatePostView.vue'
 import PostDetailView from '../views/PostDetailView.vue'
+import CopyPostDetailView from '../views/CopyPostDetailView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import SearchView from '../views/SearchView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import EditProfileView from '../views/EditProfileView.vue'
-import UserProfile from '../views/UserProfileView.vue';
-import PostDescriptionView from '../views/PostDescriptionView.vue'
+import UserProfile from '../views/UserProfileView.vue'
 import DirectFumiView from '@/views/DirectFumiView.vue'
 import DirectFumiPage from '@/components/DirectFumiPage.vue'
 import Notification from '@/components/Notification.vue'
@@ -35,13 +36,7 @@ const router = createRouter({
     {
       path: '/post',
       name: 'post',
-      component: CreatePostView
-    },
-    // 追加: 投稿可能な文字の詳細説明ページ
-    {
-      path: '/post/description',
-      name: 'post-description',
-      component: PostDescriptionView
+      component: CopyCreatePostView
     },
     // 4. 自分のプロフィールページ（タブバーから飛ぶ用）
     {
@@ -112,7 +107,7 @@ const router = createRouter({
     {
       path: '/posts/:id', // ← :id はどの投稿かを示すための変数
       name: 'post-detail',
-      component: PostDetailView
+      component: CopyPostDetailView
     },
     // 10. 404 Not Foundページ（キャッチオールルート）
     // どのURLにも一致しなかった場合に表示される

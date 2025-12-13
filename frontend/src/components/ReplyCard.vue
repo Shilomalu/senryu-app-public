@@ -1,6 +1,36 @@
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { jwtDecode } from 'jwt-decode'
+
+// ★アイコンリソースのインポート（PostCardと同じ設定）
+import icon0 from "@/assets/icons/kajinsample0.jpeg"
+import icon1 from "@/assets/icons/kajinsample1.jpeg"
+import icon2 from "@/assets/icons/kajinsample2.jpeg"
+import icon3 from "@/assets/icons/kajinsample3.jpeg"
+import icon4 from "@/assets/icons/kajinsample4.jpeg"
+import icon5 from "@/assets/icons/kajinsample5.jpeg"
+import icon6 from "@/assets/icons/kajinsample6.jpeg"
+import icon7 from "@/assets/icons/kajinsample7.jpeg"
+import icon8 from "@/assets/icons/kajinsample8.jpeg"
+import icon9 from "@/assets/icons/kajinsample9.jpeg"
+import icon10 from "@/assets/icons/kajinsample10.jpeg"
+import icon11 from "@/assets/icons/kajinsample11.jpeg"
+
+const icons = [
+  { id: 0, src: icon0 },
+  { id: 1, src: icon1 },
+  { id: 2, src: icon2 },
+  { id: 3, src: icon3 },
+  { id: 4, src: icon4 },
+  { id: 5, src: icon5 },
+  { id: 6, src: icon6 },
+  { id: 7, src: icon7 },
+  { id: 8, src: icon8 },
+  { id: 9, src: icon9 },
+  { id: 10, src: icon10 },
+  { id: 11, src: icon11 }
+];
 
 const props = defineProps({
   reply: {
@@ -14,6 +44,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['reply-deleted'])
+const router = useRouter()
 
 const canDelete = computed(() => {
   const token = localStorage.getItem('token')
@@ -26,13 +57,11 @@ const canDelete = computed(() => {
   }
 })
 
-// ★追加: 本文をスペースで区切って配列にする
-// (例) "古池や 蛙飛び込む 水の音" -> ["古池や", "蛙飛び込む", "水の音"]
-const poemLines = computed(() => {
-  if (!props.reply.content) return []
-  // 全角スペースまたは半角スペースで分割し、空文字を除去
-  return props.reply.content.trim().split(/[\s　]+/).filter(line => line.length > 0)
-})
+const goToProfile = () => {
+  if (props.reply.user_id) {
+    router.push(`/users/${props.reply.user_id}`)
+  }
+}
 
 function formatDate(dateString) {
   const date = new Date(dateString)
@@ -66,7 +95,11 @@ async function handleDelete() {
 <template>
   <div class="reply-card">
     <div class="card-header">
-      <span class="author-name">👤 {{ reply.authorName }}</span>
+      <button class="author-btn" @click="goToProfile">
+        <img :src="icons[reply.icon_index]?.src || icons[0].src" class="profile-icon" />
+        <span class="author-name">{{ reply.authorName || '名無し' }}</span>
+      </button>
+
       <button 
         v-if="canDelete" 
         class="delete-btn" 
@@ -77,15 +110,19 @@ async function handleDelete() {
       </button>
     </div>
 
-    <div class="poem-container">
-      <div class="poem-text">
-        <p 
-          v-for="(line, index) in poemLines" 
-          :key="index" 
-          class="poem-line"
-        >
-          {{ line }}
-        </p>
+    <div class="poem-wrapper">
+      <div class="poem">
+        <template v-if="reply.ruby_content && reply.ruby_content.length">
+          <div v-for="(phrase, pIndex) in reply.ruby_content" :key="pIndex" class="post-line">
+            <span v-for="(ruby_data, wIndex) in phrase" :key="wIndex" class="word-unit">
+              <ruby>{{ ruby_data.word }}<rt>{{ ruby_data.ruby }}</rt></ruby>
+            </span>
+          </div>
+        </template>
+        
+        <template v-else>
+           <p class="post-line">{{ reply.content }}</p>
+        </template>
       </div>
     </div>
 
@@ -97,8 +134,8 @@ async function handleDelete() {
 
 <style scoped>
 .reply-card {
-  width: 180px;
-  height: 340px;
+  width: 180px;   /* 幅を固定（変更なし） */
+  height: 340px;  /* 高さを固定（変更なし） */
   background-color: #fff;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -108,27 +145,47 @@ async function handleDelete() {
   flex-direction: column;
   box-sizing: border-box;
   margin-right: 10px;
-  padding: 12px;
+  padding: 10px;
   position: relative;
 }
 
+/* ヘッダー周り */
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 30px;
-  border-bottom: 1px solid #f0f0f0;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
+  height: 36px; /* アイコンサイズに合わせて調整 */
+}
+
+.author-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+}
+
+.profile-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  flex-shrink: 0;
 }
 
 .author-name {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: bold;
   color: #555;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 120px;
+  max-width: 90px;
 }
 
 .delete-btn {
@@ -144,44 +201,60 @@ async function handleDelete() {
   color: #dc3545;
 }
 
-.poem-container {
+/* 川柳表示エリア */
+.poem-wrapper {
   flex-grow: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  width: 100%;
   background-color: #fafafa;
   border-radius: 4px;
-  padding: 10px;
-  overflow: hidden; /* はみ出し防止 */
-}
-
-.poem-text {
-  writing-mode: vertical-rl; /* 縦書き・右から左へ改行 */
-  text-orientation: upright;
-  font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
-  font-size: 1.1rem;
-  line-height: 1.8;
-  color: #333;
+  padding: 0.5rem;
+  box-sizing: border-box;
   
-  height: 100%;
-  width: 100%;
-  
-  /* フレックスボックスで配置調整 */
+  /* 中央揃え設定 */
   display: flex;
-  flex-direction: column; /* 縦書きモードでのcolumnは「右から左」への並び順になります */
-  justify-content: center; /* 左右中央（縦書きモードの主軸方向） */
-  align-items: center;     /* 上下中央（縦書きモードの交差軸方向） */
-  flex-wrap: wrap;         /* 長すぎる場合に折り返しを許可するかどうか */
-  gap: 0.8rem;             /* 行間の隙間 */
+  justify-content: center; /* 左右中央（行の配置） */
+  align-items: center;     /* 上下中央（コンテンツ） */
+  overflow: hidden;
 }
 
-/* ★追加: 各行のスタイル */
-.poem-line {
-  margin: 0;
-  padding: 0;
-  white-space: nowrap; /* 行内での折返しを禁止 */
+/* 川柳本文 */
+.poem {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  font-family: "Hiragino Mincho ProN", serif;
+  font-size: 16px; /* 幅180pxに収まるサイズ */
+  line-height: 1.8;
+  
+  display: flex;
+  flex-direction: column;
+  align-items: center;    /* 各行を中央揃え */
+  justify-content: center;
+  height: 100%;
 }
 
+.post-line {
+  margin: 0 0 0.4rem 0;
+  text-align: center;
+  color: #000;
+  white-space: nowrap;
+}
+
+.word-unit {
+  display: inline-block;
+}
+
+ruby {
+  ruby-position: over;
+}
+
+rt {
+  font-size: 0.5em;
+  color: #555;
+  text-align: center;
+  margin-bottom: -0.4em;
+}
+
+/* フッター */
 .card-footer {
   height: 20px;
   display: flex;
@@ -191,7 +264,7 @@ async function handleDelete() {
 }
 
 .date {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: #aaa;
 }
 </style>

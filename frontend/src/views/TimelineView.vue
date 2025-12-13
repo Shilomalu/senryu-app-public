@@ -134,7 +134,6 @@ const fetchTimeline = async (isInitialLoad = false) => {
 const parsePosts = (data) => {
   if (!Array.isArray(data)) return [];
   return data.map(post => {
-    console.log(`ID:${post.id} のいいねデータ確認:`, post.likesCount, post.fixed_likes_count);
     let parsedRuby = [];
     try {
         if (typeof post.ruby_content === 'string') {
@@ -384,7 +383,8 @@ const goHome = async () => {
 }
 
 .tab-btn {
-  height: 60px; 
+  height: 7vh; 
+  min-height: 50px;
   background: #f8f8f8;
   border: 2px solid transparent; /* 枠線のスペースを確保 */
   border-radius: 8px;           /* 丸角にする場合 */
@@ -400,7 +400,7 @@ const goHome = async () => {
 }
 
 .tab-btn.active {
-  height: 60px; 
+  /* height: 60px;  */
   background: #1F6F78;
   border: 2px solid #1F6F78;  /* 枠線も同色で囲む */
   color: #fff;
@@ -412,7 +412,7 @@ const goHome = async () => {
 }
 
 .tab-btn:not(.active):hover {
-  height: 60px; 
+  /* height: 60px;  */
   background: #eee;
   font-size: 1.2rem;
   transform: scale(1.0);
@@ -523,13 +523,13 @@ const goHome = async () => {
 
 /* --- タイムライン周り --- */
 .timeline-content {
-  padding-top: 80px; /* ヘッダー＋バッジの分 */
+  padding-top:180px; /* ヘッダー＋バッジの分 */
   width: 100%;
-  height: 100vh;
+  /* height: 100vh; */
   display: flex;
   flex-direction: column; /* バッジとリストを縦に */
   box-sizing: border-box;
-  padding-bottom: 80px;
+  /* padding-bottom: 80px; */
 }
 
 .timeline-content li {
@@ -557,17 +557,24 @@ const goHome = async () => {
   overflow-x: auto;
   overflow-y: auto;
   scroll-snap-type: x mandatory;
-  padding: 0 1rem 1rem 1rem;
+  padding: 4vh;
   scrollbar-width: none;
-  padding-bottom: 200px;
 }
+
 .timeline::-webkit-scrollbar { display: none; }
 .timeline li {
   list-style: none;
   flex: 0 0 auto;
-  width: 80%;
+  width: 100%;
   max-width: 500px;
   scroll-snap-align: center;
+  height: auto;
+}
+
+@media (max-width: 600px) {
+  .timeline {
+    padding-top: 10vh;
+  }
 }
 
 /* その他スタイル */
@@ -578,7 +585,7 @@ const goHome = async () => {
   padding: 0 1.2rem;
 }
 .load-more-btn:disabled { opacity: 0.6; }
-.no-more-message { color: #555; font-size: 0.9rem; writing-mode: vertical-rl; }
+.no-more-message { color: #555; font-size: 0.9rem; writing-mode: vertical-rl; padding-top: 120px; padding-left: 20px;}
 .fade-slide-enter-from { opacity: 0; transform: translateY(20px); }
 .fade-slide-enter-active { transition: all 0.5s ease; }
 

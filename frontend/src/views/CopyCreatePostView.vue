@@ -2,21 +2,22 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import axios from 'axios'
 import PostCard from '../components/PostCard.vue'
-
+import { analyzeText } from '../composables/useAnalyzeText.js'
+import { useHandlePost } from '../composables/useHandlePost.js'
 
 //こんな感じでJSONでdataの内容を受け取る予定、例[{word: "古池", ruby: "ふるいけ"}, {word: "や", ruby: null}]
 const phrases = reactive([
   { text: '', ruby_data: [] },
   { text: '', ruby_data: [] },
   { text: '', ruby_data: [] },
-])
+]);
 
-const isJoinTheme = ref(true)
-const selectedGenre = ref(null)
-const message = ref('')
-const currentTheme = ref(null)
-const show_genres = ref(false)
-let genreAbortController = null
+const isJoinTheme = ref(true);
+const selectedGenre = ref(null);
+const message = ref('');
+const currentTheme = ref(null);
+const show_genres = ref(false);
+let genreAbortController = null;
 const show = ref(false);
 const page = ref(1);
 const totalPages = 4;
@@ -30,7 +31,14 @@ const genres = [
   { id: 6, name: '＃食べ物' },
   { id: 7, name: '＃学校' },
   { id: 8, name: '＃その他' },
-]
+];
+
+const { handlePost } = useHandlePost(
+  selectedGenre,
+  currentTheme,
+  isJoinTheme,
+  message
+)
 
 onMounted(async () => {
   try {
@@ -41,7 +49,7 @@ onMounted(async () => {
   } catch (err) {
     console.error('お題取得エラー:', err)
   }
-})
+});
 
 onMounted(async () => {
   try {
@@ -71,22 +79,6 @@ const prev = () => {
   if (page.value > 1) page.value--;
 };
 
-const analyzeText = async (index) => {
-  const text = phrases[index].text
-  if (!text) {
-    phrases[index].ruby_data = []
-    return
-  }
-
-  try {
-    const res = await axios.post('/api/ruby', { text })
-    phrases[index].ruby_data = res.data.ruby_data
-  } catch (err) {
-    console.error('解析失敗', err)
-    phrases[index].ruby_data = [{ word: text, ruby: null }]
-  }
-}
-
 const previewPost = computed(() => {
   const content = phrases.map((p) => p.text).join(' ')
 
@@ -107,48 +99,7 @@ const previewPost = computed(() => {
     likesCount: 0,
     genre_id: selectedGenre.value,
   }
-})
-
-const handlePost = async () => {
-  const token = localStorage.getItem('token')
-  if (!token) {
-    message.value = '席入り（ログイン）が必要です。'
-    return
-  }
-
-  const senryudata = {
-    content1: phrases[0].text,
-    content2: phrases[1].text,
-    content3: phrases[2].text,
-    ruby_dataset: phrases.map((p) => p.ruby_data),
-    genre_id: selectedGenre.value,
-    weekly_theme_id:
-      currentTheme.value && isJoinTheme.value ? currentTheme.value.weekly_theme_id : null,
-  }
-
-  try {
-    await axios.post('/api/posts', senryudata, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-
-    message.value = '投稿しました！'
-    setTimeout(() => router.push('/'), 1500)
-  } catch (err) {
-    const errorRes = err.response?.data
-
-    if (errorRes?.errorCode) {
-      let errorMessages = []
-      if (errorRes.errorCode & 1) errorMessages.push('上の句が5音ではありません。')
-      if (errorRes.errorCode & 2) errorMessages.push('中の句が7音ではありません。')
-      if (errorRes.errorCode & 4) errorMessages.push('下の句が5音ではありません。')
-      message.value = errorMessages.join('\n')
-    } else if (errorRes?.errorCode === -1) {
-      message.value = '記号などが多すぎます。'
-    } else {
-      message.value = errorRes?.error || errorRes?.message || '投稿に失敗しました。'
-    }
-  }
-}
+});
 
 //ジャンルIDを自動推論
 const genre_predict = async () => {
@@ -184,7 +135,7 @@ const genre_predict = async () => {
       console.error("ジャンルの自動推論でエラーが発生しました",err);
     }
   }
-}
+};
 </script>
 
 <template>
@@ -286,7 +237,7 @@ const genre_predict = async () => {
             type="text"
             :placeholder="['五', '七', '五'][index]"
             @change="
-              analyzeText(index);
+              analyzeText(index, phrases);
               genre_predict()
             "
             required
@@ -355,7 +306,12 @@ const genre_predict = async () => {
       </div>
 
       <!-- 投稿ボタン -->
-      <button type="button" class="submit-btn common-btn"@click="handlePost">投稿</button>
+      <button 
+        type="submit" 
+        class="submit-btn common-btn"
+        :disabled="!phrases[0].ruby_data || !phrases[1].ruby_data || !phrases[2].ruby_data" 
+        @click="handlePost(phrases)"
+      >投稿</button>
     </form>
 
     <p v-if="message">{{ message }}</p>
@@ -641,7 +597,6 @@ const genre_predict = async () => {
   padding: 20px;
   box-shadow: 0 0 8px rgba(0,0,0,0.2);
   animation: fadein 0.2s;
-  color: black;
 }
 
 /* テキスト領域 */

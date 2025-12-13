@@ -8,13 +8,13 @@
         class="follow-button" 
         @click="toggleFollow"
         :class="{ 'follow-blue': !isFollowing }"  >
-        <span v-if="isFollowing">文友</span>
+        <span v-if="isFollowing">文友 済み</span>
         <span v-else>文友になる</span>
       </button>
     </div>
 
     <button class="show-followers-btn common-btn" @click="goToFollowersList">
-      文友
+      文友を見る
       <span class="count">{{ followerCount }}</span>
     </button>
 

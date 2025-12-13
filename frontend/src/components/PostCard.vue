@@ -24,7 +24,7 @@
 
     <div class="poem-wrapper">
       <div class="poem">
-        <template v-if="post.ruby_content && post.ruby_content.length > 0">
+        <template v-if="post.ruby_content">
           <br></br>
           <div v-for="(phrase, pIndex) in post.ruby_content" :key="pIndex" class="post-line">
             <span v-for="(ruby_data, wIndex) in phrase" :key="wIndex" class="word-unit">
@@ -50,7 +50,7 @@
       </div>
       </div>
 
-    <div class="replies-wrapper" :class="{ open: !isPreview && showReplies }">
+    <div class="replies-wrapper" v-if="!isPreview && showReplies" :class="{ open: !isPreview && showReplies }">
       <div class="replies-inner">
         <div v-if="!replies.length" class="no-replies">返句はありません</div>
         <div v-else class="reply-scroll-container">
@@ -70,7 +70,7 @@ import { defineProps, ref, computed, watch} from 'vue';
 import { useRouter } from 'vue-router';
 import LikeButton from './LikeButton.vue';
 import FollowButton from './FollowButton.vue';
-import ReplyForm from './ReplyForm.vue';
+import ReplyForm from './CopyReplyForm.vue';
 import ReplyCard from './ReplyCard.vue';
 
 import icon0 from "@/assets/icons/kajinsample0.jpeg"
@@ -172,7 +172,7 @@ const genreClass = (genreId) => {
   
   /* ★高さの設定を変更 */
   height: auto; 
-  min-height: 400px;
+  /* min-height: 400px; */
   /* transitionは削除（wrapperでやるため） */
   overflow: visible; /* はみ出し許可 */
 }
@@ -180,20 +180,21 @@ const genreClass = (genreId) => {
 /* ★アニメーション用のスタイル */
 .replies-wrapper {
   max-height: 0;       /* 最初は高さ0 */
+  height: auto;
   opacity: 0;          /* 最初は透明 */
   overflow: hidden;    /* はみ出た部分は隠す */
   transition: max-height 0.5s ease, opacity 0.5s ease; /* 伸びるアニメーション */
 }
 
 .replies-wrapper.open {
-  max-height: 1200px;  /* 十分大きな値に設定（これより大きくなると切れるので注意） */
+  max-height: 2000vh;  /* 十分大きな値に設定（これより大きくなると切れるので注意） */
   opacity: 1;          /* 表示 */
 }
 
 /* 中身のレイアウト */
 .replies-inner {
   padding-top: 1rem;
-  border-top: 1px solid #ccc;
+  /* border-top: 1px solid #ccc; */
   margin-top: 0.5rem;
 }
 
@@ -224,14 +225,14 @@ const genreClass = (genreId) => {
   background-color: #fff; 
   justify-content: center; 
   align-items: center; 
-  box-sizing: border-box; 
-  height: 250px; 
+  box-sizing: border-box;
+  height: clamp(200px, 30vh, 320px)
 }
 .poem { 
   writing-mode: vertical-rl; 
   text-orientation: upright; 
   font-family: "Hiragino Mincho ProN", serif; 
-  font-size: clamp(16px, 2vw, 22px); 
+  font-size: clamp(16px, 2vw, 20px); 
   line-height: 1.8; 
   display: flex; 
   flex-direction: column;
@@ -295,14 +296,14 @@ rt {
   color: #dc3545; /* ホバー時に赤く */
 }
 .reply-scroll-container { 
-  height: 360px; 
+  height: auto; 
   display: flex; 
   flex-direction: row-reverse; 
   overflow-x: auto; 
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth; 
-  border-top: 1px solid #eee; 
-  border-bottom: 1px solid #eee; 
+  /* border-top: 1px solid #eee; 
+  border-bottom: 1px solid #eee;  */
 }
 .reply-scroll-container > .reply {
   scroll-snap-align: start; 
@@ -340,8 +341,21 @@ rt {
 }
 
 .author {
-  padding-top: 100px;
+  padding-top: 30px;
   cursor: pointer;
   color: #888; 
+}
+
+
+
+@media (max-width: 600px) {
+  .card {
+    width: 100%;
+    
+  }
+
+  .poem {
+    font-size: clamp(20px, 2vw, 24px); 
+  }
 }
 </style>

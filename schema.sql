@@ -68,6 +68,7 @@ CREATE TABLE replies (
     post_id BIGINT REFERENCES posts(id) ON DELETE CASCADE,
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     content TEXT NOT NULL,
+    ruby_content JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

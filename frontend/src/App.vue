@@ -89,7 +89,7 @@ const fetchNotifications = async () => {
 </script>
 
 <template>
- <div id = "app">
+ <div>
 
  <!-- 🔥 スプラッシュ画面 -->
   <div
@@ -204,7 +204,7 @@ const fetchNotifications = async () => {
    ここから下は通常のあなたのCSS
 ========================= */
 .content {
-  padding-bottom: 80px;
+  padding-bottom: 0px;
 }
 .tab-bar {
   position: fixed;
@@ -212,7 +212,8 @@ const fetchNotifications = async () => {
   left: 0;
   right: 0;
   display: flex;
-  height: 60px;
+  height: 7vh;
+  min-height: 60px;
   background-color: #ffffff;
   border-top: 1px solid #e0e0e0;
   box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);

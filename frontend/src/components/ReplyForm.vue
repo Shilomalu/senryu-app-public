@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from 'vue'
-import analyzeText from '../views/CreatePostView.vue'
 
 const props = defineProps({
   postId: {
@@ -74,7 +73,7 @@ async function handleSubmit(e) {
       <button 
         type="submit" 
         class="submit-button" 
-        :disabled="isSubmitting || (!content1.trim() && !content2.trim() && !content3.trim())"
+        :disabled="isSubmitting || (!content1.trim() || !content2.trim() || !content3.trim())"
       >
         {{ isSubmitting ? '送信中...' : '返句' }}
       </button>
@@ -88,7 +87,7 @@ async function handleSubmit(e) {
   padding: 1rem;
   background-color: #f8f9fa;
   border-radius: 4px;
-  height: 200px; /* 固定高さ */
+  height: auto; /* 固定高さ */
 }
 
 .reply-input {

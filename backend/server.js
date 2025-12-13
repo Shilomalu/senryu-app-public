@@ -771,74 +771,90 @@ app.get("/api/posts/:id", async (req, res) => {
 // リプライ投稿 (要認証)
 app.post("/api/posts/:id/reply", authenticateToken, async (req, res) => {
   try {
-    let { content1, content2, content3 } = req.body;
+    let { content1, content2, content3, ruby_dataset } = req.body;
     const userId = req.user.id;
     const postId = req.params.id;
-    if (!content1 || !content2 || !content3) {
-      return res.status(400).json({ error: "すべての句を入力してください。" });
+
+    const contents = [];
+    if (ruby_dataset && Array.isArray(ruby_dataset)) {
+      for (const ruby_data of ruby_dataset) {
+        contents.push(ruby_data.map(rd => rd.word).join(""));
+      }
+    }
+    if (!contents[0] || !contents[1] || !contents[2] || !content1 || !content2 || !content3) {
+      return res.status(400).json({ error: "返句の内容が必要です。" });
     }
 
-    const regex = /^[\u3040-\u309F\u30A0-\u30FF\uFF65-\uFF9F\u4E00-\u9FFF。｡、､「｢」｣・･！!？?]+$/;
-    if (!regex.test(content1) || !regex.test(content2) || !regex.test(content3)) {
-      return res.status(400).json({ error: "入力できない文字が含まれています。" });
-    }
-
-    const ruby1 = await make_ruby(content1);
-    const ruby2 = await make_ruby(content2);
-    const ruby3 = await make_ruby(content3);
-
-    // ★機能維持: 575チェックロジック再現
+    
     let num = 0;
-    const { flag: can_kaminoku, symbolCount: symbolCount1 } = await check575(ruby1.ruby_data, 5);
-    const { flag: can_nakanoku, symbolCount: symbolCount2 } = await check575(ruby2.ruby_data, 7);
-    const { flag: can_shimonoku, symbolCount: symbolCount3 } = await check575(ruby3.ruby_data, 5);
+    
+    
+    const {
+      flag: can_kaminoku,
+      symbolCount: symbolCount1,
+    } = await check575(ruby_dataset[0], 5);
+    
+    const {
+      flag: can_nakanoku,
+      symbolCount: symbolCount2,
+    } = await check575(ruby_dataset[1], 7);
+    
+    const {
+      flag: can_shimonoku,
+      symbolCount: symbolCount3,
+    } = await check575(ruby_dataset[2], 5);
 
     if (!can_kaminoku) num += 1;
     if (!can_nakanoku) num += 2;
     if (!can_shimonoku) num += 4;
 
     if (num !== 0)
-      return res.status(400).json({ errorCode: num, message: "句の音の数が正しくありません。" });
+      return res
+        .status(400)
+        .json({ errorCode: num, message: "句の音の数が正しくありません。" });
 
     const symbolCount = symbolCount1 + symbolCount2 + symbolCount3;
     if (symbolCount > 4)
-      return res.status(400).json({ errorCode: -1, message: "記号などが多すぎます。" });
+      return res
+        .status(400)
+        .json({ error: "記号などが多すぎます。" });
 
-    content1 = HKtoZK(content1);
-    content2 = HKtoZK(content2);
-    content3 = HKtoZK(content3);
-    const content = `${content1} ${content2} ${content3}`;
+        const content = `${content1} ${content2} ${content3}`;
 
-    if (!content) return res.status(400).json({ error: "リプライの内容が必要です" });
+    if (!content)
+      return res.status(400).json({ error: "返句の内容が必要です" });
 
-    const { error } = await supabase
+        const { error } = await supabase
         .from('replies')
-        .insert([{ user_id: userId, post_id: postId, content }]);
+        .insert([{ 
+            user_id: userId, 
+            post_id: postId, 
+            content: content,
+            ruby_content: ruby_dataset // ★ここを追加：ルビデータも保存
+        }]);
     
     if (error) throw error;
-    const { data: postData } = await supabase.from('posts').select('user_id').eq('id', postId).single();
+
+        const { data: postData } = await supabase.from('posts').select('user_id').eq('id', postId).single();
     
     if (postData) {
       const postOwnerId = postData.user_id;
-      // 自分の投稿へのリプライでなければ通知
       if (postOwnerId !== userId) {
-        // 2. 送信者の名前を取得
         const { data: senderData } = await supabase.from('users').select('username').eq('id', userId).single();
-        const senderName = senderData ? senderData.username : `ユーザー${userId}`;
-
-        // 3. 通知を追加
+        const senderName = senderData?.username ?? `ユーザー${userId}`;
         await supabase.from('notifications').insert([{
-          user_id: postOwnerId, // 通知を受け取る人
+          user_id: postOwnerId,
           type: 'reply',
-          from_user_id: userId, // 送った人
+          from_user_id: userId,
           message: `${senderName}さんがあなたの投稿に返句しました`
         }]);
       }
     }
-    res.status(201).json({ message: "リプライを投稿しました" });
+
+    res.status(201).json({ message: "返句を投稿しました" });
   } catch (err) {
-    console.error("リプライ投稿エラー:", err);
-    res.status(500).json({ error: "リプライの投稿に失敗しました" });
+    console.error("返句投稿エラー:", err);
+    res.status(500).json({ error: "返句の投稿に失敗しました" });
   }
 });
 
