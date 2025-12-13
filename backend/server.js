@@ -757,7 +757,7 @@ app.get("/api/posts/:id", async (req, res) => {
     // 整形
     const formattedPost = { ...post, authorName: post.users.username };
     const formattedReplies = replies.map(r => ({
-        id: r.id, content: r.content, created_at: r.created_at, user_id: r.user_id,
+        id: r.id, content: r.content, created_at: r.created_at, user_id: r.user_id, ruby_content: r.ruby_content,
         authorName: r.users.username
     }));
 
