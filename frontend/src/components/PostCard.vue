@@ -45,19 +45,21 @@
       <div class="main-actions">
         <LikeButton :postId="post.id" :currentUserId="currentUser?.id || 0" :initialIsLiked="post.isLiked" :initialLikesCount="post.likesCount" />
         <button class="reply-btn common-btn" @click="toggleReplies">
-            返句{{ post.repliesCount || 0 }}
+            返句{{ replyCount || 0 }}
         </button>
       </div>
       </div>
 
     <div class="replies-wrapper" v-if="!isPreview && showReplies" :class="{ open: !isPreview && showReplies }">
       <div class="replies-inner">
+        <div class="divider"></div>
         <div v-if="!replies.length" class="no-replies">返句はありません</div>
         <div v-else class="reply-scroll-container">
           <div v-for="reply in replies" :key="reply.id" class="reply">
             <ReplyCard :reply="reply" :current-user="currentUser" @reply-deleted="handleReplyDeleted" />
           </div>
         </div>
+        <div class="divider"></div>
         <ReplyForm :post-id="post.id" :current-user="currentUser" @reply-posted="handleReplyPosted" />
       </div>
     </div>
@@ -70,7 +72,7 @@ import { defineProps, ref, computed, watch} from 'vue';
 import { useRouter } from 'vue-router';
 import LikeButton from './LikeButton.vue';
 import FollowButton from './FollowButton.vue';
-import ReplyForm from './CopyReplyForm.vue';
+import ReplyForm from './ReplyForm.vue';
 import ReplyCard from './ReplyCard.vue';
 
 import icon0 from "@/assets/icons/kajinsample0.jpeg"
@@ -169,6 +171,7 @@ const genreClass = (genreId) => {
   flex-direction: column;
   box-sizing: border-box;
   color: #000;
+  margin-bottom: 3rem;
   
   /* ★高さの設定を変更 */
   height: auto; 
@@ -191,9 +194,14 @@ const genreClass = (genreId) => {
   opacity: 1;          /* 表示 */
 }
 
+.divider {
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  margin: 16px 0;
+}
+
 /* 中身のレイアウト */
 .replies-inner {
-  padding-top: 1rem;
   /* border-top: 1px solid #ccc; */
   margin-top: 0.5rem;
 }

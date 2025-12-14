@@ -1,9 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import PostCard from '@/components/PostCard.vue'
-import ReplyForm from '@/components/ReplyForm.vue'
-import ReplyCard from '@/components/ReplyCard.vue'
+import PostCard from '../components/PostCard.vue'
+import ReplyForm from '../components/ReplyForm.vue'
+import ReplyCard from '../components/ReplyCard.vue'
 
 const route = useRoute()
 const router = useRouter()

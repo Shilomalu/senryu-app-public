@@ -1,61 +1,68 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
+import { analyzeText } from '../composables/useAnalyzeText.js'
 
 const props = defineProps({
   postId: {
     type: [Number, String],
     required: true
-  },
-  currentUser: {
-    type: Object,
-    default: null
   }
 })
 
 const emit = defineEmits(['reply-posted'])
-const content1 = ref('')
-const content2 = ref('')
-const content3 = ref('')
-const isSubmitting = ref(false)
 
-async function handleSubmit(e) {
-  e.preventDefault()
-  // require at least one non-empty part
-  if (!content1.value.trim() && !content2.value.trim() && !content3.value.trim()) return
+const phrases = reactive([
+  { text: '', ruby_data: [] },
+  { text: '', ruby_data: [] },
+  { text: '', ruby_data: [] },
+]);
+
+const isSubmitting = ref(false);
+
+const handleReply = async () => {
   if (isSubmitting.value) return
 
-  isSubmitting.value = true
-  try {
-    const token = localStorage.getItem('token')
-    const replydata = {
-      content1: content1.value.trim(),
-      content2: content2.value.trim(),
-      content3: content3.value.trim(),
-    };
+  if (!phrases[0].text.trim() || !phrases[1].text.trim() || !phrases[2].text.trim()) {
+    return alert("返句をすべて入力してください")
+  }
 
-    const response = await fetch(`/api/posts/${props.postId}/reply`, {
+  isSubmitting.value = true
+
+  // ルビ解析を念のためもう一度走らせる（編集後も反映）
+  for (let index = 0; index < 3; ++index) {
+    if (!phrases[index].ruby_data) {
+      await Promise(analyzeText(index, phrases))
+    }
+  }
+
+  const token = localStorage.getItem('token')
+
+  try {
+    const res = await fetch(`/api/posts/${props.postId}/reply`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(replydata)
+      body: JSON.stringify({
+        content1: phrases[0].text.trim(),
+        content2: phrases[1].text.trim(),
+        content3: phrases[2].text.trim(),
+        ruby_dataset: phrases.map(p => p.ruby_data)
+      })
     })
 
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}))
-      const msg = data.error || '返句の投稿に失敗しました'
-      throw new Error(msg)
-    }
+    if (!res.ok) throw new Error("返句投稿に失敗しました")
 
-    // clear inputs
-    content1.value = ''
-    content2.value = ''
-    content3.value = ''
+    // 成功後クリア
+    phrases.forEach(p => {
+      p.text = ''
+      p.ruby_data = []
+    })
     emit('reply-posted')
-  } catch (error) {
-    console.error('返句投稿エラー:', error)
-    alert(error.message || '返句の投稿に失敗しました')
+  } catch (err) {
+    console.error(err)
+    alert(err.message)
   } finally {
     isSubmitting.value = false
   }
@@ -63,18 +70,41 @@ async function handleSubmit(e) {
 </script>
 
 <template>
-  <form @submit="handleSubmit" class="reply-form">
-    <div class="reply-inputs">
-      <input v-model="content1" type="text" placeholder="上の句（五）" maxlength="10" @input="content1 = content1.replace(/[^\u3041-\u3096\u30A1-\u30F6\u4E00-\u9FFFーー～々。、「」・！？]/g, '')">
-      <input v-model="content2" type="text" placeholder="中の句（七）" maxlength="15" @input="content2 = content2.replace(/[^\u3041-\u3096\u30A1-\u30F6\u4E00-\u9FFFーー～々。、「」・！？]/g, '')">
-      <input v-model="content3" type="text" placeholder="下の句（五）" maxlength="10" @input="content3 = content3.replace(/[^\u3041-\u3096\u30A1-\u30F6\u4E00-\u9FFFーー～々。、「」・！？]/g, '')">
-    </div>
-    <div class="button-container">
-      <button 
-        type="submit" 
-        class="submit-button" 
-        :disabled="isSubmitting || (!content1.trim() || !content2.trim() || !content3.trim())"
-      >
+  <form @submit.prevent="handleReply">
+    <div class="input-sections">
+      <div v-for="(phrase, index) in phrases" :key="index" class="phrase-group">
+        <input
+          v-model="phrase.text"
+          type="text"
+          :placeholder="['五', '七', '五'][index]"
+          @change="analyzeText(index, phrases)"
+          :maxlength="[10, 15, 10][index]"
+          class="main-input"
+          @input="phrase.text = 
+            phrase.text.replace(/[^\u3041-\u3096\u30A1-\u30F6\u4E00-\u9FFFーー～々。、「」・！？]/g, '')"
+        />
+
+        <!-- ▼ ルビ編集エリア (解析結果がある場合のみ表示) ▼ -->
+        <div v-if="phrase.ruby_data.length > 0" class="ruby-edit-area">
+          <p class="ruby-label">ルビの調整 (漢字のみ)</p>
+          <div class="ruby-items">
+            <div v-for="(item, i) in phrase.ruby_data" :key="i" class="ruby-item">
+              <!-- 単語の表示 -->
+              <span class="word-surface">{{ item.word }}</span>
+              <!-- ルビ入力欄 (ルビがある場合のみ表示) -->
+              <input 
+                v-if="item.ruby !== null" 
+                v-model="item.ruby" 
+                class="ruby-input"
+                @input="item.ruby = item.ruby.replace(/[^\u3041-\u3096ーー]/g, '')"
+              >
+              <span v-else class="no-ruby">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <button class="submit-btn common-btn" :disabled="isSubmitting">
         {{ isSubmitting ? '送信中...' : '返句' }}
       </button>
     </div>
@@ -87,54 +117,81 @@ async function handleSubmit(e) {
   padding: 1rem;
   background-color: #f8f9fa;
   border-radius: 4px;
-  height: auto; /* 固定高さ */
+  height: 200px; /* 固定高さ */
 }
 
-.reply-input {
+.phrase-group {
+  margin-bottom: 5px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  text-align: left;
+}
+.phrase-group label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+}
+.main-input {
   width: 100%;
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
-  border: 1px solid #ced4da;
+  padding: 12px;
+  font-size: 1.1em;
+  border: 1px solid #ccc;
   border-radius: 4px;
-  resize: vertical;
+  box-sizing: border-box;
+  text-align: center;
 }
 
-.reply-inputs {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+/* ルビ編集エリア */
+.ruby-edit-area {
+  margin-top: 12px;
+  background-color: #fff;
+  padding: 10px;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+}
+.ruby-label {
+  font-size: 0.85em;
+  color: #666;
   margin-bottom: 8px;
 }
 
-.reply-inputs input {
-  padding: 8px;
-  font-size: 1rem;
-  text-align: center;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-}
-
-.button-container {
+.ruby-items {
   display: flex;
-  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
 }
-
-.submit-button {
-  padding: 0.375rem 1rem;
-  font-size: 1rem;
-  color: white;
-  background-color: #007bff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+.ruby-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 30px;
 }
-
-.submit-button:disabled {
-  background-color: #6c757d;
-  cursor: not-allowed;
+.word-surface {
+  font-size: 1.0em;
+  font-weight: bold;
+  margin-bottom: 2px;
 }
-
-.submit-button:not(:disabled):hover {
-  background-color: #0056b3;
+.ruby-input {
+  width: 60px;
+  font-size: 0.8em;
+  text-align: center;
+  padding: 2px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+}
+.no-ruby {
+  font-size: 0.8em;
+  color: #ccc;
+  padding: 2px 0;
+}
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 </style>

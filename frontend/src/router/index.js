@@ -4,9 +4,7 @@ import TimelineView from '../views/TimelineView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import LoginView from '../views/LoginView.vue'
 import CreatePostView from '../views/CreatePostView.vue'
-import CopyCreatePostView from '../views/CopyCreatePostView.vue'
 import PostDetailView from '../views/PostDetailView.vue'
-import CopyPostDetailView from '../views/CopyPostDetailView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import SearchView from '../views/SearchView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
@@ -36,7 +34,7 @@ const router = createRouter({
     {
       path: '/post',
       name: 'post',
-      component: CopyCreatePostView
+      component: CreatePostView
     },
     // 4. 自分のプロフィールページ（タブバーから飛ぶ用）
     {
@@ -107,7 +105,7 @@ const router = createRouter({
     {
       path: '/posts/:id', // ← :id はどの投稿かを示すための変数
       name: 'post-detail',
-      component: CopyPostDetailView
+      component: PostDetailView
     },
     // 10. 404 Not Foundページ（キャッチオールルート）
     // どのURLにも一致しなかった場合に表示される

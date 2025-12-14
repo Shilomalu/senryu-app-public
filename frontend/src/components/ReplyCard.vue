@@ -135,7 +135,7 @@ async function handleDelete() {
 <style scoped>
 .reply-card {
   width: 180px;   /* 幅を固定（変更なし） */
-  height: 340px;  /* 高さを固定（変更なし） */
+  height: 320px;  /* 高さを固定（変更なし） */
   background-color: #fff;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -145,6 +145,7 @@ async function handleDelete() {
   flex-direction: column;
   box-sizing: border-box;
   margin-right: 10px;
+  margin-bottom: 1rem;
   padding: 10px;
   position: relative;
 }
