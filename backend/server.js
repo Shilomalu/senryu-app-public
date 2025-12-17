@@ -27,7 +27,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "your-very-secret-key";
 
 // --- 3. データベース接続 (Supabase) ---
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   console.error("【エラー】: .envファイルに SUPABASE_URL と SUPABASE_KEY を設定してください！");
@@ -582,7 +582,90 @@ app.get('/api/themes/ranking/latest', async (req, res) => {
     res.status(500).json({ error: 'ランキングの取得に失敗しました' });
   }
 });
+// ↓↓↓ 2. API処理部分 (app.get...) ↓↓↓
 
+app.get('/api/batch/calculate-ranking', async (req, res) => {
+  
+  // セキュリティチェック
+  const authHeader = req.headers['authorization'];
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    // ★修正点B: 時間ズレ対策 (+12時間で確実に「明日」にする)
+    const today = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
+    // ★追加: ログ出し
+    console.log(`【DEBUG】集計処理開始: 判定基準日=${today}`);
+
+    // 集計済みのIDを取得
+    const { data: existings } = await supabase.from('ranking_results').select('weekly_theme_id');
+    const existingIds = existings.map(e => e.weekly_theme_id);
+
+    // 集計対象のお題を検索
+    let query = supabase
+        .from('weekly_themes')
+        .select('id, end_date') // end_dateもログ用に取得
+        // ★修正点C: 今日の分もテストしたいなら .lt ではなく .lte (以下) にする
+        // テストが終わったら .lt に戻してもOK
+        .lte('end_date', today) 
+        .order('end_date', { ascending: false })
+        .limit(1);
+    
+    if (existingIds.length > 0) {
+        query = query.not('id', 'in', existingIds);
+    }
+
+    const { data: targetRows } = await query;
+
+    // ★追加: 見つからなかった理由をログに出す (ここが一番大事！)
+    if (!targetRows || targetRows.length === 0) {
+      console.log('【DEBUG】集計対象なし: 条件に合うお題が見つかりませんでした。');
+      console.log(`【DEBUG】理由: すべて集計済みか、end_date が ${today} 以前のお題がありません。`);
+      return res.json({ message: '集計対象が見つかりませんでした' });
+    }
+
+    const targetThemeId = targetRows[0].id;
+    console.log(`【DEBUG】集計対象を発見: お題ID=${targetThemeId} (終了日:${targetRows[0].end_date})`);
+
+    // 該当テーマの投稿を取得
+    const { data: posts } = await supabase
+        .from('posts')
+        .select('id, likes_num') 
+        .eq('weekly_theme_id', targetThemeId)
+        .order('likes_num', { ascending: false })
+        .limit(10);
+
+    // 保存処理
+    if (posts && posts.length > 0) {
+        console.log(`【DEBUG】投稿データを取得: ${posts.length}件。保存を開始します...`);
+        
+        const results = posts.map((p, index) => ({
+            weekly_theme_id: targetThemeId,
+            post_id: p.id,
+            rank: index + 1,
+            fixed_likes_count: p.likes_num || 0
+        }));
+        
+        const { error } = await supabase.from('ranking_results').insert(results);
+        if (error) {
+            console.error('【DEBUG】保存エラー発生:', error);
+            throw error;
+        }
+        console.log('【DEBUG】保存成功！');
+    } else {
+        console.log('【DEBUG】対象のお題に投稿が0件でした。');
+    }
+
+    res.json({ message: `お題ID:${targetThemeId} のランキングを確定しました！` });
+
+  } catch (err) {
+    console.error('【DEBUG】全体エラー:', err);
+    res.status(500).json({ error: '集計処理に失敗しました' });
+  }
+});
+/*
 // 3. ランキング集計・確定API (Supabase版)
 // ★重要: Vercel Cron用に 'post' ではなく 'get' にします
 app.get('/api/batch/calculate-ranking', async (req, res) => {
@@ -649,7 +732,7 @@ app.get('/api/batch/calculate-ranking', async (req, res) => {
     res.status(500).json({ error: '集計処理に失敗しました' });
   }
 });
-
+*/
 app.get("/api/posts/likes", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
