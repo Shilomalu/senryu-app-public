@@ -27,7 +27,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "your-very-secret-key";
 
 // --- 3. データベース接続 (Supabase) ---
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   console.error("【エラー】: .envファイルに SUPABASE_URL と SUPABASE_KEY を設定してください！");
@@ -582,7 +582,101 @@ app.get('/api/themes/ranking/latest', async (req, res) => {
     res.status(500).json({ error: 'ランキングの取得に失敗しました' });
   }
 });
+// ↓↓↓ server.js のランキング集計API部分 ↓↓↓
 
+app.get('/api/batch/calculate-ranking', async (req, res) => {
+  
+  // 1. セキュリティチェック
+  const authHeader = req.headers['authorization'];
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    // 時間設定 (+12時間で明日判定)
+    const today = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString().split('T')[0];
+    console.log(`【DEBUG】集計開始: 判定日=${today}`);
+
+    // 2. 集計済みのIDを取得 (ここが前回のエラー箇所！)
+    const { data: existings, error: fetchError } = await supabase
+        .from('ranking_results')
+        .select('weekly_theme_id');
+    
+    if (fetchError) {
+        console.error('【DEBUG】既存データの取得に失敗:', fetchError);
+        // エラーでも止まらず、空リストとして扱う
+    }
+
+    // ★安全対策: データが null なら空配列 [] を使う
+    const existingIds = (existings || []).map(e => e.weekly_theme_id);
+
+    // 3. 集計対象のお題を検索
+    let query = supabase
+        .from('weekly_themes')
+        .select('id, end_date')
+        .lte('end_date', today) // テスト用に .lte (以下) を使用
+        .order('end_date', { ascending: false })
+        .limit(1);
+    
+    if (existingIds.length > 0) {
+        query = query.not('id', 'in', existingIds);
+    }
+
+    const { data: targetRows, error: themeError } = await query;
+
+    if (themeError) {
+        console.error('【DEBUG】お題検索エラー:', themeError);
+        throw themeError;
+    }
+
+    if (!targetRows || targetRows.length === 0) {
+      console.log('【DEBUG】集計対象なし: 条件に合う未集計のお題がありません。');
+      return res.json({ message: '集計対象が見つかりませんでした' });
+    }
+
+    const targetThemeId = targetRows[0].id;
+    console.log(`【DEBUG】対象発見: ID=${targetThemeId}`);
+
+    // 4. 投稿を取得
+    const { data: posts, error: postsError } = await supabase
+        .from('posts')
+        .select('id, likes_num') 
+        .eq('weekly_theme_id', targetThemeId)
+        .order('likes_num', { ascending: false })
+        .limit(10);
+
+    if (postsError) {
+        console.error('【DEBUG】投稿取得エラー:', postsError);
+        throw postsError;
+    }
+
+    // 5. 保存処理
+    if (posts && posts.length > 0) {
+        const results = posts.map((p, index) => ({
+            weekly_theme_id: targetThemeId,
+            post_id: p.id,
+            rank: index + 1,
+            fixed_likes_count: p.likes_num || 0
+        }));
+        
+        const { error: insertError } = await supabase.from('ranking_results').insert(results);
+        if (insertError) {
+            console.error('【DEBUG】保存エラー:', insertError);
+            throw insertError;
+        }
+        console.log('【DEBUG】保存成功！');
+    } else {
+        console.log('【DEBUG】投稿が0件のため保存なし');
+    }
+
+    res.json({ message: `ランキング確定: ID:${targetThemeId}` });
+
+  } catch (err) {
+    console.error('【DEBUG】全体エラー:', err);
+    res.status(500).json({ error: '処理失敗' });
+  }
+});
+/*
 // 3. ランキング集計・確定API (Supabase版)
 // ★重要: Vercel Cron用に 'post' ではなく 'get' にします
 app.get('/api/batch/calculate-ranking', async (req, res) => {
@@ -649,7 +743,7 @@ app.get('/api/batch/calculate-ranking', async (req, res) => {
     res.status(500).json({ error: '集計処理に失敗しました' });
   }
 });
-
+*/
 app.get("/api/posts/likes", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
