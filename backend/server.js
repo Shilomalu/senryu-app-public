@@ -53,6 +53,7 @@ function formatPost(post, currentUserId = null) {
         genre_id: post.genre_id,
         // usersテーブルとの結合結果をフラットにする
         authorName: post.users ? post.users.username : "不明",
+        icon_index: post.users ? post.users.icon_index : 0,
         // 配列の長さをカウントとして返す
         likesCount: post.likes ? post.likes.length : 0, 
         repliesCount: post.replies ? post.replies.length : 0,
@@ -219,7 +220,7 @@ app.put("/api/users/me", authenticateToken, async (req, res) => {
         .from('users')
         .update(updates)
         .eq('id', id)
-        .select('id, username, email, profile_text, favorite_id');
+        .select('id, username, email, profile_text, favorite_id, icon_index');
 
     if (error || !data || data.length === 0)
       return res.status(404).json({ message: "User not found" });
@@ -273,9 +274,9 @@ app.get("/api/posts/user/:userId", async (req, res) => {
         .from('posts')
         .select(`
             *,
-            users (username),
+            users (username, icon_index),
             likes (user_id),
-            replies (id)
+            replies (id),
         `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
@@ -406,15 +407,11 @@ app.get("/api/posts/timeline", async (req, res) => {
         .from('posts')
         .select(`
             *,
-            users (username),
+            users (username, icon_index),
             likes (user_id),
             replies (id),
             follows:users!posts_user_id_fkey (id) 
-        `) // followsの判定は少し複雑ですが、簡易的にlikesと同様のロジックでJS側で判定するか、
-           // formatPostで「自分がフォローしているか」を判定するには別クエリが必要かもしれません。
-           // ここでは元のSQLに合わせて「ユーザーごとのフォロー情報」を取得するのは難しいため、
-           // 「自分が相手をフォローしているか」は formatPost ではなく、別途フォローリストを取得して突合するのがSupabase流です。
-           // ただし、「機能を変えない」ため、ここでは最低限 formatPost で処理できる範囲を返します。
+        `)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -504,7 +501,7 @@ app.get('/api/themes/current/posts', async (req, res) => {
 
     const { data, error } = await supabase
         .from('posts')
-        .select(`*, users(username), likes(user_id), replies(id)`)
+        .select(`*, users(username, icon_index), likes(user_id), replies(id)`)
         .eq('weekly_theme_id', currentThemeId)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -547,7 +544,7 @@ app.get('/api/themes/ranking/latest', async (req, res) => {
             rank, fixed_likes_count,
             posts (
                 id, content, ruby_content, user_id, genre_id, created_at,
-                users (username),
+                users (username, icon_index),
                 replies (id),
                 likes (user_id)
             )
@@ -754,7 +751,7 @@ app.get("/api/posts/likes", authenticateToken, async (req, res) => {
         .select(`
             posts (
                 *,
-                users (username),
+                users (username, icon_index),
                 likes (user_id),
                 replies (id)
             )
@@ -791,7 +788,7 @@ app.get('/api/posts/timeline/following', authenticateToken, async (req, res) => 
 
     const { data, error } = await supabase
         .from('posts')
-        .select(`*, users(username), likes(user_id), replies(id)`)
+        .select(`*, users(username, icon_index), likes(user_id), replies(id)`)
         .in('user_id', followedIds)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -837,7 +834,7 @@ app.get("/api/posts/:id", async (req, res) => {
     
     const { data: post, error: postError } = await supabase
         .from('posts')
-        .select('*, users(username)')
+        .select('*, users(username, icon_index)')
         .eq('id', postId)
         .single();
 
@@ -845,7 +842,7 @@ app.get("/api/posts/:id", async (req, res) => {
 
     const { data: replies } = await supabase
         .from('replies')
-        .select('*, users(username)')
+        .select('*, users(username, icon_index)')
         .eq('post_id', postId)
         .order('created_at', { ascending: false });
 
@@ -998,7 +995,7 @@ app.get("/api/posts/user/:id", async (req, res) => {
         const userId = req.params.id;
         const { data, error } = await supabase
             .from('posts')
-            .select(`*, users (username), likes (user_id), replies (id)`)
+            .select(`*, users (username, icon_index), likes (user_id), replies (id)`)
             .eq('user_id', userId)
             .order('created_at', { ascending: false })
             .limit(50);
@@ -1069,7 +1066,7 @@ app.get("/api/search", async (req, res) => {
     // SupabaseにはMySQLの ORDER BY FIELD がないので、取得後にJSで並び替える
     const { data: posts, error } = await supabase
         .from('posts')
-        .select(`*, users(username), likes(user_id), replies(id)`)
+        .select(`*, users(username, icon_index), likes(user_id), replies(id)`)
         .in('id', orderedIds);
 
     if (error) throw error;
@@ -1095,7 +1092,7 @@ app.get("/api/posts/:postId/likes", async (req, res) => {
     const { postId } = req.params;
     const { data, error } = await supabase
         .from('likes')
-        .select('users (id, username)')
+        .select('users (id, username, icon_index)')
         .eq('post_id', postId);
 
     if(error) throw error;
