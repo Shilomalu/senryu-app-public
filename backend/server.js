@@ -220,7 +220,7 @@ app.put("/api/users/me", authenticateToken, async (req, res) => {
         .from('users')
         .update(updates)
         .eq('id', id)
-        .select('id, username, email, profile_text, favorite_id, icon_index');
+        .select('id, username, email, profile_text, favorite_id');
 
     if (error || !data || data.length === 0)
       return res.status(404).json({ message: "User not found" });
