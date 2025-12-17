@@ -7,7 +7,7 @@
       <button 
         class="follow-button" 
         @click="toggleFollow"
-        :class="{ 'follow-blue': !isFollowing }"  >
+        :class="[isFollowing ? 'darker-btn' : 'dark-btn']"  >
         <span v-if="isFollowing">文友 済み</span>
         <span v-else>文友になる</span>
       </button>
@@ -104,6 +104,10 @@ watch(() => props.targetUserId, fetchFollowStatus);
     text-align: center;
 }
 
+.dark-btn {
+  background-color: #f0f0f0;
+}
+
 .follow-button {
   padding: 4px 8px; 
   font-size: 0.8rem; 
@@ -115,19 +119,20 @@ watch(() => props.targetUserId, fetchFollowStatus);
   white-space: nowrap;
   width: 100%; 
   box-sizing: border-box; 
+  font-weight: bold;
   
   /* 「フォロー中」のスタイル */
-  background: none; 
+  /* background: none; 
   border: 1px solid #ccc; 
   color: #000; 
-  cursor: pointer;
+  cursor: pointer; */
 }
 
-.follow-button:hover { 
+/* .follow-button:hover { 
   background-color: #f0f0f0; 
-}
+} */
 
-.follow-blue {
+/* .follow-blue {
     background-color: #007bff;
     border: 1px solid #007bff;
     color: #ffffff;
@@ -137,7 +142,7 @@ watch(() => props.targetUserId, fetchFollowStatus);
 .follow-blue:hover {
     background-color: #0056b3;
     border-color: #0056b3;
-}
+} */
 
 .show-followers-btn {
   padding: 4px 8px;

@@ -21,7 +21,7 @@ const genres = [
   { id: 5, name: '＃スポーツ' },
   { id: 6, name: '＃食べ物' },
   { id: 7, name: '＃学校' },
-  { id: 8, name: '＃旅行' },
+  { id: 8, name: '＃その他' },
 ]
 const selectedGenre = ref(null)
 //refをつけることによって画面をリロードすることなくテンプレートを変えられるようになる
