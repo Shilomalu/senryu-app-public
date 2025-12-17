@@ -609,17 +609,18 @@ app.get('/api/batch/calculate-ranking', async (req, res) => {
 
     // ★安全対策: データが null なら空配列 [] を使う
     const existingIds = (existings || []).map(e => e.weekly_theme_id);
+    const uniqueExistingIds = [...new Set(existingIds)];
 
-    // 3. 集計対象のお題を検索
     let query = supabase
         .from('weekly_themes')
         .select('id, end_date')
-        .lte('end_date', today) // テスト用に .lte (以下) を使用
+        .lte('end_date', today)
         .order('end_date', { ascending: false })
         .limit(1);
     
-    if (existingIds.length > 0) {
-        query = query.not('id', 'in', existingIds);
+    if (uniqueExistingIds.length > 0) {
+        const filterString = `(${uniqueExistingIds.join(',')})`;
+        query = query.filter('id', 'not.in', filterString);
     }
 
     const { data: targetRows, error: themeError } = await query;
@@ -664,7 +665,7 @@ app.get('/api/batch/calculate-ranking', async (req, res) => {
             console.error('【DEBUG】保存エラー:', insertError);
             throw insertError;
         }
-        console.log('【DEBUG】保存成功！');
+        console.log('【DEBUG】保存成功');
     } else {
         console.log('【DEBUG】投稿が0件のため保存なし');
     }
