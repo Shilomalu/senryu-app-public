@@ -643,7 +643,7 @@ app.get('/api/batch/calculate-ranking', async (req, res) => {
         .from('posts')
         .select('id, likes_num') 
         .eq('weekly_theme_id', targetThemeId)
-        .order('likes_num', { ascending: false })
+        .order('likes_num', { ascending: false, nullsFirst: false })
         .limit(10);
 
     if (postsError) {
