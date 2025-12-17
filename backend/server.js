@@ -1483,6 +1483,96 @@ res.status(500).json({ error: '既読情報取得エラー' });
 }
 });
 
+app.get('/api/notifications', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // MySQL: LEFT JOIN users u ...
+    // Supabase: users:from_user_id ( ... ) で結合
+    const { data, error } = await supabase
+        .from('notifications')
+        .select(`
+            id, type, message, created_at, is_read, from_user_id,
+            users:from_user_id (username, icon_index) 
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    const formattedNotifications = data.map(n => ({
+        id: n.id,
+        type: n.type,
+        message: n.message,
+        created_at: n.created_at,
+        is_read: n.is_read,
+        from_user_id: n.from_user_id,
+        // ここで結合データを平坦化
+        from_username: n.users ? n.users.username : "不明",
+        // アイコンも必要ならここで渡せます
+        from_user_icon: n.users ? n.users.icon_index : 0 
+    }));
+
+    res.json(formattedNotifications);
+  } catch (error) {
+    console.error("通知取得エラー:", error);
+    res.status(500).json({ error: "通知が取得できませんでした" });
+  }
+});
+
+app.post("/notifications", async (req, res) => {
+  try {
+    const { user_id, type, from_user_id, message } = req.body;
+
+    const { error } = await supabase
+        .from('notifications')
+        .insert([{ user_id, type, from_user_id, message }]);
+
+    if (error) throw error;
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("通知追加エラー:", error);
+    res.status(500).json({ error: "通知追加エラー" });
+  }
+});
+
+app.post("/notifications/read", async (req, res) => {
+  try {
+    const { notification_id } = req.body;
+
+    const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notification_id);
+
+    if (error) throw error;
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("既読化エラー:", error);
+    res.status(500).json({ error: "既読化エラー" });
+  }
+});
+
+app.delete('/api/notifications/:id', authenticateToken, async (req, res) => {
+  try {
+    const notifId = req.params.id;
+    const userId = req.user.id;
+    const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .match({ id: notifId, user_id: userId });
+
+    if (error) throw error;
+    res.json({ message: "通知を削除しました。" });
+
+  } catch (error) {
+    console.error("通知削除エラー:", error);
+    res.status(500).json({ error: "通知削除エラー" });
+  }
+});
+
 // --- 6. サーバー起動 ---
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`サーバーがポート${PORT}で起動しました。`));
