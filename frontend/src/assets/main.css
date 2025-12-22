@@ -129,13 +129,13 @@ input {
 
 .dark-btn.active {
   transform: none;
-  background-color: #1F6F78; /* ホバーで少し明るく *//* ボタン全体を下に動かす */
+  /* background-color: #1F6F78;
   color: white;
-  font-weight: bold;
+  font-weight: bold; */
 }
 
 .dark-btn:hover {
-  background-color: #1F6F78; /* ホバーで少し明るく */
+  background-color: #1F6F78;
   color: white;
   font-weight: bold;
   transform: scale(1.1);

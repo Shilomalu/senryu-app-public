@@ -18,7 +18,7 @@ const genres = [
   { id: 2, name: '＃夏' },
   { id: 3, name: '＃秋' },
   { id: 4, name: '＃冬' },
-  { id: 5, name: '＃スポーツ' },
+  { id: 5, name: '＃趣味' },
   { id: 6, name: '＃食べ物' },
   { id: 7, name: '＃学校' },
   { id: 8, name: '＃その他' },
@@ -347,5 +347,13 @@ form {
     transform: scale(1) translateY(0);
   }
 }
+
+.dark-btn.active {
+  transform: none;
+  background-color: #1F6F78;
+  color: white;
+  font-weight: bold;
+}
+
 </style>
 

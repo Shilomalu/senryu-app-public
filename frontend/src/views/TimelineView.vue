@@ -269,9 +269,6 @@ const goHome = async () => {
 
     <!-- タイムライン -->
     <div class="timeline-content">
-      
-      
-
       <div v-if="filter === 'ranking'" class="special-timeline-container">
     
         <section class="ranking-section">
@@ -419,7 +416,7 @@ const goHome = async () => {
   color: #1F6F78;
 }
 
-/* ぴょんバウンドアニメ */
+/* ぴょんバウンドアニメ
 @keyframes bounce {
   0%   { transform: translateY(0); }
   30%  { transform: translateY(-1000px); }
@@ -434,6 +431,7 @@ const goHome = async () => {
   font-size: 1.1rem;
   animation: bounce 1.0s ease 4;
 }
+*/
 
 /* メニューボタン */
 .menu-toggle-btn {

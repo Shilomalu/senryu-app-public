@@ -104,9 +104,9 @@ watch(() => props.targetUserId, fetchFollowStatus);
     text-align: center;
 }
 
-.dark-btn {
+/* .dark-btn {
   background-color: #f0f0f0;
-}
+} */
 
 .follow-button {
   padding: 4px 8px; 
@@ -128,9 +128,10 @@ watch(() => props.targetUserId, fetchFollowStatus);
   cursor: pointer; */
 }
 
-/* .follow-button:hover { 
-  background-color: #f0f0f0; 
-} */
+.follow-button:hover { 
+  /* background-color: #f0f0f0;  */
+  transform: none;
+}
 
 /* .follow-blue {
     background-color: #007bff;
