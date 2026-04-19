@@ -53,6 +53,7 @@ user_id: post.user_id,
 genre_id: post.genre_id,
 // usersテーブルとの結合結果をフラットにする
 authorName: post.users ? post.users.username : "不明",
+icon_index: post.users ? (post.users.icon_index ?? 0) : 0,
 // 配列の長さをカウントとして返す
 likesCount: post.likes ? post.likes.length : 0, 
 repliesCount: post.replies ? post.replies.length : 0,
@@ -273,7 +274,7 @@ const { data, error } = await supabase
 .from('posts')
 .select(`
            *,
-           users (username),
+           users (username, icon_index),
            likes (user_id),
            replies (id)
        `)
@@ -406,7 +407,7 @@ const { data, error } = await supabase
 .from('posts')
 .select(`
            *,
-           users (username),
+           users (username, icon_index),
            likes (user_id),
            replies (id),
            follows:users!posts_user_id_fkey (id) 
@@ -504,7 +505,7 @@ const currentThemeId = themes[0].id;
 
 const { data, error } = await supabase
 .from('posts')
-.select(`*, users(username), likes(user_id), replies(id)`)
+.select(`*, users(username, icon_index), likes(user_id), replies(id)`)
 .eq('weekly_theme_id', currentThemeId)
 .order('created_at', { ascending: false })
 .limit(50);
@@ -547,7 +548,7 @@ const { data, error } = await supabase
            rank, fixed_likes_count,
            posts (
                id, content, ruby_content, user_id, genre_id, created_at,
-               users (username),
+               users (username, icon_index),
                replies (id),
                likes (user_id)
            )
@@ -569,6 +570,7 @@ user_id: r.posts.user_id,
 genre_id: r.posts.genre_id,
 created_at: r.posts.created_at,
 authorName: r.posts.users ? r.posts.users.username : "不明",
+icon_index: r.posts.users ? (r.posts.users.icon_index ?? 0) : 0,
 likesCount: realTimeLikesCount,
 likedUserIds: r.posts.likes ? r.posts.likes.map(l => l.user_id) : [],
 isLiked: r.posts.likes && r.posts.likes.some(l => l.user_id === currentUserId) ? 1 : 0,
@@ -755,7 +757,7 @@ const { data, error } = await supabase
 .select(`
            posts (
                *,
-               users (username),
+               users (username, icon_index),
                likes (user_id),
                replies (id)
            )
@@ -792,7 +794,7 @@ if (followedIds.length === 0) return res.json([]);
 
 const { data, error } = await supabase
 .from('posts')
-.select(`*, users(username), likes(user_id), replies(id)`)
+.select(`*, users(username, icon_index), likes(user_id), replies(id)`)
 .in('user_id', followedIds)
 .order('created_at', { ascending: false })
 .limit(50);
@@ -978,7 +980,7 @@ app.get("/api/users/:id", async (req, res) => {
 try {
 const { data, error } = await supabase
 .from('users')
-.select('id, username, email, profile_text')
+.select('id, username, email, profile_text, icon_index')
 .eq('id', req.params.id)
 .single();
 
@@ -999,7 +1001,7 @@ try {
 const userId = req.params.id;
 const { data, error } = await supabase
 .from('posts')
-.select(`*, users (username), likes (user_id), replies (id)`)
+.select(`*, users (username, icon_index), likes (user_id), replies (id)`)
 .eq('user_id', userId)
 .order('created_at', { ascending: false })
 .limit(50);

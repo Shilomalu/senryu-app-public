@@ -2,6 +2,20 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
+import PostCard from '@/components/PostCard.vue';
+import icon0 from '@/assets/icons/kajinsample0.jpeg';
+import icon1 from '@/assets/icons/kajinsample1.jpeg';
+import icon2 from '@/assets/icons/kajinsample2.jpeg';
+import icon3 from '@/assets/icons/kajinsample3.jpeg';
+import icon4 from '@/assets/icons/kajinsample4.jpeg';
+import icon5 from '@/assets/icons/kajinsample5.jpeg';
+import icon6 from '@/assets/icons/kajinsample6.jpeg';
+import icon7 from '@/assets/icons/kajinsample7.jpeg';
+import icon8 from '@/assets/icons/kajinsample8.jpeg';
+import icon9 from '@/assets/icons/kajinsample9.jpeg';
+import icon10 from '@/assets/icons/kajinsample10.jpeg';
+import icon11 from '@/assets/icons/kajinsample11.jpeg';
 
 const route = useRoute();
 const userId = route.params.id; // URLの :id から取得
@@ -9,32 +23,56 @@ const userId = route.params.id; // URLの :id から取得
 const isLoading = ref(true);
 const userExists = ref(true);
 const username = ref('');
-const email = ref('');
 const profile_text = ref('');
+const iconIndex = ref(0);
 const posts = ref([]);
+const currentUser = ref(null);
 
-// ログインユーザーのトークン（閲覧はログイン不要でも可）
+const icons = [
+  { id: 0, src: icon0 },
+  { id: 1, src: icon1 },
+  { id: 2, src: icon2 },
+  { id: 3, src: icon3 },
+  { id: 4, src: icon4 },
+  { id: 5, src: icon5 },
+  { id: 6, src: icon6 },
+  { id: 7, src: icon7 },
+  { id: 8, src: icon8 },
+  { id: 9, src: icon9 },
+  { id: 10, src: icon10 },
+  { id: 11, src: icon11 }
+];
+
 const token = localStorage.getItem('token');
+if (token) {
+  try {
+    currentUser.value = jwtDecode(token);
+  } catch (err) {
+    console.warn('Invalid token for current user:', err);
+    currentUser.value = null;
+  }
+}
 
-// 他ユーザーのプロフィールと投稿取得
 const loadUserProfile = async () => {
   try {
-    // プロフィール情報の取得
     const userRes = await axios.get(`/api/users/${userId}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
 
     const userData = userRes.data;
     username.value = userData.username;
-    email.value = userData.email;
     profile_text.value = userData.profile_text;
+    iconIndex.value = userData.icon_index ?? 0;
 
-    // 投稿データの取得
     const postRes = await axios.get(`/api/posts/user/${userId}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
 
-    posts.value = postRes.data;
+    posts.value = postRes.data.map(post => ({
+      ...post,
+      likesCount: Number(post.likesCount ?? post.likeCount ?? 0),
+      isLiked: Boolean(post.isLiked || post.is_liked)
+    }));
   } catch (err) {
     console.error('ユーザーデータ取得エラー:', err);
     userExists.value = false;
@@ -42,8 +80,6 @@ const loadUserProfile = async () => {
     isLoading.value = false;
   }
 };
-
-
 
 onMounted(() => {
   loadUserProfile();
@@ -60,30 +96,36 @@ onMounted(() => {
     </div>
 
     <div v-else class="profile-container">
-      <h1>{{ username }} さんの句歴</h1>
-
-      <div class="profile-info">
-        <ul>
-          <li><strong>俳号：</strong> {{ username }}</li>
-          <li><strong>添え書き：</strong> {{ profile_text }}</li>
-        </ul>
+      <div class="profile-header">
+        <div class="profile-summary">
+          <img :src="icons[iconIndex]?.src || icons[0].src" class="profile-icon-large" />
+          <div class="profile-text-block">
+            <h1>{{ username }} さんの句歴</h1>
+            <p class="profile-description">{{ profile_text || 'まだ添え書きが設定されていません。' }}</p>
+          </div>
+        </div>
       </div>
 
-      <div class="post-list">
+      <section class="user-posts">
         <h2>投稿一覧</h2>
-        <ul v-if="posts.length > 0">
-          <li v-for="post in posts" :key="post.id">{{ post.content }}</li>
-        </ul>
-        <p v-else>投稿がまだありません。</p>
-      </div>
+        <div v-if="posts.length" class="posts-grid">
+          <div v-for="post in posts" :key="post.id" class="post-card-item">
+            <PostCard :post="post" :currentUser="currentUser" />
+          </div>
+        </div>
+        <div v-else class="no-posts">
+          投稿がまだありません。
+        </div>
+      </section>
     </div>
   </div>
 </template>
 
 <style scoped>
 .form-container {
-  max-width: 600px;
-  text-align: left;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1rem;
 }
 
 .loading, .not-found {
@@ -92,33 +134,65 @@ onMounted(() => {
   margin-top: 4rem;
 }
 
-.profile-container h1 {
-  text-align: center;
+.profile-header {
   margin-bottom: 1.5rem;
-  font-size: 1.6rem;
 }
 
-.profile-info ul {
-  list-style: none;
-  padding: 0;
+.profile-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.profile-info li {
-  margin-bottom: 1rem;
-  font-size: 1.1rem;
+.profile-icon-large {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #ccc;
 }
 
-.post-list {
+.profile-text-block {
+  flex: 1;
+  min-width: 220px;
+}
+
+.profile-text-block h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.8rem;
+}
+
+.profile-description {
+  margin: 0;
+  color: #555;
+  line-height: 1.6;
+}
+
+.user-posts {
   margin-top: 2rem;
 }
 
-.post-list ul {
-  list-style: none;
-  padding: 0;
+.user-posts h2 {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
 }
 
-.post-list li {
-  border-bottom: 1px solid #ddd;
-  padding: 0.5rem 0;
+.posts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.post-card-item {
+  display: flex;
+}
+
+.no-posts {
+  color: #666;
+  padding: 1rem;
+  background: #fafafa;
+  border: 1px dashed #ccc;
+  border-radius: 10px;
 }
 </style>
